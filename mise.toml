@@ -1,4 +1,4 @@
 [tools]
 node = "24"
-pnpm = "9"
+"npm:pnpm" = "11"
 "aqua:hashicorp/terraform" = "1.9.8"

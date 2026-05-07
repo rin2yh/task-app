@@ -1,4 +1,4 @@
-name: Terraform
+name: Terraform plan
 
 on:
   pull_request:
@@ -6,16 +6,11 @@ on:
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'terraform/**'
-      - '.github/workflows/terraform.yml'
   workflow_dispatch:
 
 concurrency:
-  group: terraform-${{ github.ref }}
-  cancel-in-progress: false
+  group: terraform-plan-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -83,25 +78,3 @@ jobs:
       - name: Fail if plan failed
         if: steps.plan.outcome == 'failure'
         run: exit 1
-
-  apply:
-    # R2 backend 移行と Secrets 投入が完了するまで無効化。
-    # 完了後は次の条件に置き換えて main push 時のみ apply するよう戻す:
-    #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    # 詳細は docs/cicd.md セクション 3。
-    if: false
-    needs: [plan]
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: terraform
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
-      - name: terraform init
-        run: |
-          terraform init \
-            -backend-config="bucket=${{ secrets.TF_BACKEND_BUCKET }}" \
-            -backend-config="endpoints={s3=\"https://${{ secrets.TF_VAR_cloudflare_account_id }}.r2.cloudflarestorage.com\"}"
-      - name: terraform apply
-        run: terraform apply -auto-approve

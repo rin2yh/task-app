@@ -1,0 +1,12 @@
+allowBuilds:
+  '@biomejs/biome': true
+  esbuild: true
+  sharp: true
+  workerd: true
+
+# 公開直後のサプライチェーン攻撃対策。公開から 2 週間（20160 分）経過していない
+# パッケージのインストールを拒否する。緊急で新しいバージョンが必要なときは
+# このファイルを一時的に編集する。
+minimumReleaseAge: 20160
+minimumReleaseAgeIgnoreMissingTime: true
+minimumReleaseAgeStrict: false
