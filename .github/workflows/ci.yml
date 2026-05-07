@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+
+  unit-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+
+  unit-workers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:workers
+
+  e2e-changed:
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: jdx/mise-action@v2
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Playwright (only changed)
+        run: pnpm exec playwright test --only-changed=${{ github.event.pull_request.base.sha }}
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-changed
+          path: app/playwright-report/
+          retention-days: 7
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [unit-client, unit-workers]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
+          restore-keys: pnpm-
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build

@@ -13,12 +13,12 @@ resource "cloudflare_workers_script" "task_app" {
   account_id = var.cloudflare_account_id
   name       = var.worker_name
   # 初期登録用のダミー content。以後 wrangler deploy が実体を上書きする。
-  content    = <<-EOT
+  content = <<-EOT
     export default {
       fetch() { return new Response('bootstrap', { status: 200 }); }
     }
   EOT
-  module     = true
+  module  = true
 
   d1_database_binding {
     name        = "DB"

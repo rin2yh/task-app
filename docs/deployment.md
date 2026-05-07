@@ -1,5 +1,7 @@
 # デプロイ
 
+> 平常時のデプロイは GitHub Actions が自動で実行します。CI/CD の設定・運用は [`docs/cicd.md`](./cicd.md) を参照してください。本ドキュメントは初回セットアップ・緊急時の手動操作・Terraform の詳細を扱います。
+
 Cloudflare Workers + D1 への本番デプロイ手順です。Terraform で scaffolding (D1、Worker、Secrets) を作り、Worker 本体は `wrangler deploy` で更新する 2 段構成です。
 
 ## 0. 前提
@@ -23,12 +25,16 @@ Worker 本体は `lifecycle.ignore_changes = [content, module]` のため、Terr
 
 ## 2. 本番マイグレーション
 
+平常時は GitHub Actions の `deploy.yml` が自動実行します。緊急時の手動実行:
+
 ```bash
 cd task-app/app
 pnpm db:migrate:prod
 ```
 
 ## 3. ビルドとデプロイ
+
+平常時は GitHub Actions の `deploy.yml` が自動実行します。緊急時の手動実行:
 
 ```bash
 cd task-app/app
