@@ -40,6 +40,8 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - name: Stage .dev.vars for E2E
         run: cp .dev.vars.e2e .dev.vars
+      - name: Apply D1 migrations (local)
+        run: pnpm db:migrate:local
       - name: Playwright (full)
         run: pnpm exec playwright test
       - name: Upload Playwright report
