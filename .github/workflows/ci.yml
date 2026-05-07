@@ -17,12 +17,12 @@ defaults:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         with:
           path: ~/.local/share/pnpm/store
           key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
@@ -31,12 +31,12 @@ jobs:
       - run: pnpm lint
 
   typecheck:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         with:
           path: ~/.local/share/pnpm/store
           key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
@@ -45,12 +45,12 @@ jobs:
       - run: pnpm typecheck
 
   unit-client:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         with:
           path: ~/.local/share/pnpm/store
           key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
@@ -59,12 +59,12 @@ jobs:
       - run: pnpm test
 
   unit-workers:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         with:
           path: ~/.local/share/pnpm/store
           key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
@@ -73,21 +73,21 @@ jobs:
       - run: pnpm test:workers
 
   e2e-changed:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [lint, typecheck]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           fetch-depth: 0
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         with:
           path: ~/.local/share/pnpm/store
           key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
           restore-keys: pnpm-
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         with:
           path: ~/.cache/ms-playwright
           key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
@@ -98,20 +98,20 @@ jobs:
         run: pnpm exec playwright test --only-changed=${{ github.event.pull_request.base.sha }}
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: playwright-report-changed
           path: app/playwright-report/
           retention-days: 7
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [unit-client, unit-workers]
     steps:
-      - uses: actions/checkout@v4
-      - uses: jdx/mise-action@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
       - name: Cache pnpm store
-        uses: actions/cache@v4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
         with:
           path: ~/.local/share/pnpm/store
           key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
