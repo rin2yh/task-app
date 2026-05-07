@@ -1,0 +1,28 @@
+name = "task-app"
+main = "server.ts"
+compatibility_date = "2025-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+assets = { directory = "./dist/client", binding = "ASSETS" }
+
+[[d1_databases]]
+binding = "DB"
+database_name = "task-app-local"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "./migrations"
+
+[vars]
+ENVIRONMENT = "development"
+
+[triggers]
+crons = ["0 3 * * *"]
+
+[env.production]
+name = "task-app"
+vars = { ENVIRONMENT = "production" }
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "task-app-prod"
+database_id = "00000000-0000-0000-0000-000000000001"
+migrations_dir = "./migrations"

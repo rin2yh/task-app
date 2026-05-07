@@ -1,0 +1,71 @@
+import { Hono } from 'hono';
+import { z } from 'zod';
+import type { AppEnv } from '../env';
+import { createDb } from '../db/client';
+import {
+  createProject,
+  deleteProject,
+  getProjectByIdForOwner,
+  listProjectsByOwner,
+  updateProject,
+} from '../db/repositories/projects';
+import { csrfGuard, requireAuth, requireUser } from '../auth/middleware';
+import { parseJson } from '../lib/validation';
+import { NotFound } from '../lib/errors';
+
+const CreateInput = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().max(2000).nullable().optional(),
+});
+
+const UpdateInput = z.object({
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().max(2000).nullable().optional(),
+});
+
+export const projectRoutes = new Hono<AppEnv>();
+
+projectRoutes.use('*', requireAuth);
+
+projectRoutes.get('/', async (c) => {
+  const user = requireUser(c);
+  const db = createDb(c.env.DB);
+  const projects = await listProjectsByOwner(db, user.id);
+  return c.json({ projects });
+});
+
+projectRoutes.post('/', csrfGuard, async (c) => {
+  const user = requireUser(c);
+  const input = await parseJson(c, CreateInput);
+  const db = createDb(c.env.DB);
+  const project = await createProject(db, user.id, input);
+  return c.json({ project }, 201);
+});
+
+projectRoutes.patch('/:id', csrfGuard, async (c) => {
+  const user = requireUser(c);
+  const id = c.req.param('id');
+  const input = await parseJson(c, UpdateInput);
+  const db = createDb(c.env.DB);
+  const updated = await updateProject(db, id, user.id, input);
+  if (!updated) throw NotFound();
+  return c.json({ project: updated });
+});
+
+projectRoutes.delete('/:id', csrfGuard, async (c) => {
+  const user = requireUser(c);
+  const id = c.req.param('id');
+  const db = createDb(c.env.DB);
+  const ok = await deleteProject(db, id, user.id);
+  if (!ok) throw NotFound();
+  return c.json({ ok: true });
+});
+
+projectRoutes.get('/:id', async (c) => {
+  const user = requireUser(c);
+  const id = c.req.param('id');
+  const db = createDb(c.env.DB);
+  const project = await getProjectByIdForOwner(db, id, user.id);
+  if (!project) throw NotFound();
+  return c.json({ project });
+});

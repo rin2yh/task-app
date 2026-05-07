@@ -1,0 +1,6 @@
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
+SESSION_SECRET="generate-a-strong-32+-char-secret"
+APP_URL="http://localhost:5173"
+ALLOWED_LOGINS=""
+E2E_AUTH=""

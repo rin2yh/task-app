@@ -1,0 +1,64 @@
+import { cloudflare } from '@cloudflare/vite-plugin';
+import { inertiaPages } from '@hono/inertia/vite';
+import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
+import { defineConfig } from 'vite';
+
+const isE2E = process.env.E2E_AUTH === '1';
+
+export default defineConfig({
+  plugins: [
+    react(),
+    inertiaPages({
+      pagesDir: 'pages',
+      output: 'pages.gen.ts',
+    }),
+    cloudflare({
+      configPath: './wrangler.toml',
+      experimental: { remoteBindings: false },
+    }),
+    VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'client/pwa',
+      filename: 'sw.ts',
+      registerType: 'autoUpdate',
+      injectRegister: false,
+      manifest: {
+        name: 'My Task App',
+        short_name: 'TaskApp',
+        description: 'GitHub Projects 風カンバンタスク管理',
+        start_url: '/',
+        display: 'standalone',
+        background_color: '#ffffff',
+        theme_color: '#0ea5e9',
+        icons: [
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          {
+            src: '/icons/icon-512-maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+      },
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+      },
+    }),
+  ],
+  define: {
+    'import.meta.env.E2E_AUTH': JSON.stringify(isE2E ? '1' : ''),
+  },
+  build: {
+    target: 'es2022',
+  },
+  resolve: {
+    alias: {
+      '@': '/.',
+      '@server': '/server',
+      '@client': '/client',
+      '@shared': '/shared',
+    },
+  },
+});

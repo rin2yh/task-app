@@ -1,0 +1,89 @@
+/*
+ * Tailwind を使う場合は @tailwind を有効化してください。
+ * 雛形では最低限のリセットとユーティリティ風スタイルのみ。
+ */
+:root {
+  color-scheme: light;
+  --c-bg: #f8fafc;
+  --c-fg: #0f172a;
+  --c-muted: #475569;
+  --c-card: #ffffff;
+  --c-border: #e2e8f0;
+  --c-accent: #0ea5e9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', 'Noto Sans JP',
+    sans-serif;
+  background: var(--c-bg);
+  color: var(--c-fg);
+}
+
+a {
+  color: var(--c-accent);
+  text-decoration: none;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--c-border);
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.btn-primary {
+  background: var(--c-accent);
+  color: white;
+  border-color: var(--c-accent);
+}
+.btn-danger {
+  color: #b91c1c;
+}
+
+.card {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 0.6rem;
+  padding: 0.7rem 0.9rem;
+}
+
+.column {
+  width: 320px;
+  background: #f1f5f9;
+  border-radius: 0.7rem;
+  padding: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.board {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  align-items: flex-start;
+  overflow-x: auto;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--c-border);
+  border-radius: 0.4rem;
+  background: white;
+  width: 100%;
+}
