@@ -17,7 +17,8 @@
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply task-app-local --local",
-    "db:migrate:prod": "wrangler d1 migrations apply task-app-prod --remote"
+    "db:migrate:prod": "wrangler d1 migrations apply task-app-prod --remote",
+    "import:issues": "node --experimental-strip-types scripts/import-issues.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
