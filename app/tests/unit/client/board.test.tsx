@@ -5,7 +5,9 @@ import type { Column, Label, TaskWithLabels } from '../../../shared/types';
 
 vi.mock('axios', () => ({
   default: {
-    post: vi.fn().mockResolvedValue({ data: { task: { id: 'new', columnId: 'c1' }, tasksInColumn: [] } }),
+    post: vi
+      .fn()
+      .mockResolvedValue({ data: { task: { id: 'new', columnId: 'c1' }, tasksInColumn: [] } }),
     delete: vi.fn().mockResolvedValue({ data: { ok: true } }),
     patch: vi.fn().mockResolvedValue({ data: { task: {} } }),
     put: vi.fn().mockResolvedValue({ data: { labels: [] } }),
@@ -36,9 +38,7 @@ const labels: Label[] = [];
 
 describe('Board', () => {
   it('renders columns and tasks', () => {
-    render(
-      <Board projectId="p" columns={cols} tasks={tasks} labels={labels} csrfToken="x" />,
-    );
+    render(<Board projectId="p" columns={cols} tasks={tasks} labels={labels} csrfToken="x" />);
     expect(screen.getByTestId('column-c1')).toBeInTheDocument();
     expect(screen.getByTestId('column-c2')).toBeInTheDocument();
     expect(screen.getByTestId('task-t1')).toBeInTheDocument();

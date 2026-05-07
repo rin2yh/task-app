@@ -1,4 +1,4 @@
-import { test as base, type APIRequestContext, type BrowserContext } from '@playwright/test';
+import { type APIRequestContext, type BrowserContext, test as base } from '@playwright/test';
 
 export const test = base.extend<{
   authenticate: (login: string) => Promise<void>;
@@ -19,11 +19,9 @@ export const test = base.extend<{
 export const expect = test.expect;
 
 function parseSetCookies(header: string, domain: string) {
-  return header
-    .split(/, (?=[^,]+=)/)
-    .map((part) => {
-      const [kv] = part.split(';');
-      const [name, ...rest] = kv!.split('=');
-      return { name: name!.trim(), value: rest.join('='), domain, path: '/' };
-    });
+  return header.split(/, (?=[^,]+=)/).map((part) => {
+    const [kv] = part.split(';');
+    const [name, ...rest] = kv!.split('=');
+    return { name: name!.trim(), value: rest.join('='), domain, path: '/' };
+  });
 }

@@ -16,9 +16,11 @@ async function setup() {
   });
   const projId = ((await proj.json()) as { project: { id: string } }).project.id;
   const cols = (
-    (await (await SELF.fetch(`http://localhost/projects/${projId}/columns`, {
-      headers: { cookie: u.cookies },
-    })).json()) as { columns: Array<{ id: string }> }
+    (await (
+      await SELF.fetch(`http://localhost/projects/${projId}/columns`, {
+        headers: { cookie: u.cookies },
+      })
+    ).json()) as { columns: Array<{ id: string }> }
   ).columns;
   const t = await SELF.fetch(`http://localhost/columns/${cols[0]!.id}/tasks`, {
     method: 'POST',
@@ -75,16 +77,24 @@ describe('labels', () => {
 
   it('attach and detach labels to a task', async () => {
     const { headers, projId, taskId } = await setup();
-    const a = ((await (await SELF.fetch(`http://localhost/projects/${projId}/labels`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ name: 'a', color: '#111111' }),
-    })).json()) as { label: { id: string } }).label;
-    const b = ((await (await SELF.fetch(`http://localhost/projects/${projId}/labels`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ name: 'b', color: '#222222' }),
-    })).json()) as { label: { id: string } }).label;
+    const a = (
+      (await (
+        await SELF.fetch(`http://localhost/projects/${projId}/labels`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ name: 'a', color: '#111111' }),
+        })
+      ).json()) as { label: { id: string } }
+    ).label;
+    const b = (
+      (await (
+        await SELF.fetch(`http://localhost/projects/${projId}/labels`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ name: 'b', color: '#222222' }),
+        })
+      ).json()) as { label: { id: string } }
+    ).label;
     const put = await SELF.fetch(`http://localhost/tasks/${taskId}/labels`, {
       method: 'PUT',
       headers,

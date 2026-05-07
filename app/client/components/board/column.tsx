@@ -1,5 +1,5 @@
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { Column as ColumnT, TaskWithLabels } from '../../../shared/types';
 import { TaskCard } from './task-card';
 
@@ -12,7 +12,10 @@ type Props = {
 };
 
 export function Column({ column, tasks, onCreateTask, onSelectTask, onDeleteColumn }: Props) {
-  const { setNodeRef } = useDroppable({ id: `col-${column.id}`, data: { type: 'column', columnId: column.id } });
+  const { setNodeRef } = useDroppable({
+    id: `col-${column.id}`,
+    data: { type: 'column', columnId: column.id },
+  });
   return (
     <div className="column" data-testid={`column-${column.id}`}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -27,7 +30,10 @@ export function Column({ column, tasks, onCreateTask, onSelectTask, onDeleteColu
         </button>
       </header>
       <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-        <div ref={setNodeRef} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minHeight: 40 }}>
+        <div
+          ref={setNodeRef}
+          style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minHeight: 40 }}
+        >
           {tasks.map((t) => (
             <TaskCard key={t.id} task={t} onClick={() => onSelectTask(t)} />
           ))}

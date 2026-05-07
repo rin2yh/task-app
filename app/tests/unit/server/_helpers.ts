@@ -1,7 +1,7 @@
 import { applyD1Migrations, env } from 'cloudflare:test';
 import { sql } from 'drizzle-orm';
-import { createDb } from '../../../server/db/client';
 import { createSession } from '../../../server/auth/session';
+import { createDb } from '../../../server/db/client';
 import { users } from '../../../server/db/schema';
 
 export const ENV = env as unknown as import('../../../server/env').Env & {

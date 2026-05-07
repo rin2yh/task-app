@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/session';
+import { expect, test } from '../fixtures/session';
 
 test('未ログイン時は /auth/login にリダイレクト', async ({ page }) => {
   const res = await page.goto('/');

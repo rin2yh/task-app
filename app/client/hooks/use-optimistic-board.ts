@@ -6,10 +6,7 @@ export type BoardState = {
   tasksByColumn: Record<string, TaskWithLabels[]>;
 };
 
-export function buildInitialState(
-  columns: Column[],
-  tasks: TaskWithLabels[],
-): BoardState {
+export function buildInitialState(columns: Column[], tasks: TaskWithLabels[]): BoardState {
   const sortedCols = [...columns].sort((a, b) => a.position - b.position);
   const tasksByColumn: Record<string, TaskWithLabels[]> = {};
   for (const col of sortedCols) tasksByColumn[col.id] = [];
@@ -26,33 +23,30 @@ export function buildInitialState(
 export function useOptimisticBoard(initial: BoardState) {
   const [state, setState] = useState(initial);
 
-  const moveTaskLocal = useCallback(
-    (taskId: string, toColumnId: string, toIndex: number) => {
-      setState((prev) => {
-        const next: BoardState = {
-          columns: prev.columns,
-          tasksByColumn: { ...prev.tasksByColumn },
-        };
-        let moved: TaskWithLabels | undefined;
-        for (const colId of Object.keys(next.tasksByColumn)) {
-          const idx = next.tasksByColumn[colId]!.findIndex((t) => t.id === taskId);
-          if (idx >= 0) {
-            const arr = [...next.tasksByColumn[colId]!];
-            moved = arr.splice(idx, 1)[0];
-            next.tasksByColumn[colId] = arr;
-            break;
-          }
+  const moveTaskLocal = useCallback((taskId: string, toColumnId: string, toIndex: number) => {
+    setState((prev) => {
+      const next: BoardState = {
+        columns: prev.columns,
+        tasksByColumn: { ...prev.tasksByColumn },
+      };
+      let moved: TaskWithLabels | undefined;
+      for (const colId of Object.keys(next.tasksByColumn)) {
+        const idx = next.tasksByColumn[colId]!.findIndex((t) => t.id === taskId);
+        if (idx >= 0) {
+          const arr = [...next.tasksByColumn[colId]!];
+          moved = arr.splice(idx, 1)[0];
+          next.tasksByColumn[colId] = arr;
+          break;
         }
-        if (!moved) return prev;
-        const dest = [...(next.tasksByColumn[toColumnId] ?? [])];
-        const insertAt = Math.max(0, Math.min(toIndex, dest.length));
-        dest.splice(insertAt, 0, { ...moved, columnId: toColumnId });
-        next.tasksByColumn[toColumnId] = dest;
-        return next;
-      });
-    },
-    [],
-  );
+      }
+      if (!moved) return prev;
+      const dest = [...(next.tasksByColumn[toColumnId] ?? [])];
+      const insertAt = Math.max(0, Math.min(toIndex, dest.length));
+      dest.splice(insertAt, 0, { ...moved, columnId: toColumnId });
+      next.tasksByColumn[toColumnId] = dest;
+      return next;
+    });
+  }, []);
 
   const replaceTasksForColumn = useCallback((columnId: string, tasks: Task[]) => {
     setState((prev) => {

@@ -1,9 +1,8 @@
-import { readMigrations } from '@cloudflare/vitest-pool-workers/config';
-import { defineWorkersConfig } from '@cloudflare/vitest-pool-workers/config';
 import path from 'node:path';
+import { defineWorkersConfig, readD1Migrations } from '@cloudflare/vitest-pool-workers/config';
 
 export default defineWorkersConfig(async () => {
-  const migrations = await readMigrations(path.resolve(__dirname, 'migrations'));
+  const migrations = await readD1Migrations(path.resolve(__dirname, 'migrations'));
   return {
     test: {
       include: ['tests/unit/server/**/*.test.ts'],

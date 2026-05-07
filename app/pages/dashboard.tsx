@@ -15,9 +15,13 @@ export default function Dashboard({ projects }: Props) {
     if (!name.trim()) return;
     setBusy(true);
     try {
-      await axios.post('/projects', { name }, {
-        headers: { 'X-CSRF-Token': shared.csrfToken },
-      });
+      await axios.post(
+        '/projects',
+        { name },
+        {
+          headers: { 'X-CSRF-Token': shared.csrfToken },
+        },
+      );
       router.reload();
       setName('');
     } finally {

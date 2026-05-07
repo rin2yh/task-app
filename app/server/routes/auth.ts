@@ -1,10 +1,9 @@
-import { Hono } from 'hono';
-import { generateState, OAuth2RequestError } from 'arctic';
+import { OAuth2RequestError, generateState } from 'arctic';
 import { eq } from 'drizzle-orm';
+import { Hono } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
-import type { AppEnv } from '../env';
-import { createDb } from '../db/client';
-import { users } from '../db/schema';
+import { createGitHubProvider, fetchGitHubUser } from '../auth/github';
+import { csrfGuard } from '../auth/middleware';
 import {
   CSRF_COOKIE,
   SESSION_COOKIE,
@@ -12,8 +11,9 @@ import {
   createSession,
   deleteSession,
 } from '../auth/session';
-import { createGitHubProvider, fetchGitHubUser } from '../auth/github';
-import { csrfGuard } from '../auth/middleware';
+import { createDb } from '../db/client';
+import { users } from '../db/schema';
+import type { AppEnv } from '../env';
 
 const STATE_COOKIE = '__Host-oauth-state';
 
@@ -57,14 +57,18 @@ authRoutes.get('/callback', async (c) => {
   const ghUser = await fetchGitHubUser(accessToken);
 
   const allowed = (c.env.ALLOWED_LOGINS ?? '').trim();
-  if (allowed && !allowed.split(',').map((s) => s.trim()).includes(ghUser.login)) {
+  if (
+    allowed &&
+    !allowed
+      .split(',')
+      .map((s) => s.trim())
+      .includes(ghUser.login)
+  ) {
     return c.redirect('/auth/login?error=forbidden', 302);
   }
 
   const db = createDb(c.env.DB);
-  const existing = (
-    await db.select().from(users).where(eq(users.githubId, ghUser.id)).limit(1)
-  )[0];
+  const existing = (await db.select().from(users).where(eq(users.githubId, ghUser.id)).limit(1))[0];
   let userId: number;
   if (existing) {
     userId = existing.id;
@@ -128,9 +132,7 @@ authRoutes.post('/test-login', async (c) => {
   const login = body.login;
   const githubId = body.githubId ?? Math.floor(Math.random() * 1_000_000) + 1;
   const db = createDb(c.env.DB);
-  const existing = (
-    await db.select().from(users).where(eq(users.githubId, githubId)).limit(1)
-  )[0];
+  const existing = (await db.select().from(users).where(eq(users.githubId, githubId)).limit(1))[0];
   let userId: number;
   if (existing) {
     userId = existing.id;

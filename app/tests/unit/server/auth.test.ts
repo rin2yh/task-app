@@ -1,9 +1,9 @@
 import { SELF } from 'cloudflare:test';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { applyMigrations, createTestUser, ENV } from './_helpers';
-import { createDb } from '../../../server/db/client';
 import { eq } from 'drizzle-orm';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { createDb } from '../../../server/db/client';
 import { sessions } from '../../../server/db/schema';
+import { ENV, applyMigrations, createTestUser } from './_helpers';
 
 describe('auth flow', () => {
   beforeEach(async () => {

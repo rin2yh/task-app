@@ -25,10 +25,6 @@
       "@shared/*": ["./shared/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "pages.gen.ts"
-  ],
+  "include": ["**/*.ts", "**/*.tsx", "pages.gen.ts"],
   "exclude": ["node_modules", "dist", ".wrangler"]
 }

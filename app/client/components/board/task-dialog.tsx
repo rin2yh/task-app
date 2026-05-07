@@ -70,16 +70,27 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
 
   return (
     <dialog open aria-labelledby="task-dialog-title" data-testid={`task-dialog-${task.id}`}>
-      <form onSubmit={save} style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: 320 }}>
-        <h3 id="task-dialog-title" style={{ margin: 0 }}>タスク編集</h3>
+      <form
+        onSubmit={save}
+        style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: 320 }}
+      >
+        <h3 id="task-dialog-title" style={{ margin: 0 }}>
+          タスク編集
+        </h3>
         <label>
           タイトル
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} />
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={200}
+          />
         </label>
         <label>
           説明
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
         </label>
+        {/* biome-ignore lint/a11y/noLabelWithoutControl: PrioritySelect 内部で <select> を描画している */}
         <label>
           優先度
           <PrioritySelect value={priority} onChange={setPriority} />
@@ -88,13 +99,18 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
           期限
           <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </label>
-        <fieldset style={{ border: '1px solid var(--c-border)', borderRadius: '0.4rem', padding: '0.4rem' }}>
+        <fieldset
+          style={{ border: '1px solid var(--c-border)', borderRadius: '0.4rem', padding: '0.4rem' }}
+        >
           <legend>ラベル</legend>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
             {allLabels.map((l) => {
               const checked = selectedLabels.has(l.id);
               return (
-                <label key={l.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                <label
+                  key={l.id}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                >
                   <input
                     type="checkbox"
                     checked={checked}

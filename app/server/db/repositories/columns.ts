@@ -1,12 +1,8 @@
 import { and, asc, eq, max } from 'drizzle-orm';
 import { ulid } from 'ulid';
+import { computeInsertPosition, rebalance, tailPosition } from '../../lib/position';
 import type { Database } from '../client';
-import { columns, projects, type DbColumn } from '../schema';
-import {
-  computeInsertPosition,
-  rebalance,
-  tailPosition,
-} from '../../lib/position';
+import { type DbColumn, columns, projects } from '../schema';
 
 async function ensureProjectOwned(
   db: Database,
@@ -131,11 +127,13 @@ export async function reorderColumn(
   const beforeIdx = input.beforeColumnId
     ? others.findIndex((c) => c.id === input.beforeColumnId)
     : -1;
-  const afterIdx = input.afterColumnId
-    ? others.findIndex((c) => c.id === input.afterColumnId)
-    : -1;
+  const afterIdx = input.afterColumnId ? others.findIndex((c) => c.id === input.afterColumnId) : -1;
   const prevPos =
-    beforeIdx >= 0 ? others[beforeIdx]!.position : afterIdx > 0 ? others[afterIdx - 1]!.position : null;
+    beforeIdx >= 0
+      ? others[beforeIdx]!.position
+      : afterIdx > 0
+        ? others[afterIdx - 1]!.position
+        : null;
   const nextPos =
     afterIdx >= 0
       ? others[afterIdx]!.position

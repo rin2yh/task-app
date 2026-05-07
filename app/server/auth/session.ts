@@ -1,6 +1,6 @@
 import { eq, lt } from 'drizzle-orm';
 import type { Database } from '../db/client';
-import { sessions, users, type DbUser } from '../db/schema';
+import { type DbUser, sessions, users } from '../db/schema';
 
 export const SESSION_COOKIE = '__Host-session';
 export const CSRF_COOKIE = '__Host-csrf';

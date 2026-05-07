@@ -1,9 +1,9 @@
 import type { MiddlewareHandler } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
-import type { AppEnv } from '../env';
 import { createDb } from '../db/client';
-import { CSRF_COOKIE, findSession, SESSION_COOKIE } from './session';
-import { Unauthorized, Forbidden } from '../lib/errors';
+import type { AppEnv } from '../env';
+import { Forbidden, Unauthorized } from '../lib/errors';
+import { CSRF_COOKIE, SESSION_COOKIE, findSession } from './session';
 
 export const sessionLoader: MiddlewareHandler<AppEnv> = async (c, next) => {
   const token = getCookie(c, SESSION_COOKIE);

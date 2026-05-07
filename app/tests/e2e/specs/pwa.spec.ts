@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/session';
+import { expect, test } from '../fixtures/session';
 
 test('manifest が配信される', async ({ page }) => {
   const res = await page.goto('/manifest.webmanifest');
@@ -7,7 +7,11 @@ test('manifest が配信される', async ({ page }) => {
   expect(json.name).toBeTruthy();
 });
 
-test('オフライン時にシェルが表示される（本番ビルド時のみ）', async ({ page, context, authenticate }) => {
+test('オフライン時にシェルが表示される（本番ビルド時のみ）', async ({
+  page,
+  context,
+  authenticate,
+}) => {
   test.skip(process.env.E2E_ENV !== 'prod', 'PWA 検証は本番ビルド向け');
   await authenticate('pwa');
   await page.goto('/');

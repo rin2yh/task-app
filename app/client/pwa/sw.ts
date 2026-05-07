@@ -1,8 +1,8 @@
 /// <reference lib="webworker" />
 import { clientsClaim } from 'workbox-core';
 import { precacheAndRoute } from 'workbox-precaching';
-import { NetworkFirst, CacheFirst, NetworkOnly } from 'workbox-strategies';
 import { registerRoute } from 'workbox-routing';
+import { CacheFirst, NetworkFirst, NetworkOnly } from 'workbox-strategies';
 
 declare let self: ServiceWorkerGlobalScope;
 
@@ -12,7 +12,10 @@ clientsClaim();
 precacheAndRoute(self.__WB_MANIFEST);
 
 registerRoute(
-  ({ request }) => request.destination === 'style' || request.destination === 'script' || request.destination === 'font',
+  ({ request }) =>
+    request.destination === 'style' ||
+    request.destination === 'script' ||
+    request.destination === 'font',
   new CacheFirst({ cacheName: 'static-assets' }),
 );
 
@@ -26,9 +29,12 @@ registerRoute(
 
 registerRoute(
   ({ url, request }) =>
-    request.method !== 'GET' || url.pathname.startsWith('/projects') ||
-    url.pathname.startsWith('/columns') || url.pathname.startsWith('/tasks') ||
-    url.pathname.startsWith('/labels') || url.pathname.startsWith('/auth'),
+    request.method !== 'GET' ||
+    url.pathname.startsWith('/projects') ||
+    url.pathname.startsWith('/columns') ||
+    url.pathname.startsWith('/tasks') ||
+    url.pathname.startsWith('/labels') ||
+    url.pathname.startsWith('/auth'),
   new NetworkOnly(),
 );
 

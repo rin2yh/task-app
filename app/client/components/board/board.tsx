@@ -1,11 +1,11 @@
 import {
   DndContext,
+  type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   closestCenter,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import axios from 'axios';
@@ -59,8 +59,8 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     const beforeIdx = toIndex - 1;
     const list = board.state.tasksByColumn[toColumnId] ?? [];
     const beforeTaskId =
-      beforeIdx >= 0 && list[beforeIdx]?.id !== activeId ? list[beforeIdx]?.id ?? null : null;
-    const afterTaskId = list[toIndex]?.id !== activeId ? list[toIndex]?.id ?? null : null;
+      beforeIdx >= 0 && list[beforeIdx]?.id !== activeId ? (list[beforeIdx]?.id ?? null) : null;
+    const afterTaskId = list[toIndex]?.id !== activeId ? (list[toIndex]?.id ?? null) : null;
     const snapshot = board.state;
     board.moveTaskLocal(activeId, toColumnId, toIndex);
 
@@ -170,7 +170,6 @@ function NewTaskDialog({
       >
         <h3>新規タスク</h3>
         <input
-          autoFocus
           type="text"
           placeholder="タイトル"
           value={title}

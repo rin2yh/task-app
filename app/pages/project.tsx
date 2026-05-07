@@ -26,7 +26,11 @@ export default function Project({ project, columns, tasks, labels }: Props) {
   const addColumn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newColumnName.trim()) return;
-    await axios.post(`/projects/${project.id}/columns`, { name: newColumnName.trim() }, { headers });
+    await axios.post(
+      `/projects/${project.id}/columns`,
+      { name: newColumnName.trim() },
+      { headers },
+    );
     setNewColumnName('');
     router.reload();
   };

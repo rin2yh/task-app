@@ -1,18 +1,18 @@
-import { Hono } from 'hono';
 import { inertia } from '@hono/inertia';
+import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import type { AppEnv } from './server/env';
+import { rootView } from './root-view';
 import { sessionLoader } from './server/auth/middleware';
+import { purgeExpired } from './server/auth/session';
+import { createDb } from './server/db/client';
+import type { AppEnv } from './server/env';
+import { buildSharedProps } from './server/inertia/share';
 import { authRoutes } from './server/routes/auth';
-import { projectRoutes } from './server/routes/projects';
 import { columnRoutes, columnsByProjectRoutes } from './server/routes/columns';
 import { labelRoutes, labelsByProjectRoutes } from './server/routes/labels';
-import { taskRoutes, tasksByColumnRoutes } from './server/routes/tasks';
 import { pageRoutes } from './server/routes/pages';
-import { buildSharedProps } from './server/inertia/share';
-import { rootView } from './root-view';
-import { createDb } from './server/db/client';
-import { purgeExpired } from './server/auth/session';
+import { projectRoutes } from './server/routes/projects';
+import { taskRoutes, tasksByColumnRoutes } from './server/routes/tasks';
 
 const ASSETS_VERSION = '1';
 
