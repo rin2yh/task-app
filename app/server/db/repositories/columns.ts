@@ -1,6 +1,11 @@
 import { and, asc, eq, max } from 'drizzle-orm';
 import { ulid } from 'ulid';
-import { computeInsertPosition, rebalance, tailPosition } from '../../lib/position';
+import {
+  REBALANCE_THRESHOLD,
+  computeInsertPosition,
+  rebalance,
+  tailPosition,
+} from '../../lib/position';
 import type { Database } from '../client';
 import { type DbColumn, columns, projects } from '../schema';
 
@@ -142,7 +147,10 @@ export async function reorderColumn(
         : null;
   const maxPos = others.at(-1)?.position ?? 0;
   const newPos = computeInsertPosition(prevPos, nextPos, maxPos);
-  if (newPos == null) {
+  const existingCollapsed = others.some(
+    (c, i) => i > 0 && c.position - others[i - 1]!.position < REBALANCE_THRESHOLD,
+  );
+  if (newPos == null || existingCollapsed) {
     // 全列リバランス：論理順に並べたうえで対象列を target index に配置
     const logical = others.slice();
     let insertAt: number;

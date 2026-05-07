@@ -12,7 +12,6 @@ export const pageRoutes = new Hono<AppEnv>();
 
 pageRoutes.get('/auth/login', async (c) => {
   if (c.get('user')) return c.redirect('/');
-  // @ts-expect-error - c.render is provided by @hono/inertia middleware
   return c.render('login', { error: c.req.query('error') ?? null });
 });
 
@@ -20,7 +19,6 @@ pageRoutes.get('/', requireAuth, async (c) => {
   const user = requireUser(c);
   const db = createDb(c.env.DB);
   const projects = await listProjectsByOwner(db, user.id);
-  // @ts-expect-error - c.render is provided by @hono/inertia middleware
   return c.render('dashboard', { projects });
 });
 
@@ -35,7 +33,6 @@ pageRoutes.get('/projects/:id', requireAuth, async (c) => {
     listTasksForProject(db, id),
     listLabelsForProject(db, id, user.id),
   ]);
-  // @ts-expect-error - c.render is provided by @hono/inertia middleware
   return c.render('project', {
     project,
     columns: cols ?? [],

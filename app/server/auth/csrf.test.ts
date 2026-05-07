@@ -1,6 +1,6 @@
 import { SELF } from 'cloudflare:test';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { applyMigrations, createTestUser } from './_helpers';
+import { applyMigrations, createTestUser } from '../_test-helpers';
 
 describe('CSRF protection', () => {
   beforeEach(async () => {

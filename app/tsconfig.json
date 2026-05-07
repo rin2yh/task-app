@@ -16,7 +16,12 @@
     "verbatimModuleSyntax": false,
     "allowImportingTsExtensions": false,
     "noEmit": true,
-    "types": ["@cloudflare/workers-types", "vite/client", "vitest/globals"],
+    "types": [
+      "@cloudflare/workers-types",
+      "@cloudflare/vitest-pool-workers/types",
+      "vite/client",
+      "vitest/globals"
+    ],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],

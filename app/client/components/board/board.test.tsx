@@ -1,18 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import { Board } from '../../../client/components/board/board';
+import { describe, expect, it } from 'vitest';
 import type { Column, Label, TaskWithLabels } from '../../../shared/types';
-
-vi.mock('axios', () => ({
-  default: {
-    post: vi
-      .fn()
-      .mockResolvedValue({ data: { task: { id: 'new', columnId: 'c1' }, tasksInColumn: [] } }),
-    delete: vi.fn().mockResolvedValue({ data: { ok: true } }),
-    patch: vi.fn().mockResolvedValue({ data: { task: {} } }),
-    put: vi.fn().mockResolvedValue({ data: { labels: [] } }),
-  },
-}));
+import { Board } from './board';
 
 const cols: Column[] = [
   { id: 'c1', projectId: 'p', name: 'Todo', position: 1, createdAt: 0 },

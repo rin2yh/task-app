@@ -9,9 +9,7 @@ export type GitHubUser = {
 };
 
 export function createGitHubProvider(env: Env): GitHub {
-  return new GitHub(env.GITHUB_CLIENT_ID, env.GITHUB_CLIENT_SECRET, {
-    redirectURI: `${env.APP_URL}/auth/callback`,
-  });
+  return new GitHub(env.GITHUB_CLIENT_ID, env.GITHUB_CLIENT_SECRET, `${env.APP_URL}/auth/callback`);
 }
 
 export async function fetchGitHubUser(accessToken: string): Promise<GitHubUser> {

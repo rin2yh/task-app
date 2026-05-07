@@ -1,9 +1,9 @@
 import { SELF } from 'cloudflare:test';
 import { eq, sql } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createDb } from '../../../server/db/client';
-import { columns } from '../../../server/db/schema';
-import { ENV, applyMigrations, createTestUser } from './_helpers';
+import { ENV, applyMigrations, createTestUser } from '../_test-helpers';
+import { createDb } from '../db/client';
+import { columns } from '../db/schema';
 
 async function createProject(u: Awaited<ReturnType<typeof createTestUser>>) {
   const res = await SELF.fetch('http://localhost/projects', {

@@ -11,11 +11,10 @@ export default defineConfig({
     react(),
     inertiaPages({
       pagesDir: 'pages',
-      output: 'pages.gen.ts',
+      outFile: 'pages.gen.ts',
     }),
     cloudflare({
       configPath: './wrangler.toml',
-      experimental: { remoteBindings: false },
     }),
     VitePWA({
       strategies: 'injectManifest',

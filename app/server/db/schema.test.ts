@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createDb } from '../../../server/db/client';
-import { users } from '../../../server/db/schema';
-import { ENV, applyMigrations } from './_helpers';
+import { ENV, applyMigrations } from '../_test-helpers';
+import { createDb } from '../db/client';
+import { users } from '../db/schema';
 
 describe('users table', () => {
   beforeEach(async () => {

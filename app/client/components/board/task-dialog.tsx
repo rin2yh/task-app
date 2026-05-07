@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { useState } from 'react';
 import type { Label, Priority, TaskWithLabels } from '../../../shared/types';
 import { LabelChip } from '../shared/label-chip';
@@ -25,7 +24,10 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
   );
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const headers = { 'X-CSRF-Token': csrfToken };
+  const jsonHeaders = {
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': csrfToken,
+  };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,13 +44,23 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
         priority,
         dueDate: dueDate ? Date.parse(`${dueDate}T00:00:00Z`) : null,
       };
-      const { data } = await axios.patch(`/tasks/${task.id}`, payload, { headers });
-      const updatedLabels = await axios.put(
-        `/tasks/${task.id}/labels`,
-        { labelIds: Array.from(selectedLabels) },
-        { headers },
-      );
-      onUpdated({ ...data.task, labels: updatedLabels.data.labels as Label[] });
+      const patchRes = await fetch(`/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: jsonHeaders,
+        body: JSON.stringify(payload),
+      });
+      if (!patchRes.ok) throw new Error(`update failed: ${patchRes.status}`);
+      const patchData = (await patchRes.json()) as { task: TaskWithLabels };
+
+      const labelsRes = await fetch(`/tasks/${task.id}/labels`, {
+        method: 'PUT',
+        headers: jsonHeaders,
+        body: JSON.stringify({ labelIds: Array.from(selectedLabels) }),
+      });
+      if (!labelsRes.ok) throw new Error(`labels update failed: ${labelsRes.status}`);
+      const labelsData = (await labelsRes.json()) as { labels: Label[] };
+
+      onUpdated({ ...patchData.task, labels: labelsData.labels });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : '保存に失敗しました');
@@ -61,7 +73,10 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
     if (!confirm('タスクを削除しますか？')) return;
     setBusy(true);
     try {
-      await axios.delete(`/tasks/${task.id}`, { headers });
+      await fetch(`/tasks/${task.id}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-Token': csrfToken },
+      });
       onDeleted(task);
     } finally {
       setBusy(false);

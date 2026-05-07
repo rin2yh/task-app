@@ -16,7 +16,7 @@ import { taskRoutes, tasksByColumnRoutes } from './server/routes/tasks';
 
 const ASSETS_VERSION = '1';
 
-const app = new Hono<AppEnv>();
+const app = new Hono<AppEnv>({ strict: false });
 
 app.use('*', sessionLoader);
 
@@ -25,7 +25,7 @@ app.use(
   inertia({
     version: ASSETS_VERSION,
     rootView,
-    share: (c) => buildSharedProps(c as never),
+    share: (c: never) => buildSharedProps(c),
   } as never),
 );
 
@@ -49,7 +49,7 @@ app.onError((err, c) => {
 
 export default {
   fetch: app.fetch,
-  async scheduled(_event: ScheduledEvent, env: AppEnv['Bindings']) {
+  async scheduled(_controller: ScheduledController, env: AppEnv['Bindings']) {
     const db = createDb(env.DB);
     await purgeExpired(db);
   },

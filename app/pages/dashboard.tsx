@@ -1,5 +1,4 @@
 import { router, usePage } from '@inertiajs/react';
-import axios from 'axios';
 import { useState } from 'react';
 import type { Project, SharedProps } from '../shared/types';
 
@@ -15,13 +14,15 @@ export default function Dashboard({ projects }: Props) {
     if (!name.trim()) return;
     setBusy(true);
     try {
-      await axios.post(
-        '/projects',
-        { name },
-        {
-          headers: { 'X-CSRF-Token': shared.csrfToken },
+      const res = await fetch('/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': shared.csrfToken,
         },
-      );
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error(`Failed to create project: ${res.status}`);
       router.reload();
       setName('');
     } finally {
@@ -30,7 +31,10 @@ export default function Dashboard({ projects }: Props) {
   };
 
   const logout = async () => {
-    await axios.post('/auth/logout', null, { headers: { 'X-CSRF-Token': shared.csrfToken } });
+    await fetch('/auth/logout', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': shared.csrfToken },
+    });
     window.location.href = '/auth/login';
   };
 
