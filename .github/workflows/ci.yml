@@ -94,6 +94,8 @@ jobs:
           restore-keys: pnpm-
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+      - name: Stage .dev.vars for E2E
+        run: cp .dev.vars.e2e .dev.vars
       - name: Playwright (only changed)
         run: pnpm exec playwright test --only-changed=${{ github.event.pull_request.base.sha }}
       - name: Upload Playwright report

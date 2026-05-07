@@ -38,6 +38,8 @@ jobs:
           restore-keys: pnpm-
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+      - name: Stage .dev.vars for E2E
+        run: cp .dev.vars.e2e .dev.vars
       - name: Playwright (full)
         run: pnpm exec playwright test
       - name: Upload Playwright report
