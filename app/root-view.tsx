@@ -1,14 +1,15 @@
 import { renderToString } from 'react-dom/server';
-import { Link, Script, ViteClient } from 'vite-ssr-components/react';
+import { Link, ReactRefresh, Script, ViteClient } from 'vite-ssr-components/react';
 
-type Props = {
-  page: string;
-  manifest?: string;
-  pageProps: Record<string, unknown>;
+type Page = {
+  component: string;
+  props: Record<string, unknown>;
+  url: string;
+  version?: string | null;
 };
 
-export function rootView(props: Props): string {
-  const dataPage = JSON.stringify({ component: props.page, props: props.pageProps });
+export function rootView(page: Page): string {
+  const dataPage = JSON.stringify(page);
   const html = renderToString(
     <html lang="ja">
       <head>
@@ -19,6 +20,7 @@ export function rootView(props: Props): string {
         <link rel="icon" href="/icons/icon-192.png" />
         <title>Task App</title>
         <ViteClient />
+        <ReactRefresh />
         <Link rel="stylesheet" href="/client/styles/tailwind.css" />
       </head>
       <body className="bg-slate-50 text-slate-900 antialiased">

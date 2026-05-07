@@ -6,20 +6,24 @@ import { listLabelsForProject } from '../db/repositories/labels';
 import { getProjectByIdForOwner, listProjectsByOwner } from '../db/repositories/projects';
 import { listTasksForProject } from '../db/repositories/tasks';
 import type { AppEnv } from '../env';
+import { buildSharedProps } from '../inertia/share';
 import { NotFound } from '../lib/errors';
 
 export const pageRoutes = new Hono<AppEnv>();
 
 pageRoutes.get('/auth/login', async (c) => {
   if (c.get('user')) return c.redirect('/');
-  return c.render('login', { error: c.req.query('error') ?? null });
+  return c.render('login', {
+    ...buildSharedProps(c),
+    error: c.req.query('error') ?? null,
+  });
 });
 
 pageRoutes.get('/', requireAuth, async (c) => {
   const user = requireUser(c);
   const db = createDb(c.env.DB);
   const projects = await listProjectsByOwner(db, user.id);
-  return c.render('dashboard', { projects });
+  return c.render('dashboard', { ...buildSharedProps(c), projects });
 });
 
 pageRoutes.get('/projects/:id', requireAuth, async (c) => {
@@ -34,6 +38,7 @@ pageRoutes.get('/projects/:id', requireAuth, async (c) => {
     listLabelsForProject(db, id, user.id),
   ]);
   return c.render('project', {
+    ...buildSharedProps(c),
     project,
     columns: cols ?? [],
     tasks: tasksAll,

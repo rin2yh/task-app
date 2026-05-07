@@ -1,27 +1,17 @@
-import { type APIRequestContext, type BrowserContext, test as base } from '@playwright/test';
+import { test as base } from '@playwright/test';
 
 export const test = base.extend<{
   authenticate: (login: string) => Promise<void>;
 }>({
-  authenticate: async ({ context, request }, use) => {
+  authenticate: async ({ context }, use) => {
     const fn = async (login: string) => {
-      const res = await request.post('/auth/test-login', { data: { login } });
+      // context.request shares the cookie jar with the browser context, so
+      // Set-Cookie from this POST is attached to subsequent page navigation.
+      const res = await context.request.post('/auth/test-login', { data: { login } });
       if (!res.ok()) throw new Error(`test-login failed: ${res.status()}`);
-      const cookies = res.headers()['set-cookie'];
-      if (cookies) {
-        await context.addCookies(parseSetCookies(cookies, 'localhost'));
-      }
     };
     await use(fn);
   },
 });
 
 export const expect = test.expect;
-
-function parseSetCookies(header: string, domain: string) {
-  return header.split(/, (?=[^,]+=)/).map((part) => {
-    const [kv] = part.split(';');
-    const [name, ...rest] = kv!.split('=');
-    return { name: name!.trim(), value: rest.join('='), domain, path: '/' };
-  });
-}

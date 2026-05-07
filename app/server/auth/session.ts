@@ -2,8 +2,8 @@ import { eq, lt } from 'drizzle-orm';
 import type { Database } from '../db/client';
 import { type DbUser, sessions, users } from '../db/schema';
 
-export const SESSION_COOKIE = '__Host-session';
-export const CSRF_COOKIE = '__Host-csrf';
+export const SESSION_COOKIE = 'session';
+export const CSRF_COOKIE = 'csrf';
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export function generateToken(bytes = 32): string {

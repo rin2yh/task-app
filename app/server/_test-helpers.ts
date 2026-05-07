@@ -49,7 +49,7 @@ export async function createTestUser(login: string): Promise<TestUser> {
     .returning();
   const userId = inserted[0]!.id;
   const session = await createSession(db, userId);
-  const cookies = `__Host-session=${session.token}; __Host-csrf=${session.csrfToken}`;
+  const cookies = `session=${session.token}; csrf=${session.csrfToken}`;
   return {
     id: userId,
     login,

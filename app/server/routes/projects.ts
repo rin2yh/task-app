@@ -5,7 +5,6 @@ import { createDb } from '../db/client';
 import {
   createProject,
   deleteProject,
-  getProjectByIdForOwner,
   listProjectsByOwner,
   updateProject,
 } from '../db/repositories/projects';
@@ -59,13 +58,4 @@ projectRoutes.delete('/:id', csrfGuard, async (c) => {
   const ok = await deleteProject(db, id, user.id);
   if (!ok) throw NotFound();
   return c.json({ ok: true });
-});
-
-projectRoutes.get('/:id', async (c) => {
-  const user = requireUser(c);
-  const id = c.req.param('id');
-  const db = createDb(c.env.DB);
-  const project = await getProjectByIdForOwner(db, id, user.id);
-  if (!project) throw NotFound();
-  return c.json({ project });
 });

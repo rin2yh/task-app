@@ -22,7 +22,7 @@ export const sessionLoader: MiddlewareHandler<AppEnv> = async (c, next) => {
       setCookie(c, SESSION_COOKIE, '', {
         path: '/',
         httpOnly: true,
-        secure: true,
+        secure: c.env.ENVIRONMENT === 'production',
         sameSite: 'Lax',
         maxAge: 0,
       });

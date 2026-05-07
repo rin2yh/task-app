@@ -6,7 +6,6 @@ import { sessionLoader } from './server/auth/middleware';
 import { purgeExpired } from './server/auth/session';
 import { createDb } from './server/db/client';
 import type { AppEnv } from './server/env';
-import { buildSharedProps } from './server/inertia/share';
 import { authRoutes } from './server/routes/auth';
 import { columnRoutes, columnsByProjectRoutes } from './server/routes/columns';
 import { labelRoutes, labelsByProjectRoutes } from './server/routes/labels';
@@ -20,14 +19,7 @@ const app = new Hono<AppEnv>({ strict: false });
 
 app.use('*', sessionLoader);
 
-app.use(
-  '*',
-  inertia({
-    version: ASSETS_VERSION,
-    rootView,
-    share: (c: never) => buildSharedProps(c),
-  } as never),
-);
+app.use('*', inertia({ version: ASSETS_VERSION, rootView }));
 
 app.route('/auth', authRoutes);
 app.route('/projects', projectRoutes);

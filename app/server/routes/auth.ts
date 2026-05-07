@@ -15,11 +15,11 @@ import { createDb } from '../db/client';
 import { users } from '../db/schema';
 import type { AppEnv } from '../env';
 
-const STATE_COOKIE = '__Host-oauth-state';
+const STATE_COOKIE = 'oauth-state';
 
 export const authRoutes = new Hono<AppEnv>();
 
-authRoutes.get('/login', async (c) => {
+authRoutes.get('/github', async (c) => {
   if (c.get('user')) return c.redirect('/');
   const provider = createGitHubProvider(c.env);
   const state = generateState();
@@ -27,7 +27,7 @@ authRoutes.get('/login', async (c) => {
   setCookie(c, STATE_COOKIE, state, {
     path: '/',
     httpOnly: true,
-    secure: true,
+    secure: c.env.ENVIRONMENT === 'production',
     sameSite: 'Lax',
     maxAge: 600,
   });
@@ -41,7 +41,12 @@ authRoutes.get('/callback', async (c) => {
   if (!code || !state || !stored || state !== stored) {
     return c.redirect('/auth/login?error=state', 302);
   }
-  setCookie(c, STATE_COOKIE, '', { path: '/', maxAge: 0, secure: true, httpOnly: true });
+  setCookie(c, STATE_COOKIE, '', {
+    path: '/',
+    maxAge: 0,
+    secure: c.env.ENVIRONMENT === 'production',
+    httpOnly: true,
+  });
 
   const provider = createGitHubProvider(c.env);
   let accessToken: string;
@@ -93,14 +98,14 @@ authRoutes.get('/callback', async (c) => {
   setCookie(c, SESSION_COOKIE, session.token, {
     path: '/',
     httpOnly: true,
-    secure: true,
+    secure: c.env.ENVIRONMENT === 'production',
     sameSite: 'Lax',
     maxAge: SESSION_TTL_MS / 1000,
   });
   setCookie(c, CSRF_COOKIE, session.csrfToken, {
     path: '/',
     httpOnly: false,
-    secure: true,
+    secure: c.env.ENVIRONMENT === 'production',
     sameSite: 'Lax',
     maxAge: SESSION_TTL_MS / 1000,
   });
@@ -113,8 +118,17 @@ authRoutes.post('/logout', csrfGuard, async (c) => {
     const db = createDb(c.env.DB);
     await deleteSession(db, token);
   }
-  setCookie(c, SESSION_COOKIE, '', { path: '/', maxAge: 0, secure: true, httpOnly: true });
-  setCookie(c, CSRF_COOKIE, '', { path: '/', maxAge: 0, secure: true });
+  setCookie(c, SESSION_COOKIE, '', {
+    path: '/',
+    maxAge: 0,
+    secure: c.env.ENVIRONMENT === 'production',
+    httpOnly: true,
+  });
+  setCookie(c, CSRF_COOKIE, '', {
+    path: '/',
+    maxAge: 0,
+    secure: c.env.ENVIRONMENT === 'production',
+  });
   if (c.req.header('X-Inertia')) {
     c.header('X-Inertia-Location', '/auth/login');
     return c.body(null, 409);
@@ -147,14 +161,14 @@ authRoutes.post('/test-login', async (c) => {
   setCookie(c, SESSION_COOKIE, session.token, {
     path: '/',
     httpOnly: true,
-    secure: true,
+    secure: c.env.ENVIRONMENT === 'production',
     sameSite: 'Lax',
     maxAge: SESSION_TTL_MS / 1000,
   });
   setCookie(c, CSRF_COOKIE, session.csrfToken, {
     path: '/',
     httpOnly: false,
-    secure: true,
+    secure: c.env.ENVIRONMENT === 'production',
     sameSite: 'Lax',
     maxAge: SESSION_TTL_MS / 1000,
   });
