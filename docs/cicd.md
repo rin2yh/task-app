@@ -42,8 +42,8 @@ Cloudflare ダッシュボード → **My Profile → API Tokens → Create Toke
 | `TF_VAR_session_secret` | セッション署名鍵 | `openssl rand -hex 32` | `terraform.yml`, `terraform-apply.yml` |
 | `TF_VAR_app_url` | 本番 URL | 例: `https://task-app.<account>.workers.dev` | `terraform.yml`, `terraform-apply.yml` |
 | `TF_BACKEND_BUCKET` | R2 backend のバケット名 | 2.4 で作成 | `terraform.yml`, `terraform-apply.yml` |
-| `AWS_ACCESS_KEY_ID` | R2 backend (S3 互換) 認証 | Cloudflare R2 → Manage R2 API Tokens | `terraform.yml`, `terraform-apply.yml` |
-| `AWS_SECRET_ACCESS_KEY` | 同上 | 同上 | `terraform.yml`, `terraform-apply.yml` |
+| `CLOUDFLARE_R2_ACCESS_KEY_ID` | R2 backend (S3 互換) 認証 | Cloudflare R2 → Manage R2 API Tokens | `terraform.yml`, `terraform-apply.yml` |
+| `CLOUDFLARE_R2_SECRET_ACCESS_KEY` | 同上 | 同上 | `terraform.yml`, `terraform-apply.yml` |
 
 ### 2.3 `wrangler.toml` の本番 `database_id` 差し替え
 
@@ -54,7 +54,7 @@ Cloudflare ダッシュボード → **My Profile → API Tokens → Create Toke
 `terraform.yml` の `apply` ジョブを有効化する **前に** 一度だけ実施します。state がローカル backend のままだと CI runner のディスクで消失します。
 
 1. Cloudflare ダッシュボード → **R2 → Create bucket** で state 用バケットを作成（例: `task-app-tfstate`）。バケット名を `TF_BACKEND_BUCKET` Secret に登録します。
-2. **R2 → Manage R2 API Tokens** で S3 互換アクセスキーを発行し、`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` Secret に登録します。
+2. **R2 → Manage R2 API Tokens** で S3 互換アクセスキーを発行し、`CLOUDFLARE_R2_ACCESS_KEY_ID` / `CLOUDFLARE_R2_SECRET_ACCESS_KEY` Secret に登録します（ワークフロー側で Terraform S3 backend が読む `AWS_*` env にマップ）。
 3. ローカルで state を移行します。`terraform/backend.tf` は既に `s3` backend に書き換え済みです。
 
    ```bash
