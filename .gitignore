@@ -8,3 +8,4 @@
 *.swo
 .claude/*
 !.claude/rules/
+!.claude/settings.json
