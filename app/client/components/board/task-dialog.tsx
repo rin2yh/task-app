@@ -105,11 +105,8 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
           説明
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
         </label>
-        {/* biome-ignore lint/a11y/noLabelWithoutControl: PrioritySelect 内部で <select> を描画している */}
-        <label>
-          優先度
-          <PrioritySelect value={priority} onChange={setPriority} />
-        </label>
+        <label htmlFor="task-priority">優先度</label>
+        <PrioritySelect id="task-priority" value={priority} onChange={setPriority} />
         <label>
           期限
           <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />

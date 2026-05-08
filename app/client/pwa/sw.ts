@@ -70,12 +70,13 @@ async function networkFirst(
   timeoutMs: number,
 ): Promise<Response> {
   const cache = await caches.open(cacheName);
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const res = await Promise.race([
       fetch(request),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('network timeout')), timeoutMs),
-      ),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('network timeout')), timeoutMs);
+      }),
     ]);
     if (res.ok) cache.put(request, res.clone());
     return res;
@@ -83,5 +84,7 @@ async function networkFirst(
     const cached = await cache.match(request);
     if (cached) return cached;
     throw new Error('network and cache both failed');
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }

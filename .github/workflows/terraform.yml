@@ -6,6 +6,7 @@ on:
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform.yml'
+      - '.github/actions/terraform-init/**'
   workflow_dispatch:
 
 concurrency:
@@ -43,11 +44,10 @@ jobs:
       - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
       - name: terraform fmt -check
         run: terraform fmt -check
-      - name: terraform init
-        run: |
-          terraform init \
-            -backend-config="bucket=${{ secrets.CLOUDFLARE_R2_TFSTATE_BUCKET }}" \
-            -backend-config="endpoints={s3=\"https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com\"}"
+      - uses: ./.github/actions/terraform-init
+        with:
+          bucket: ${{ secrets.CLOUDFLARE_R2_TFSTATE_BUCKET }}
+          account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: terraform validate
         run: terraform validate
       - name: terraform plan

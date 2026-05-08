@@ -1,10 +1,75 @@
 import { eq, lt } from 'drizzle-orm';
+import type { Context } from 'hono';
+import { setCookie } from 'hono/cookie';
 import type { Database } from '../db/client';
 import { type DbUser, sessions, users } from '../db/schema';
+import type { AppEnv } from '../env';
 
 export const SESSION_COOKIE = 'session';
 export const CSRF_COOKIE = 'csrf';
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+// http://localhost で動作する dev/E2E でも cookie が届くように、Workers の本番のみ secure を立てる
+const isSecure = (c: Context<AppEnv>): boolean => c.env.ENVIRONMENT === 'production';
+
+export function setSessionCookies(
+  c: Context<AppEnv>,
+  session: { token: string; csrfToken: string },
+): void {
+  const secure = isSecure(c);
+  setCookie(c, SESSION_COOKIE, session.token, {
+    path: '/',
+    httpOnly: true,
+    secure,
+    sameSite: 'Lax',
+    maxAge: SESSION_TTL_MS / 1000,
+  });
+  setCookie(c, CSRF_COOKIE, session.csrfToken, {
+    path: '/',
+    httpOnly: false,
+    secure,
+    sameSite: 'Lax',
+    maxAge: SESSION_TTL_MS / 1000,
+  });
+}
+
+export function clearSessionCookies(c: Context<AppEnv>): void {
+  const secure = isSecure(c);
+  setCookie(c, SESSION_COOKIE, '', {
+    path: '/',
+    httpOnly: true,
+    secure,
+    sameSite: 'Lax',
+    maxAge: 0,
+  });
+  setCookie(c, CSRF_COOKIE, '', {
+    path: '/',
+    httpOnly: false,
+    secure,
+    sameSite: 'Lax',
+    maxAge: 0,
+  });
+}
+
+export function setOAuthStateCookie(c: Context<AppEnv>, name: string, value: string): void {
+  setCookie(c, name, value, {
+    path: '/',
+    httpOnly: true,
+    secure: isSecure(c),
+    sameSite: 'Lax',
+    maxAge: 600,
+  });
+}
+
+export function clearOAuthStateCookie(c: Context<AppEnv>, name: string): void {
+  setCookie(c, name, '', {
+    path: '/',
+    httpOnly: true,
+    secure: isSecure(c),
+    sameSite: 'Lax',
+    maxAge: 0,
+  });
+}
 
 export function generateToken(bytes = 32): string {
   const buf = new Uint8Array(bytes);
