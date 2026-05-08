@@ -31,8 +31,8 @@ Cloudflare ダッシュボード → **My Profile → API Tokens → Create Toke
 
 ### 2.2 GitHub Secrets と production environment
 
-1. リポジトリ Settings → **Environments → New environment** で `production` を作成し、必要なら Required reviewers を設定（apply / deploy ジョブの手動承認ゲート用）。Secrets を environment 側に登録する必要は無い — 全て repository secrets で運用する。
-2. リポジトリ Settings → **Secrets and variables → Actions** に以下を登録します。Cloudflare 系の値は同一 secret を `deploy.yml` も `terraform.yml` / `terraform-apply.yml` も共有して利用します。
+1. リポジトリ Settings → **Environments → New environment** で `production` を作成し、必要なら Required reviewers を設定（apply / deploy ジョブの手動承認ゲート用）。
+2. 同 environment の **Environment secrets** に以下を登録します。Secrets を参照する全ジョブには `environment: production` を指定済み。Cloudflare 系の値は同一 secret を `deploy.yml` も `terraform.yml` / `terraform-apply.yml` も共有して利用します。
 
 | 名称 | 用途 | 取得方法 | 使用 workflow |
 |---|---|---|---|
@@ -130,8 +130,8 @@ terraform plan
 ### `playwright test --only-changed` が想定外の spec を選ぶ
 PR ジョブは `actions/checkout@v4` を `fetch-depth: 0` で取得しています。shallow clone のままだと `--only-changed` が base sha との差分を解決できず全件走る/0 件になることがあります。`fetch-depth: 0` が抜けていないか確認してください。
 
-### `wrangler` 認証エラー
-Secrets が repository secrets として登録されていない、または値が空でないか確認してください（Settings → Secrets and variables → Actions）。`production` environment は手動承認ゲートとしてのみ使用しており、secrets はそちらに登録不要です。
+### `wrangler` / `terraform` で認証関連の値が空になる
+secret は `production` environment に登録されています。secret を参照するジョブは `environment: production` の指定が必須です。新規ジョブを足す場合は忘れずに付与してください。
 
 ### `Error acquiring the state lock`
 R2 backend 上に `<key>.tflock` が残っている可能性があります。直前の `apply` がタイムアウトで死んだケースが多いので、Cloudflare R2 のオブジェクトブラウザで該当オブジェクトの中身（lock 主体）を確認してから `terraform force-unlock <LOCK_ID>` で解除します。
