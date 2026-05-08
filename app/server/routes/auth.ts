@@ -116,18 +116,3 @@ authRoutes.post('/logout', csrfGuard, async (c) => {
   }
   return c.redirect('/auth/login', 302);
 });
-
-// E2E のフェイク GitHub authorize エンドポイント。E2E_AUTH=1 の時のみ機能し、
-// 受け取った login をそのまま code として redirect_uri にリダイレクトする。
-// 本番では E2E_AUTH が立たないので 404 を返し、外部からは存在しないように見える。
-authRoutes.get('/__fake-gh/authorize', (c) => {
-  if (c.env.E2E_AUTH !== '1') return c.notFound();
-  const state = c.req.query('state');
-  const login = c.req.query('login');
-  const redirectUri = c.req.query('redirect_uri');
-  if (!state || !login || !redirectUri) return c.notFound();
-  const url = new URL(redirectUri);
-  url.searchParams.set('code', login);
-  url.searchParams.set('state', state);
-  return c.redirect(url.toString());
-});

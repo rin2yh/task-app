@@ -26,14 +26,6 @@ describe('auth flow', () => {
     expect(location).toMatch(/github\.com\/login\/oauth\/authorize/);
   });
 
-  it('fake gh authorize is disabled in production (E2E_AUTH not set)', async () => {
-    const res = await SELF.fetch(
-      'http://localhost/auth/__fake-gh/authorize?state=s&login=l&redirect_uri=http://localhost/auth/callback',
-      { redirect: 'manual' },
-    );
-    expect(res.status).toBe(404);
-  });
-
   it('logout deletes session and clears cookies', async () => {
     const u = await createTestUser('logout-user');
     const res = await SELF.fetch('http://localhost/auth/logout', {

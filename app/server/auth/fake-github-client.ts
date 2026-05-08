@@ -11,10 +11,11 @@ export class FakeGitHubOAuthClient implements OAuthClient {
   ) {}
   createAuthorizationURL(state: string, _scopes: string[]): URL {
     const login = this.c.req.query('login') ?? 'e2e-user';
-    const url = new URL(`${this.env.APP_URL}/auth/__fake-gh/authorize`);
+    // 本物の GitHub authorize 画面の代わりに、code (= login) をすでに埋めた
+    // /auth/callback URL を返す。ブラウザはそのまま callback まで follow する。
+    const url = new URL(`${this.env.APP_URL}/auth/callback`);
+    url.searchParams.set('code', login);
     url.searchParams.set('state', state);
-    url.searchParams.set('login', login);
-    url.searchParams.set('redirect_uri', `${this.env.APP_URL}/auth/callback`);
     return url;
   }
   async validateAuthorizationCode(code: string) {

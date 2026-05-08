@@ -4,8 +4,6 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-const isE2E = process.env.E2E_AUTH === '1';
-
 export default defineConfig({
   plugins: [
     react(),
@@ -47,9 +45,6 @@ export default defineConfig({
       devOptions: { enabled: true, type: 'module' },
     }),
   ],
-  define: {
-    'import.meta.env.E2E_AUTH': JSON.stringify(isE2E ? '1' : ''),
-  },
   build: {
     target: 'es2022',
   },
