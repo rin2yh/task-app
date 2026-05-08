@@ -6,4 +6,5 @@
 .idea/
 *.swp
 *.swo
-.claude/
+.claude/*
+!.claude/rules/
