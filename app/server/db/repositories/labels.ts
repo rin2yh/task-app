@@ -1,7 +1,7 @@
 import { and, asc, eq } from 'drizzle-orm';
-import { ulid } from 'ulid';
 import type { Database } from '../client';
 import { type DbLabel, labels, projects } from '../schema';
+import { ulid } from '../ulid';
 
 async function ensureProjectOwned(
   db: Database,
