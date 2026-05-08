@@ -25,7 +25,6 @@ Cloudflare ダッシュボード → **My Profile → API Tokens → Create Toke
 - Workers Scripts: Edit
 - D1: Edit
 - Account Settings: Read
-- User Details: Read
 
 このトークンは GitHub Secrets の `CLOUDFLARE_API_TOKEN` と Terraform 用 `TF_VAR_cloudflare_api_token` の両方に同じ値を入れて構いません。
 
