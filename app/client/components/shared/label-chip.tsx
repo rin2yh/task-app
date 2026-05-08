@@ -4,8 +4,7 @@ import type { Label } from '../../../shared/types';
 export function LabelChip({ label }: { label: Label }) {
   return (
     <Badge
-      variant="outline"
-      className="border-transparent rounded-full px-2 py-0.5 text-[0.7rem] font-medium"
+      className="rounded-full border-transparent px-2 py-0.5 text-[0.7rem] font-medium"
       style={{ background: label.color, color: pickFg(label.color) }}
     >
       {label.name}

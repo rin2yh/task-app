@@ -9,6 +9,12 @@ import {
 import { cn } from '@/lib/utils';
 import type { Priority } from '../../../shared/types';
 
+const PRIORITY_OPTIONS: { value: Priority; label: string; badgeClass: string }[] = [
+  { value: 'low', label: 'Low', badgeClass: 'bg-slate-400 text-white' },
+  { value: 'medium', label: 'Medium', badgeClass: 'bg-sky-500 text-white' },
+  { value: 'high', label: 'High', badgeClass: 'bg-red-500 text-white' },
+];
+
 export function PrioritySelect({
   id,
   value,
@@ -24,26 +30,20 @@ export function PrioritySelect({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="low">Low</SelectItem>
-        <SelectItem value="medium">Medium</SelectItem>
-        <SelectItem value="high">High</SelectItem>
+        {PRIORITY_OPTIONS.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
 }
 
-const PRIORITY_CLASSES: Record<Priority, string> = {
-  low: 'bg-slate-400 text-white hover:bg-slate-400/90',
-  medium: 'bg-sky-500 text-white hover:bg-sky-500/90',
-  high: 'bg-red-500 text-white hover:bg-red-500/90',
-};
-
 export function PriorityBadge({ priority }: { priority: Priority }) {
+  const opt = PRIORITY_OPTIONS.find((o) => o.value === priority);
   return (
-    <Badge
-      data-testid="priority"
-      className={cn('uppercase border-transparent', PRIORITY_CLASSES[priority])}
-    >
+    <Badge data-testid="priority" className={cn('border-transparent uppercase', opt?.badgeClass)}>
       {priority}
     </Badge>
   );

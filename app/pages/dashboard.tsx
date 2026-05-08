@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
@@ -26,7 +26,7 @@ export default function Dashboard({ projects }: Props) {
         body: JSON.stringify({ name }),
       });
       if (!res.ok) throw new Error(`Failed to create project: ${res.status}`);
-      router.reload();
+      router.reload({ only: ['projects'] });
       setName('');
     } finally {
       setBusy(false);
@@ -75,15 +75,13 @@ export default function Dashboard({ projects }: Props) {
       <ul className="mt-4 space-y-2.5">
         {projects.map((p) => (
           <li key={p.id}>
-            <Card>
-              <CardContent className="p-4">
-                <a href={`/projects/${p.id}`} className="font-medium text-primary hover:underline">
-                  {p.name}
-                </a>
-                {p.description ? (
-                  <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
-                ) : null}
-              </CardContent>
+            <Card className="p-4">
+              <a href={`/projects/${p.id}`} className="font-medium text-primary hover:underline">
+                {p.name}
+              </a>
+              {p.description ? (
+                <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
+              ) : null}
             </Card>
           </li>
         ))}
