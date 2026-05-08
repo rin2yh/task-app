@@ -30,9 +30,6 @@ env:
 
 jobs:
   apply:
-    # R2 backend 移行と Secrets 投入が完了するまで無効化。
-    # 完了後は `if: false` を削除する。詳細は docs/cicd.md セクション 3。
-    if: false
     runs-on: ubuntu-24.04
     environment: production
     defaults:
