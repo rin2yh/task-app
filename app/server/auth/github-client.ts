@@ -14,8 +14,9 @@ export class GitHubOAuthClient implements OAuthClient {
   createAuthorizationURL(state: string, scopes: string[]): URL {
     return this.gh.createAuthorizationURL(state, scopes);
   }
-  validateAuthorizationCode(code: string) {
-    return this.gh.validateAuthorizationCode(code);
+  async validateAuthorizationCode(code: string) {
+    const tokens = await this.gh.validateAuthorizationCode(code);
+    return { accessToken: tokens.accessToken() };
   }
   async fetchUser(accessToken: string): Promise<GitHubUser> {
     const res = await fetch('https://api.github.com/user', {

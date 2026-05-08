@@ -1,25 +1,20 @@
 import type { Context } from 'hono';
-import type { AppEnv, Env } from '../env';
+import type { AppEnv } from '../env';
 import type { GitHubUser, OAuthClient } from './oauth';
 
-// `/auth/github?login=xxx` で渡された login を access token として一連の OAuth
-// フローを完走させ、本物と同じ /auth/callback ハンドラに到達させる。
 export class FakeGitHubOAuthClient implements OAuthClient {
-  constructor(
-    private readonly env: Env,
-    private readonly c: Context<AppEnv>,
-  ) {}
+  constructor(private readonly c: Context<AppEnv>) {}
   createAuthorizationURL(state: string, _scopes: string[]): URL {
     const login = this.c.req.query('login') ?? 'e2e-user';
-    // 本物の GitHub authorize 画面の代わりに、code (= login) をすでに埋めた
-    // /auth/callback URL を返す。ブラウザはそのまま callback まで follow する。
-    const url = new URL(`${this.env.APP_URL}/auth/callback`);
+    // 認可画面を介さず /auth/callback に直接バウンスさせる。code に login を
+    // 載せ、後段の fetchUser が同じ文字列から user を組み立てる。
+    const url = new URL(`${this.c.env.APP_URL}/auth/callback`);
     url.searchParams.set('code', login);
     url.searchParams.set('state', state);
     return url;
   }
   async validateAuthorizationCode(code: string) {
-    return { accessToken: () => code };
+    return { accessToken: code };
   }
   async fetchUser(accessToken: string): Promise<GitHubUser> {
     const login = accessToken;
