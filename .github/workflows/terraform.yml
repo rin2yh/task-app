@@ -52,18 +52,25 @@ jobs:
         run: terraform validate
       - name: terraform plan
         id: plan
-        run: terraform plan -no-color -out=tfplan
+        run: |
+          set -o pipefail
+          terraform plan -no-color -out=tfplan 2>&1 | tee plan.txt
         continue-on-error: true
       - name: Comment plan on PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         env:
-          PLAN_STDOUT: ${{ steps.plan.outputs.stdout }}
           PLAN_OUTCOME: ${{ steps.plan.outcome }}
         with:
           script: |
+            const fs = require('node:fs');
             const outcome = process.env.PLAN_OUTCOME;
-            const stdout = process.env.PLAN_STDOUT || '(no output captured)';
+            let stdout = '';
+            try {
+              stdout = fs.readFileSync('terraform/plan.txt', 'utf8');
+            } catch (err) {
+              stdout = `(plan output unavailable: ${err.message})`;
+            }
             const truncated = stdout.length > 60000 ? stdout.slice(0, 60000) + '\n…(truncated)' : stdout;
             const body = [
               `### terraform plan (${outcome})`,
