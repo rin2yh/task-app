@@ -8,7 +8,8 @@ GitHub Actions による品質ゲート・本番デプロイ・Terraform 自動�
 |---|---|---|
 | `.github/workflows/ci.yml` | `pull_request` (base: `main`) | lint / typecheck / unit (client + workers) / 関連 E2E / build |
 | `.github/workflows/deploy.yml` | `push` to `main` (`app/**`, ワークフロー自身) | E2E 全件 → 本番 D1 マイグレーション → `wrangler deploy --env production` |
-| `.github/workflows/terraform.yml` | PR / push to `main` (`terraform/**`) + `workflow_dispatch` | PR で `plan` を PR コメント、`main` push で `apply` |
+| `.github/workflows/terraform.yml` | PR (`terraform/**`) + `workflow_dispatch` | PR で `plan` を PR コメント |
+| `.github/workflows/terraform-apply.yml` | `push` to `main` (`terraform/**`) + `workflow_dispatch` | `terraform apply -auto-approve` |
 
 ジョブ順序: lint → typecheck → unit (client + workers) → e2e → build → migrate → deploy。
 
@@ -26,7 +27,7 @@ Cloudflare ダッシュボード → **My Profile → API Tokens → Create Toke
 - D1: Edit
 - Account Settings: Read
 
-このトークンは GitHub Secrets の `CLOUDFLARE_API_TOKEN` と Terraform 用 `TF_VAR_cloudflare_api_token` の両方に同じ値を入れて構いません。
+このトークンは `CLOUDFLARE_API_TOKEN` 1 つの secret に登録すれば、wrangler / Terraform 双方で再利用されます。
 
 ### 2.2 GitHub Secrets と production environment
 
@@ -41,7 +42,7 @@ Cloudflare ダッシュボード → **My Profile → API Tokens → Create Toke
 | `TF_VAR_github_client_secret` | 同上 | 同上 | `terraform.yml`, `terraform-apply.yml` |
 | `TF_VAR_session_secret` | セッション署名鍵 | `openssl rand -hex 32` | `terraform.yml`, `terraform-apply.yml` |
 | `TF_VAR_app_url` | 本番 URL | 例: `https://task-app.<account>.workers.dev` | `terraform.yml`, `terraform-apply.yml` |
-| `TF_BACKEND_BUCKET` | R2 backend のバケット名 | 2.4 で作成 | `terraform.yml`, `terraform-apply.yml` |
+| `CLOUDFLARE_R2_TFSTATE_BUCKET` | R2 backend のバケット名 | 2.4 で作成 | `terraform.yml`, `terraform-apply.yml` |
 | `CLOUDFLARE_R2_ACCESS_KEY_ID` | R2 backend (S3 互換) 認証 | Cloudflare R2 → Manage R2 API Tokens | `terraform.yml`, `terraform-apply.yml` |
 | `CLOUDFLARE_R2_SECRET_ACCESS_KEY` | 同上 | 同上 | `terraform.yml`, `terraform-apply.yml` |
 
@@ -53,7 +54,7 @@ Cloudflare ダッシュボード → **My Profile → API Tokens → Create Toke
 
 `terraform.yml` の `apply` ジョブを有効化する **前に** 一度だけ実施します。state がローカル backend のままだと CI runner のディスクで消失します。
 
-1. Cloudflare ダッシュボード → **R2 → Create bucket** で state 用バケットを作成（例: `task-app-tfstate`）。バケット名を `TF_BACKEND_BUCKET` Secret に登録します。
+1. Cloudflare ダッシュボード → **R2 → Create bucket** で state 用バケットを作成（例: `task-app-tfstate`）。バケット名を `CLOUDFLARE_R2_TFSTATE_BUCKET` Secret に登録します。
 2. **R2 → Manage R2 API Tokens** で S3 互換アクセスキーを発行し、`CLOUDFLARE_R2_ACCESS_KEY_ID` / `CLOUDFLARE_R2_SECRET_ACCESS_KEY` Secret に登録します（ワークフロー側で Terraform S3 backend が読む `AWS_*` env にマップ）。
 3. ローカルで state を移行します。`terraform/backend.tf` は既に `s3` backend に書き換え済みです。
 
@@ -88,7 +89,7 @@ git commit -m "chore(terraform): commit provider lock file"
 2. `ci.yml` 投入後、ダミー PR を立てて全 job 緑を確認。
 3. `terraform.yml` の `plan` ジョブを動作確認（`terraform/**` 修正 PR を立て、PR コメントに plan 結果が貼られることを確認）。
 4. `deploy.yml` の `e2e-full` と `migrate-db` だけ動かして API トークン権限を検証（`deploy` ジョブは `if: false` のまま）。
-5. 2.4 の R2 backend 移行を完了後、`terraform.yml` の `apply` ジョブの `if: false` を `if: github.event_name == 'push' && github.ref == 'refs/heads/main'` に変更。
+5. 2.4 の R2 backend 移行を完了後、`terraform-apply.yml` の `apply` ジョブの `if: false` を削除。
 6. 初回 `wrangler deploy --env production` をローカルから 1 回実行し、Terraform 初期スキャフォールドのダミー content を実体で上書き。
 7. `deploy.yml` の `deploy` ジョブの `if: false` を削除し、main マージで初回フル実行。
 

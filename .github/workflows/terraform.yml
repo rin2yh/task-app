@@ -45,7 +45,7 @@ jobs:
       - name: terraform init
         run: |
           terraform init \
-            -backend-config="bucket=${{ secrets.TF_BACKEND_BUCKET }}" \
+            -backend-config="bucket=${{ secrets.CLOUDFLARE_R2_TFSTATE_BUCKET }}" \
             -backend-config="endpoints={s3=\"https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com\"}"
       - name: terraform validate
         run: terraform validate
