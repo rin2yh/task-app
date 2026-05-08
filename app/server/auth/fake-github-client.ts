@@ -13,8 +13,8 @@ export class FakeGitHubOAuthClient implements OAuthClient {
     url.searchParams.set('state', state);
     return url;
   }
-  async validateAuthorizationCode(code: string) {
-    return { accessToken: code };
+  async validateAuthorizationCode(code: string): Promise<string> {
+    return code;
   }
   async fetchUser(accessToken: string): Promise<GitHubUser> {
     const login = accessToken;

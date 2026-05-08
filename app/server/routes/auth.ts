@@ -69,8 +69,7 @@ authRoutes.get('/callback', async (c) => {
   const client = createOAuthClient(c);
   let accessToken: string;
   try {
-    const tokens = await client.validateAuthorizationCode(code);
-    accessToken = tokens.accessToken;
+    accessToken = await client.validateAuthorizationCode(code);
   } catch (err) {
     if (err instanceof OAuth2RequestError) {
       return c.redirect('/auth/login?error=oauth', 302);

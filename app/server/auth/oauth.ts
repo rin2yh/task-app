@@ -7,6 +7,6 @@ export type GitHubUser = {
 
 export interface OAuthClient {
   createAuthorizationURL(state: string, scopes: string[]): URL;
-  validateAuthorizationCode(code: string): Promise<{ accessToken: string }>;
+  validateAuthorizationCode(code: string): Promise<string>;
   fetchUser(accessToken: string): Promise<GitHubUser>;
 }
