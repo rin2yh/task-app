@@ -38,10 +38,10 @@ Cloudflare ダッシュボード → **My Profile → API Tokens → Create Toke
 |---|---|---|---|
 | `CLOUDFLARE_API_TOKEN` | wrangler deploy / d1 migrations apply / Terraform provider 認証 | 2.1 で作成したトークン | `deploy.yml`, `terraform.yml`, `terraform-apply.yml` |
 | `CLOUDFLARE_ACCOUNT_ID` | アカウント識別 / R2 backend endpoint URL / Terraform 変数 | ダッシュボード右下 / `wrangler whoami` | `deploy.yml`, `terraform.yml`, `terraform-apply.yml` |
-| `TF_VAR_github_client_id` | 本番 GitHub OAuth App | https://github.com/settings/developers | `terraform.yml`, `terraform-apply.yml` |
-| `TF_VAR_github_client_secret` | 同上 | 同上 | `terraform.yml`, `terraform-apply.yml` |
-| `TF_VAR_session_secret` | セッション署名鍵 | `openssl rand -hex 32` | `terraform.yml`, `terraform-apply.yml` |
-| `TF_VAR_app_url` | 本番 URL | 例: `https://task-app.<account>.workers.dev` | `terraform.yml`, `terraform-apply.yml` |
+| `OAUTH_GITHUB_CLIENT_ID` | 本番 GitHub OAuth App | https://github.com/settings/developers | `terraform.yml`, `terraform-apply.yml` |
+| `OAUTH_GITHUB_CLIENT_SECRET` | 同上 | 同上 | `terraform.yml`, `terraform-apply.yml` |
+| `SESSION_SECRET` | セッション署名鍵 | `openssl rand -hex 32` | `terraform.yml`, `terraform-apply.yml` |
+| `APP_URL` | 本番 URL | 例: `https://task-app.<account>.workers.dev` | `terraform.yml`, `terraform-apply.yml` |
 | `CLOUDFLARE_R2_TFSTATE_BUCKET` | R2 backend のバケット名 | 2.4 で作成 | `terraform.yml`, `terraform-apply.yml` |
 | `CLOUDFLARE_R2_ACCESS_KEY_ID` | R2 backend (S3 互換) 認証 | Cloudflare R2 → Manage R2 API Tokens | `terraform.yml`, `terraform-apply.yml` |
 | `CLOUDFLARE_R2_SECRET_ACCESS_KEY` | 同上 | 同上 | `terraform.yml`, `terraform-apply.yml` |

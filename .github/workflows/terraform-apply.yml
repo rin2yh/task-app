@@ -19,10 +19,10 @@ env:
   TF_IN_AUTOMATION: 'true'
   TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-  TF_VAR_github_client_id: ${{ secrets.TF_VAR_github_client_id }}
-  TF_VAR_github_client_secret: ${{ secrets.TF_VAR_github_client_secret }}
-  TF_VAR_session_secret: ${{ secrets.TF_VAR_session_secret }}
-  TF_VAR_app_url: ${{ secrets.TF_VAR_app_url }}
+  TF_VAR_github_client_id: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
+  TF_VAR_github_client_secret: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
+  TF_VAR_session_secret: ${{ secrets.SESSION_SECRET }}
+  TF_VAR_app_url: ${{ secrets.APP_URL }}
   # Terraform S3 backend が読む env 名は AWS_* 固定。secret 名は R2 の発行画面に
   # 揃えて Cloudflare 系で統一する。
   AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
