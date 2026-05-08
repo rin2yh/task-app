@@ -8,7 +8,7 @@ GitHub Actions による品質ゲート・本番デプロイ・Terraform 自動�
 |---|---|---|
 | `.github/workflows/ci.yml` | `pull_request` (base: `main`) | lint / typecheck / unit (client + workers) / 関連 E2E / build |
 | `.github/workflows/deploy.yml` | `push` to `main` (`app/**`, ワークフロー自身) | E2E 全件 → 本番 D1 マイグレーション → `wrangler deploy --env production` |
-| `.github/workflows/terraform.yml` | PR (`terraform/**`) + `workflow_dispatch` | PR で `plan` を PR コメント |
+| `.github/workflows/terraform.yml` | PR (`terraform/**`) | PR で `plan` を PR コメント |
 | `.github/workflows/terraform-apply.yml` | `push` to `main` (`terraform/**`) + `workflow_dispatch` | `terraform apply -auto-approve` |
 
 ジョブ順序: lint → typecheck → unit (client + workers) → e2e → build → migrate → deploy。
