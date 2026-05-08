@@ -64,6 +64,7 @@ jobs:
         with:
           script: |
             const fs = require('node:fs');
+            const MARKER = '<!-- terraform-plan-comment -->';
             const outcome = process.env.PLAN_OUTCOME;
             let stdout = '';
             try {
@@ -73,6 +74,7 @@ jobs:
             }
             const truncated = stdout.length > 60000 ? stdout.slice(0, 60000) + '\n…(truncated)' : stdout;
             const body = [
+              MARKER,
               `### terraform plan (${outcome})`,
               '',
               '<details><summary>plan output</summary>',
@@ -83,12 +85,17 @@ jobs:
               '',
               '</details>',
             ].join('\n');
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body,
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number, per_page: 100,
             });
+            const existing = comments.find((c) => c.body && c.body.includes(MARKER));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
       - name: Fail if plan failed
         if: steps.plan.outcome == 'failure'
         run: exit 1
