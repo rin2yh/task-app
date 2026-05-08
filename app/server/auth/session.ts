@@ -9,8 +9,8 @@ export const SESSION_COOKIE = 'session';
 export const CSRF_COOKIE = 'csrf';
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-// http://localhost で動作する dev/E2E でも cookie が届くように、Workers の本番のみ secure を立てる
-const isSecure = (c: Context<AppEnv>): boolean => c.env.ENVIRONMENT === 'production';
+// http://localhost で動作する dev/E2E でも cookie が届くように、HTTPS リクエストのみ secure を立てる
+const isSecure = (c: Context<AppEnv>): boolean => new URL(c.req.url).protocol === 'https:';
 
 export function setSessionCookies(
   c: Context<AppEnv>,

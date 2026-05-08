@@ -5,7 +5,6 @@ type Page = {
   component: string;
   props: Record<string, unknown>;
   url: string;
-  version?: string | null;
 };
 
 export function rootView(page: Page): string {

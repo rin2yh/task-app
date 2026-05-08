@@ -12,12 +12,10 @@ export default defineConfig(async () => {
           compatibilityFlags: ['nodejs_compat'],
           d1Databases: ['DB'],
           bindings: {
-            ENVIRONMENT: 'test',
             APP_URL: 'http://localhost:5173',
             GITHUB_CLIENT_ID: 'test-client-id',
             GITHUB_CLIENT_SECRET: 'test-client-secret',
             SESSION_SECRET: 'test-session-secret-32-chars-padding',
-            E2E_AUTH: '1',
             ALLOWED_LOGINS: '',
             TEST_MIGRATIONS: migrations,
           },

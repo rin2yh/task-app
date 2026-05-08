@@ -21,7 +21,7 @@ async function ownsColumn(
   return { column: row.column, projectId: row.column.projectId };
 }
 
-export async function ownsTask(
+async function ownsTask(
   db: Database,
   taskId: string,
   ownerId: number,

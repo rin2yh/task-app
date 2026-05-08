@@ -7,7 +7,6 @@ on:
       - 'terraform/**'
       - '.github/workflows/terraform.yml'
       - '.github/actions/terraform-init/**'
-  workflow_dispatch:
 
 concurrency:
   group: terraform-plan-${{ github.ref }}

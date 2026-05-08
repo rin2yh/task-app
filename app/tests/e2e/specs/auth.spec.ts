@@ -5,7 +5,7 @@ test('未ログイン時は /auth/login にリダイレクト', async ({ page })
   expect(res?.url()).toContain('/auth/login');
 });
 
-test('test-login バックドアでログインしダッシュボードにアクセスできる', async ({
+test('fake gh OAuth フローでログインしダッシュボードにアクセスできる', async ({
   page,
   authenticate,
 }) => {

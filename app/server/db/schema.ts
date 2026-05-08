@@ -146,9 +146,7 @@ export const taskLabelsRelations = relations(taskLabels, ({ one }) => ({
 }));
 
 export type DbUser = typeof users.$inferSelect;
-export type DbSession = typeof sessions.$inferSelect;
 export type DbProject = typeof projects.$inferSelect;
 export type DbColumn = typeof columns.$inferSelect;
 export type DbTask = typeof tasks.$inferSelect;
 export type DbLabel = typeof labels.$inferSelect;
-export type DbTaskLabel = typeof taskLabels.$inferSelect;
