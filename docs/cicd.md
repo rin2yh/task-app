@@ -32,7 +32,7 @@ Cloudflare ダッシュボード → **My Profile → API Tokens → Create Toke
 ### 2.2 GitHub Secrets と production environment
 
 1. リポジトリ Settings → **Environments → New environment** で `production` を作成し、必要なら Required reviewers を設定（apply / deploy ジョブの手動承認ゲート用）。
-2. 同 environment の **Environment secrets** に以下を登録します。Secrets を参照する全ジョブには `environment: production` を指定済み。Cloudflare 系の値は同一 secret を `deploy.yml` も `terraform.yml` / `terraform-apply.yml` も共有して利用します。
+2. 同 environment の **Environment secrets** に以下を登録します。Cloudflare 系の値は同一 secret を `deploy.yml` / `terraform.yml` / `terraform-apply.yml` で共有して利用します。
 
 | 名称 | 用途 | 取得方法 | 使用 workflow |
 |---|---|---|---|
@@ -42,21 +42,17 @@ Cloudflare ダッシュボード → **My Profile → API Tokens → Create Toke
 | `OAUTH_GITHUB_CLIENT_SECRET` | 同上 | 同上 | `terraform.yml`, `terraform-apply.yml` |
 | `SESSION_SECRET` | セッション署名鍵 | `openssl rand -hex 32` | `terraform.yml`, `terraform-apply.yml` |
 | `APP_URL` | 本番 URL | 例: `https://task-app.<account>.workers.dev` | `terraform.yml`, `terraform-apply.yml` |
-| `CLOUDFLARE_R2_TFSTATE_BUCKET` | R2 backend のバケット名 | 2.4 で作成 | `terraform.yml`, `terraform-apply.yml` |
+| `CLOUDFLARE_R2_TFSTATE_BUCKET` | R2 backend のバケット名 | 2.3 で作成 | `terraform.yml`, `terraform-apply.yml` |
 | `CLOUDFLARE_R2_ACCESS_KEY_ID` | R2 backend (S3 互換) 認証 | Cloudflare R2 → Manage R2 API Tokens | `terraform.yml`, `terraform-apply.yml` |
 | `CLOUDFLARE_R2_SECRET_ACCESS_KEY` | 同上 | 同上 | `terraform.yml`, `terraform-apply.yml` |
 
-### 2.3 `wrangler.toml` の本番 `database_id` 差し替え
+### 2.3 Terraform state を Cloudflare R2 backend に移行
 
-ローカルで一度 `terraform apply` を通し、出力の `d1_database_id` を `app/wrangler.toml` の `[[env.production.d1_databases]]` の `database_id` に貼り付けてコミットします。プレースホルダのままだと `wrangler d1 migrations apply task-app-prod --remote` が失敗します。
-
-### 2.4 Terraform state を Cloudflare R2 backend に移行
-
-`terraform.yml` の `apply` ジョブを有効化する **前に** 一度だけ実施します。state がローカル backend のままだと CI runner のディスクで消失します。
+state がローカル backend のままだと CI runner のディスクで消失するため、初回に一度だけ R2 backend へ移行します。
 
 1. Cloudflare ダッシュボード → **R2 → Create bucket** で state 用バケットを作成（例: `task-app-tfstate`）。バケット名を `CLOUDFLARE_R2_TFSTATE_BUCKET` Secret に登録します。
 2. **R2 → Manage R2 API Tokens** で S3 互換アクセスキーを発行し、`CLOUDFLARE_R2_ACCESS_KEY_ID` / `CLOUDFLARE_R2_SECRET_ACCESS_KEY` Secret に登録します（ワークフロー側で Terraform S3 backend が読む `AWS_*` env にマップ）。
-3. ローカルで state を移行します。`terraform/backend.tf` は既に `s3` backend に書き換え済みです。
+3. ローカルで state を移行します。
 
    ```bash
    cd terraform
@@ -70,9 +66,9 @@ Cloudflare ダッシュボード → **My Profile → API Tokens → Create Toke
 
 4. `terraform plan` が no-change で通ることを確認します。
 
-### 2.5 `.terraform.lock.hcl` を git 管理へ
+### 2.4 `.terraform.lock.hcl` を git 管理へ
 
-`terraform/.gitignore` の除外は解除済みです。ローカルで `terraform init` を行うと生成される `terraform/.terraform.lock.hcl` をコミットしてください（CI とローカルで provider バージョンを揃えるため）。
+ローカルで `terraform init` を行うと生成される `terraform/.terraform.lock.hcl` をコミットしてください（CI とローカルで provider バージョンを揃えるため）。
 
 ```bash
 cd terraform
@@ -81,30 +77,26 @@ git add .terraform.lock.hcl
 git commit -m "chore(terraform): commit provider lock file"
 ```
 
-## 3. ワークフロー有効化の段取り
+### 2.5 初回 `wrangler deploy` でダミー content を上書き
 
-ワークフローは以下の順で段階的に有効化してください。リポジトリにマージ済みの初期状態は `deploy` ジョブと `apply` ジョブが `if: false` で無効化されています。
+`terraform apply` 直後の Worker は Terraform スキャフォールドのダミー content のままです。`deploy.yml` を main マージで走らせる前に、ローカルから一度だけ実体を上書きしておきます。
 
-1. リポジトリ前提修正（`wrangler.toml` の `database_id`、`@playwright/test` 1.50+、`backend.tf`、`.terraform.lock.hcl` コミット）を 1 PR にまとめて main にマージ。
-2. `ci.yml` 投入後、ダミー PR を立てて全 job 緑を確認。
-3. `terraform.yml` の `plan` ジョブを動作確認（`terraform/**` 修正 PR を立て、PR コメントに plan 結果が貼られることを確認）。
-4. `deploy.yml` の `e2e-full` と `migrate-db` だけ動かして API トークン権限を検証（`deploy` ジョブは `if: false` のまま）。
-5. 2.4 の R2 backend 移行を完了後、`terraform-apply.yml` の `apply` ジョブの `if: false` を削除。
-6. 初回 `wrangler deploy --env production` をローカルから 1 回実行し、Terraform 初期スキャフォールドのダミー content を実体で上書き。
-7. `deploy.yml` の `deploy` ジョブの `if: false` を削除し、main マージで初回フル実行。
+```bash
+cd app
+pnpm build
+pnpm exec wrangler deploy --env production
+```
 
-### 初回フル実行前のチェックリスト
+### 2.6 初回フル実行前のチェックリスト
 
-- [ ] `app/wrangler.toml` の本番 `database_id` が実値に差し替え済み
-- [ ] `terraform apply` をローカルで 1 回通し、D1 と Worker scaffold が存在
-- [ ] 一度 `wrangler deploy --env production` をローカルから実行し、Terraform のダミー content が実体で上書きされている
 - [ ] GitHub Secrets が全て登録済み（セクション 2.2）
 - [ ] `production` environment 作成済み
-- [ ] `@playwright/test` が 1.50+
-- [ ] `terraform/.terraform.lock.hcl` がコミット済み
-- [ ] Terraform state が R2 backend に移行済み
+- [ ] Terraform state が R2 backend に移行済み（セクション 2.3）
+- [ ] `terraform/.terraform.lock.hcl` がコミット済み（セクション 2.4）
+- [ ] `terraform apply` をローカルで 1 回通し、D1 と Worker scaffold が存在
+- [ ] 一度 `wrangler deploy --env production` をローカルから実行し、Terraform のダミー content が実体で上書きされている（セクション 2.5）
 
-## 4. ローカルで CI 同等のチェックを走らせる
+## 3. ローカルで CI 同等のチェックを走らせる
 
 ```bash
 cd app
@@ -122,10 +114,7 @@ terraform validate
 terraform plan
 ```
 
-## 5. トラブルシューティング
-
-### `wrangler d1 migrations apply task-app-prod --remote` が失敗する
-`app/wrangler.toml` の本番 `database_id` がプレースホルダのままになっていないか確認してください（セクション 2.3）。
+## 4. トラブルシューティング
 
 ### `playwright test --only-changed` が想定外の spec を選ぶ
 PR ジョブは `actions/checkout@v4` を `fetch-depth: 0` で取得しています。shallow clone のままだと `--only-changed` が base sha との差分を解決できず全件走る/0 件になることがあります。`fetch-depth: 0` が抜けていないか確認してください。
@@ -139,7 +128,7 @@ R2 backend 上に `<key>.tflock` が残っている可能性があります。�
 ### Terraform `plan` の結果コメントが PR に出ない
 `plan` ジョブの `permissions: pull-requests: write` が効いていない、もしくはフォーク PR の場合 GitHub の制約で `GITHUB_TOKEN` が read-only になります。フォークからの terraform 変更 PR は対象外と割り切るか、`pull_request_target` への切り替えを検討してください（後者はセキュリティの注意点があるため必要時のみ）。
 
-## 6. ロールバック
+## 5. ロールバック
 
 ### アプリ側（Worker）
 ```bash
