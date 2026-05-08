@@ -2,8 +2,8 @@ import { OAuth2RequestError, generateState } from 'arctic';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
-import { createOAuthClient } from '../auth/github';
 import { csrfGuard } from '../auth/middleware';
+import { createOAuthClient } from '../auth/oauth-factory';
 import {
   clearOAuthStateCookie,
   clearSessionCookies,
