@@ -24,6 +24,5 @@ vars = { ENVIRONMENT = "production" }
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "task-app-prod"
-# TODO: terraform apply 後に表示される d1_database_id を貼り付ける（docs/cicd.md セクション 2.3）
-database_id = "00000000-0000-0000-0000-000000000001"
+database_id = "3605a196-43db-4276-adc9-61ef66dca5ab"
 migrations_dir = "./migrations"
