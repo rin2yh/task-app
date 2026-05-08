@@ -1,8 +1,8 @@
 import { cloudflare } from '@cloudflare/vite-plugin';
 import { inertiaPages } from '@hono/inertia/vite';
 import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 const isE2E = process.env.E2E_AUTH === '1';
 
@@ -11,11 +11,10 @@ export default defineConfig({
     react(),
     inertiaPages({
       pagesDir: 'pages',
-      output: 'pages.gen.ts',
+      outFile: 'pages.gen.ts',
     }),
     cloudflare({
       configPath: './wrangler.toml',
-      experimental: { remoteBindings: false },
     }),
     VitePWA({
       strategies: 'injectManifest',
@@ -45,6 +44,7 @@ export default defineConfig({
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
       },
+      devOptions: { enabled: true, type: 'module' },
     }),
   ],
   define: {

@@ -1,15 +1,7 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { TaskDialog } from '../../../client/components/board/task-dialog';
 import type { TaskWithLabels } from '../../../shared/types';
-
-vi.mock('axios', () => ({
-  default: {
-    patch: vi.fn().mockResolvedValue({ data: { task: { id: 't1', columnId: 'c1' } } }),
-    put: vi.fn().mockResolvedValue({ data: { labels: [] } }),
-    delete: vi.fn().mockResolvedValue({ data: { ok: true } }),
-  },
-}));
+import { TaskDialog } from './task-dialog';
 
 const task: TaskWithLabels = {
   id: 't1',

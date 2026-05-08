@@ -1,9 +1,9 @@
 import { SELF } from 'cloudflare:test';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { applyMigrations, createTestUser, ENV } from './_helpers';
-import { createDb } from '../../../server/db/client';
 import { eq } from 'drizzle-orm';
-import { sessions } from '../../../server/db/schema';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ENV, applyMigrations, createTestUser } from '../_test-helpers';
+import { createDb } from '../db/client';
+import { sessions } from '../db/schema';
 
 describe('auth flow', () => {
   beforeEach(async () => {
@@ -16,12 +16,12 @@ describe('auth flow', () => {
     expect(res.headers.get('location')).toBe('/auth/login');
   });
 
-  it('GET /auth/login starts OAuth and sets state cookie', async () => {
-    const res = await SELF.fetch('http://localhost/auth/login', { redirect: 'manual' });
+  it('GET /auth/github starts OAuth and sets state cookie', async () => {
+    const res = await SELF.fetch('http://localhost/auth/github', { redirect: 'manual' });
     expect(res.status).toBeGreaterThanOrEqual(300);
     expect(res.status).toBeLessThan(400);
     const setCookie = res.headers.get('set-cookie') ?? '';
-    expect(setCookie).toContain('__Host-oauth-state=');
+    expect(setCookie).toContain('oauth-state=');
     const location = res.headers.get('location') ?? '';
     expect(location).toMatch(/github\.com\/login\/oauth\/authorize/);
   });
@@ -37,8 +37,8 @@ describe('auth flow', () => {
     expect(body.ok).toBe(true);
     expect(body.userId).toBeTypeOf('number');
     const setCookie = res.headers.get('set-cookie') ?? '';
-    expect(setCookie).toContain('__Host-session=');
-    expect(setCookie).toContain('__Host-csrf=');
+    expect(setCookie).toContain('session=');
+    expect(setCookie).toContain('csrf=');
   });
 
   it('logout deletes session and clears cookies', async () => {

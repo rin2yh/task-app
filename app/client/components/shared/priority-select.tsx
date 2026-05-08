@@ -1,14 +1,16 @@
 import type { Priority } from '../../../shared/types';
 
 export function PrioritySelect({
+  id,
   value,
   onChange,
 }: {
+  id?: string;
   value: Priority;
   onChange: (v: Priority) => void;
 }) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value as Priority)}>
+    <select id={id} value={value} onChange={(e) => onChange(e.target.value as Priority)}>
       <option value="low">Low</option>
       <option value="medium">Medium</option>
       <option value="high">High</option>

@@ -1,9 +1,9 @@
 import { SELF } from 'cloudflare:test';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { applyMigrations, createTestUser, ENV } from './_helpers';
-import { createDb } from '../../../server/db/client';
-import { columns } from '../../../server/db/schema';
 import { eq, sql } from 'drizzle-orm';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { ENV, applyMigrations, createTestUser } from '../_test-helpers';
+import { createDb } from '../db/client';
+import { columns } from '../db/schema';
 
 async function createProject(u: Awaited<ReturnType<typeof createTestUser>>) {
   const res = await SELF.fetch('http://localhost/projects', {
@@ -47,9 +47,11 @@ describe('columns CRUD + reorder', () => {
     const u = await createTestUser('reord');
     const p = await createProject(u);
     const list1 = (
-      (await (await SELF.fetch(`http://localhost/projects/${p.id}/columns`, {
-        headers: { cookie: u.cookies },
-      })).json()) as { columns: Array<{ id: string; name: string; position: number }> }
+      (await (
+        await SELF.fetch(`http://localhost/projects/${p.id}/columns`, {
+          headers: { cookie: u.cookies },
+        })
+      ).json()) as { columns: Array<{ id: string; name: string; position: number }> }
     ).columns;
     expect(list1.map((c) => c.name)).toEqual(['Todo', 'In Progress', 'Done']);
     // Done を Todo の前に置く（beforeColumnId = Todo）
@@ -66,9 +68,11 @@ describe('columns CRUD + reorder', () => {
     });
     expect(reorder.status).toBe(200);
     const list2 = (
-      (await (await SELF.fetch(`http://localhost/projects/${p.id}/columns`, {
-        headers: { cookie: u.cookies },
-      })).json()) as { columns: Array<{ id: string; name: string }> }
+      (await (
+        await SELF.fetch(`http://localhost/projects/${p.id}/columns`, {
+          headers: { cookie: u.cookies },
+        })
+      ).json()) as { columns: Array<{ id: string; name: string }> }
     ).columns;
     expect(list2[0]?.id).toBe(done.id);
   });

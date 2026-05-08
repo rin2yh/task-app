@@ -1,14 +1,13 @@
 import {
   DndContext,
+  type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   closestCenter,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import axios from 'axios';
 import { useMemo, useState } from 'react';
 import type { Column as ColumnT, Label, TaskWithLabels } from '../../../shared/types';
 import { buildInitialState, useOptimisticBoard } from '../../hooks/use-optimistic-board';
@@ -33,7 +32,10 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  const headers = { 'X-CSRF-Token': csrfToken };
+  const jsonHeaders = {
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': csrfToken,
+  };
 
   const onDragEnd = async (e: DragEndEvent) => {
     const { active, over } = e;
@@ -59,18 +61,20 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     const beforeIdx = toIndex - 1;
     const list = board.state.tasksByColumn[toColumnId] ?? [];
     const beforeTaskId =
-      beforeIdx >= 0 && list[beforeIdx]?.id !== activeId ? list[beforeIdx]?.id ?? null : null;
-    const afterTaskId = list[toIndex]?.id !== activeId ? list[toIndex]?.id ?? null : null;
+      beforeIdx >= 0 && list[beforeIdx]?.id !== activeId ? (list[beforeIdx]?.id ?? null) : null;
+    const afterTaskId = list[toIndex]?.id !== activeId ? (list[toIndex]?.id ?? null) : null;
     const snapshot = board.state;
     board.moveTaskLocal(activeId, toColumnId, toIndex);
 
     try {
-      const { data } = await axios.post(
-        `/tasks/${activeId}/move`,
-        { toColumnId, beforeTaskId, afterTaskId },
-        { headers },
-      );
-      if (data?.tasksInColumn) {
+      const res = await fetch(`/tasks/${activeId}/move`, {
+        method: 'POST',
+        headers: jsonHeaders,
+        body: JSON.stringify({ toColumnId, beforeTaskId, afterTaskId }),
+      });
+      if (!res.ok) throw new Error(`move failed: ${res.status}`);
+      const data = (await res.json()) as { tasksInColumn?: TaskWithLabels[] };
+      if (data.tasksInColumn) {
         board.replaceTasksForColumn(toColumnId, data.tasksInColumn);
       }
     } catch {
@@ -80,7 +84,13 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
   };
 
   const handleCreate = async (columnId: string, payload: { title: string }) => {
-    const { data } = await axios.post(`/columns/${columnId}/tasks`, payload, { headers });
+    const res = await fetch(`/columns/${columnId}/tasks`, {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`create failed: ${res.status}`);
+    const data = (await res.json()) as { task: TaskWithLabels };
     const newTask: TaskWithLabels = { ...data.task, labels: [] };
     board.replaceTasksForColumn(columnId, [
       ...(board.state.tasksByColumn[columnId] ?? []),
@@ -102,7 +112,10 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
               onSelectTask={setOpenTask}
               onDeleteColumn={async (id) => {
                 if (!confirm('列を削除しますか？')) return;
-                await axios.delete(`/columns/${id}`, { headers });
+                await fetch(`/columns/${id}`, {
+                  method: 'DELETE',
+                  headers: { 'X-CSRF-Token': csrfToken },
+                });
                 window.location.reload();
               }}
             />
@@ -170,7 +183,6 @@ function NewTaskDialog({
       >
         <h3>新規タスク</h3>
         <input
-          autoFocus
           type="text"
           placeholder="タイトル"
           value={title}

@@ -1,5 +1,4 @@
 import { router, usePage } from '@inertiajs/react';
-import axios from 'axios';
 import { useState } from 'react';
 import { Board } from '../client/components/board/board';
 import type {
@@ -21,12 +20,18 @@ export default function Project({ project, columns, tasks, labels }: Props) {
   const { props: shared } = usePage<SharedProps>();
   const [newColumnName, setNewColumnName] = useState('');
 
-  const headers = { 'X-CSRF-Token': shared.csrfToken };
-
   const addColumn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newColumnName.trim()) return;
-    await axios.post(`/projects/${project.id}/columns`, { name: newColumnName.trim() }, { headers });
+    const res = await fetch(`/projects/${project.id}/columns`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': shared.csrfToken,
+      },
+      body: JSON.stringify({ name: newColumnName.trim() }),
+    });
+    if (!res.ok) throw new Error(`Failed to add column: ${res.status}`);
     setNewColumnName('');
     router.reload();
   };

@@ -54,3 +54,7 @@ pnpm dev
 ```
 
 ブラウザで http://localhost:5173 を開き、GitHub ログインまで一往復できれば OK です。
+
+## 6. CI/CD
+
+GitHub Actions による自動 lint / typecheck / test / 本番デプロイの設定は [`docs/cicd.md`](./cicd.md) を参照してください。

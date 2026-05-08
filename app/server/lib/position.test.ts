@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  POSITION_STEP,
-  computeInsertPosition,
-  rebalance,
-  tailPosition,
-} from '../../../server/lib/position';
+import { POSITION_STEP, computeInsertPosition, rebalance, tailPosition } from './position';
 
 describe('position helpers', () => {
   it('returns STEP for empty list', () => {

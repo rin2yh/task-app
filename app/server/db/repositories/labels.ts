@@ -1,7 +1,7 @@
 import { and, asc, eq } from 'drizzle-orm';
 import { ulid } from 'ulid';
 import type { Database } from '../client';
-import { labels, projects, type DbLabel } from '../schema';
+import { type DbLabel, labels, projects } from '../schema';
 
 async function ensureProjectOwned(
   db: Database,
@@ -16,11 +16,7 @@ async function ensureProjectOwned(
   return rows.length > 0;
 }
 
-async function ownsLabel(
-  db: Database,
-  labelId: string,
-  ownerId: number,
-): Promise<DbLabel | null> {
+async function ownsLabel(db: Database, labelId: string, ownerId: number): Promise<DbLabel | null> {
   const rows = await db
     .select({ label: labels })
     .from(labels)
@@ -71,10 +67,7 @@ export async function updateLabel(
     name: patch.name ?? existing.name,
     color: patch.color ?? existing.color,
   };
-  await db
-    .update(labels)
-    .set({ name: next.name, color: next.color })
-    .where(eq(labels.id, labelId));
+  await db.update(labels).set({ name: next.name, color: next.color }).where(eq(labels.id, labelId));
   return next;
 }
 

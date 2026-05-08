@@ -1,6 +1,6 @@
 import { SELF } from 'cloudflare:test';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { applyMigrations, createTestUser } from './_helpers';
+import { applyMigrations, createTestUser } from '../_test-helpers';
 
 async function setup() {
   const u = await createTestUser('tu');
@@ -16,9 +16,11 @@ async function setup() {
   });
   const projId = ((await proj.json()) as { project: { id: string } }).project.id;
   const cols = (
-    (await (await SELF.fetch(`http://localhost/projects/${projId}/columns`, {
-      headers: { cookie: u.cookies },
-    })).json()) as { columns: Array<{ id: string }> }
+    (await (
+      await SELF.fetch(`http://localhost/projects/${projId}/columns`, {
+        headers: { cookie: u.cookies },
+      })
+    ).json()) as { columns: Array<{ id: string }> }
   ).columns;
   return { u, headers, projId, cols };
 }

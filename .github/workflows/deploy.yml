@@ -1,0 +1,74 @@
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/deploy.yml'
+      - '.github/actions/setup/**'
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  e2e-full:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: ./.github/actions/setup
+      - name: Cache Playwright browsers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('app/pnpm-lock.yaml') }}
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Stage .dev.vars for E2E
+        run: cp .dev.vars.e2e .dev.vars
+      - name: Apply D1 migrations (local)
+        run: pnpm db:migrate:local
+      - name: Playwright (full)
+        run: pnpm exec playwright test
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: playwright-report-full
+          path: app/playwright-report/
+          retention-days: 14
+
+  migrate-db:
+    runs-on: ubuntu-24.04
+    needs: [e2e-full]
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: ./.github/actions/setup
+      - run: pnpm db:migrate:prod
+
+  deploy:
+    # 初回フル実行までは無効化（docs/cicd.md セクション 3 参照）。
+    # API トークン権限の検証と Terraform 初回 apply 完了後に `if: false` を削除する。
+    if: false
+    runs-on: ubuntu-24.04
+    needs: [migrate-db]
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+      - run: pnpm exec wrangler deploy --env production

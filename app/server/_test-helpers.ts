@@ -1,10 +1,10 @@
 import { applyD1Migrations, env } from 'cloudflare:test';
 import { sql } from 'drizzle-orm';
-import { createDb } from '../../../server/db/client';
-import { createSession } from '../../../server/auth/session';
-import { users } from '../../../server/db/schema';
+import { createSession } from './auth/session';
+import { createDb } from './db/client';
+import { users } from './db/schema';
 
-export const ENV = env as unknown as import('../../../server/env').Env & {
+export const ENV = env as unknown as import('./env').Env & {
   TEST_MIGRATIONS?: D1Migration[];
 };
 
@@ -49,7 +49,7 @@ export async function createTestUser(login: string): Promise<TestUser> {
     .returning();
   const userId = inserted[0]!.id;
   const session = await createSession(db, userId);
-  const cookies = `__Host-session=${session.token}; __Host-csrf=${session.csrfToken}`;
+  const cookies = `session=${session.token}; csrf=${session.csrfToken}`;
   return {
     id: userId,
     login,
