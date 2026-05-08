@@ -30,22 +30,20 @@ Cloudflare ダッシュボード → **My Profile → API Tokens → Create Toke
 
 ### 2.2 GitHub Secrets と production environment
 
-1. リポジトリ Settings → **Environments → New environment** で `production` を作成（必要に応じて Required reviewers を設定）。
-2. 以下の Secrets を登録します。`CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` は **`production` environment scoped** にして PR から触れないようにしてください。それ以外は repository secrets で構いません。
+1. リポジトリ Settings → **Environments → New environment** で `production` を作成し、必要なら Required reviewers を設定（apply / deploy ジョブの手動承認ゲート用）。Secrets を environment 側に登録する必要は無い — 全て repository secrets で運用する。
+2. リポジトリ Settings → **Secrets and variables → Actions** に以下を登録します。Cloudflare 系の値は同一 secret を `deploy.yml` も `terraform.yml` / `terraform-apply.yml` も共有して利用します。
 
-| 名称 | 用途 | 取得方法 | 使用 workflow | スコープ |
-|---|---|---|---|---|
-| `CLOUDFLARE_API_TOKEN` | wrangler deploy / d1 migrations apply | 2.1 で作成したトークン | `deploy.yml`, `terraform.yml` | environment (`production`) |
-| `CLOUDFLARE_ACCOUNT_ID` | アカウント識別 | ダッシュボード右下 / `wrangler whoami` | `deploy.yml`, `terraform.yml` | environment (`production`) |
-| `TF_VAR_cloudflare_api_token` | Terraform provider 認証 | 2.1 を再利用可 | `terraform.yml` | repository |
-| `TF_VAR_cloudflare_account_id` | Terraform 変数（R2 endpoint URL でも使用） | 同上 | `terraform.yml` | repository |
-| `TF_VAR_github_client_id` | 本番 GitHub OAuth App | https://github.com/settings/developers | `terraform.yml` | repository |
-| `TF_VAR_github_client_secret` | 同上 | 同上 | `terraform.yml` | repository |
-| `TF_VAR_session_secret` | セッション署名鍵 | `openssl rand -hex 32` | `terraform.yml` | repository |
-| `TF_VAR_app_url` | 本番 URL | 例: `https://task-app.<account>.workers.dev` | `terraform.yml` | repository |
-| `TF_BACKEND_BUCKET` | R2 backend のバケット名 | 2.4 で作成 | `terraform.yml` | repository |
-| `AWS_ACCESS_KEY_ID` | R2 backend (S3 互換) 認証 | Cloudflare R2 → Manage R2 API Tokens | `terraform.yml` | repository |
-| `AWS_SECRET_ACCESS_KEY` | 同上 | 同上 | `terraform.yml` | repository |
+| 名称 | 用途 | 取得方法 | 使用 workflow |
+|---|---|---|---|
+| `CLOUDFLARE_API_TOKEN` | wrangler deploy / d1 migrations apply / Terraform provider 認証 | 2.1 で作成したトークン | `deploy.yml`, `terraform.yml`, `terraform-apply.yml` |
+| `CLOUDFLARE_ACCOUNT_ID` | アカウント識別 / R2 backend endpoint URL / Terraform 変数 | ダッシュボード右下 / `wrangler whoami` | `deploy.yml`, `terraform.yml`, `terraform-apply.yml` |
+| `TF_VAR_github_client_id` | 本番 GitHub OAuth App | https://github.com/settings/developers | `terraform.yml`, `terraform-apply.yml` |
+| `TF_VAR_github_client_secret` | 同上 | 同上 | `terraform.yml`, `terraform-apply.yml` |
+| `TF_VAR_session_secret` | セッション署名鍵 | `openssl rand -hex 32` | `terraform.yml`, `terraform-apply.yml` |
+| `TF_VAR_app_url` | 本番 URL | 例: `https://task-app.<account>.workers.dev` | `terraform.yml`, `terraform-apply.yml` |
+| `TF_BACKEND_BUCKET` | R2 backend のバケット名 | 2.4 で作成 | `terraform.yml`, `terraform-apply.yml` |
+| `AWS_ACCESS_KEY_ID` | R2 backend (S3 互換) 認証 | Cloudflare R2 → Manage R2 API Tokens | `terraform.yml`, `terraform-apply.yml` |
+| `AWS_SECRET_ACCESS_KEY` | 同上 | 同上 | `terraform.yml`, `terraform-apply.yml` |
 
 ### 2.3 `wrangler.toml` の本番 `database_id` 差し替え
 
@@ -132,7 +130,7 @@ terraform plan
 PR ジョブは `actions/checkout@v4` を `fetch-depth: 0` で取得しています。shallow clone のままだと `--only-changed` が base sha との差分を解決できず全件走る/0 件になることがあります。`fetch-depth: 0` が抜けていないか確認してください。
 
 ### `wrangler` 認証エラー
-`CLOUDFLARE_API_TOKEN` を `production` environment scoped で登録しているため、`environment: production` を指定していないジョブからは参照できません。`deploy` ジョブにのみ `environment: production` が付いていることを確認してください。
+Secrets が repository secrets として登録されていない、または値が空でないか確認してください（Settings → Secrets and variables → Actions）。`production` environment は手動承認ゲートとしてのみ使用しており、secrets はそちらに登録不要です。
 
 ### `Error acquiring the state lock`
 R2 backend 上に `<key>.tflock` が残っている可能性があります。直前の `apply` がタイムアウトで死んだケースが多いので、Cloudflare R2 のオブジェクトブラウザで該当オブジェクトの中身（lock 主体）を確認してから `terraform force-unlock <LOCK_ID>` で解除します。
