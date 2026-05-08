@@ -15,7 +15,23 @@ GitHub Actions による品質ゲート・本番デプロイ・Terraform 自動�
 
 E2E は PR では `playwright test --only-changed=<base.sha>` で関連 spec のみ、デプロイ前は全件実行します。
 
-## 2. ローカルで CI 同等のチェックを走らせる
+## 2. GitHub OAuth App セットアップ
+
+OAuth 関連は未設定です。以下の手順で本番用 OAuth App を用意します。
+
+1. https://github.com/settings/developers → **New OAuth App** で本番用 OAuth App を作成。
+   - Homepage URL: `${APP_URL}`（例: `https://task-app.<account>.workers.dev`）
+   - Authorization callback URL: `${APP_URL}/auth/callback`
+2. 発行された Client ID / Client Secret を、リポジトリ Settings → **Environments → production → Environment secrets** に登録。
+
+   | Secret 名 | 値 |
+   |---|---|
+   | `OAUTH_GITHUB_CLIENT_ID` | OAuth App の Client ID |
+   | `OAUTH_GITHUB_CLIENT_SECRET` | OAuth App の Client Secret |
+
+3. main の `terraform/**` 変更で `terraform-apply.yml` を走らせる（または手動 `workflow_dispatch`）と、上記 secret が `cloudflare_workers_secret.github_client_id` / `github_client_secret` 経由で Worker の `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` に反映されます。
+
+## 3. ローカルで CI 同等のチェックを走らせる
 
 ```bash
 cd app
@@ -33,7 +49,7 @@ terraform validate
 terraform plan
 ```
 
-## 3. ロールバック
+## 4. ロールバック
 
 ### アプリ側（Worker）
 ```bash
