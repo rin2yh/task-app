@@ -9,5 +9,18 @@
       "Bash(git reset --hard*)",
       "Bash(git commit --amend*)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun x gh-setup-hooks",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
   }
 }
