@@ -58,9 +58,6 @@ jobs:
       - run: pnpm db:migrate:prod
 
   deploy:
-    # 初回フル実行までは無効化（docs/cicd.md セクション 3 参照）。
-    # API トークン権限の検証と Terraform 初回 apply 完了後に `if: false` を削除する。
-    if: false
     runs-on: ubuntu-24.04
     needs: [migrate-db]
     environment: production
