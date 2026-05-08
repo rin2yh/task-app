@@ -1,5 +1,4 @@
 import { and, asc, eq, max } from 'drizzle-orm';
-import { ulid } from 'ulid';
 import {
   REBALANCE_THRESHOLD,
   computeInsertPosition,
@@ -8,6 +7,7 @@ import {
 } from '../../lib/position';
 import type { Database } from '../client';
 import { type DbColumn, columns, projects } from '../schema';
+import { ulid } from '../ulid';
 
 async function ensureProjectOwned(
   db: Database,
