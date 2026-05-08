@@ -22,7 +22,7 @@ type Props = {
   csrfToken: string;
 };
 
-export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
+export function Board({ columns, tasks, labels, csrfToken }: Props) {
   const initial = useMemo(() => buildInitialState(columns, tasks), [columns, tasks]);
   const board = useOptimisticBoard(initial);
   const [openTask, setOpenTask] = useState<TaskWithLabels | null>(null);
@@ -102,7 +102,7 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <div className="board" data-testid={`board-${projectId}`}>
+        <div className="board">
           {board.state.columns.map((c) => (
             <Column
               key={c.id}
@@ -147,7 +147,6 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
 
       {creatingInColumn ? (
         <NewTaskDialog
-          columnId={creatingInColumn}
           onCancel={() => setCreatingInColumn(null)}
           onSubmit={(payload) => handleCreate(creatingInColumn, payload)}
         />
@@ -157,18 +156,16 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
 }
 
 function NewTaskDialog({
-  columnId,
   onCancel,
   onSubmit,
 }: {
-  columnId: string;
   onCancel: () => void;
   onSubmit: (payload: { title: string }) => Promise<void>;
 }) {
   const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
   return (
-    <dialog open data-testid={`new-task-${columnId}`}>
+    <dialog open>
       <form
         onSubmit={async (e) => {
           e.preventDefault();

@@ -28,8 +28,8 @@ const labels: Label[] = [];
 describe('Board', () => {
   it('renders columns and tasks', () => {
     render(<Board projectId="p" columns={cols} tasks={tasks} labels={labels} csrfToken="x" />);
-    expect(screen.getByTestId('column-c1')).toBeInTheDocument();
-    expect(screen.getByTestId('column-c2')).toBeInTheDocument();
-    expect(screen.getByTestId('task-t1')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Todo' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Done' })).toBeInTheDocument();
+    expect(screen.getByText('first')).toBeInTheDocument();
   });
 });

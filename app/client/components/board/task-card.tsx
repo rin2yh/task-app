@@ -28,7 +28,6 @@ export function TaskCard({ task, onClick }: Props) {
       // biome-ignore lint/a11y/useSemanticElements: dnd-kit の listeners は div に割り当てる前提のため button 化できない
       role="button"
       tabIndex={0}
-      data-testid={`task-${task.id}`}
       className="card"
       onKeyDown={(e) => {
         if (e.key === 'Enter') onClick();

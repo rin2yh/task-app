@@ -17,7 +17,7 @@ export function Column({ column, tasks, onCreateTask, onSelectTask, onDeleteColu
     data: { type: 'column', columnId: column.id },
   });
   return (
-    <div className="column" data-testid={`column-${column.id}`}>
+    <div className="column">
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ fontSize: '0.95rem', margin: 0 }}>{column.name}</h2>
         <button

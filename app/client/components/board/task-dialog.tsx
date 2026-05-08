@@ -84,7 +84,7 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
   };
 
   return (
-    <dialog open aria-labelledby="task-dialog-title" data-testid={`task-dialog-${task.id}`}>
+    <dialog open aria-labelledby="task-dialog-title">
       <form
         onSubmit={save}
         style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: 320 }}

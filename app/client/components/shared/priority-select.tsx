@@ -27,7 +27,6 @@ const COLORS: Record<Priority, string> = {
 export function PriorityBadge({ priority }: { priority: Priority }) {
   return (
     <span
-      data-testid="priority"
       style={{
         fontSize: '0.7rem',
         padding: '2px 6px',

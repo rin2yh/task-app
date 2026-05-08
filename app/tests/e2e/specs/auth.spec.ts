@@ -11,7 +11,8 @@ test('fake gh OAuth フローでログインしダッシュボードにアクセ
 }) => {
   await authenticate('e2e-user');
   await page.goto('/');
-  await expect(page.getByTestId('auth-login')).toContainText('e2e-user');
+  await expect(page.getByRole('banner')).toContainText('e2e-user');
+  await expect(page.getByRole('button', { name: 'ログアウト' })).toBeVisible();
 });
 
 test('ログアウトでセッション削除', async ({ page, authenticate }) => {
