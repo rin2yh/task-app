@@ -1,7 +1,6 @@
 export type Env = {
   DB: D1Database;
   ASSETS: Fetcher;
-  ENVIRONMENT: 'development' | 'production' | 'test';
   APP_URL: string;
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;

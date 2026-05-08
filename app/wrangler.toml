@@ -11,15 +11,11 @@ database_name = "task-app-local"
 database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "./migrations"
 
-[vars]
-ENVIRONMENT = "development"
-
 [triggers]
 crons = ["0 3 * * *"]
 
 [env.production]
 name = "task-app"
-vars = { ENVIRONMENT = "production" }
 
 [[env.production.d1_databases]]
 binding = "DB"

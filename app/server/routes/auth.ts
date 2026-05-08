@@ -117,9 +117,9 @@ authRoutes.post('/logout', csrfGuard, async (c) => {
   return c.redirect('/auth/login', 302);
 });
 
-// E2E のみ有効。本番では env.E2E_AUTH も env.ENVIRONMENT も 'test'/'1' になり得ないため 404 を返す。
+// E2E のみ有効。本番では env.E2E_AUTH が '1' になり得ないため 404 を返す。
 authRoutes.post('/test-login', async (c) => {
-  if (c.env.E2E_AUTH !== '1' && c.env.ENVIRONMENT !== 'test') {
+  if (c.env.E2E_AUTH !== '1') {
     return c.notFound();
   }
   const body = await c.req.json<{ login: string; githubId?: number }>();
