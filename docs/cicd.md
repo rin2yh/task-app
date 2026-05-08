@@ -45,7 +45,6 @@ pnpm build
 
 cd ../terraform
 terraform fmt -check
-tflint --init
 tflint
 terraform validate
 terraform plan

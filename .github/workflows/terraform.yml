@@ -48,12 +48,6 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
-      - name: tflint --init
-        run: tflint --init
-        env:
-          # tflint plugin downloads から GitHub API rate limit を回避するため
-          # workflow に既に存在する GITHUB_TOKEN を渡す。
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: tflint
         run: tflint --format compact
 
