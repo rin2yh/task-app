@@ -1,6 +1,7 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { hydrateRoot } from 'react-dom/client';
 import { registerSW } from './pwa/register';
+import './styles/tailwind.css';
 
 const pages = import.meta.glob('../pages/**/*.tsx', { eager: false });
 

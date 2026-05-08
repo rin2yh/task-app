@@ -1,5 +1,9 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
+
+const dir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
@@ -21,9 +25,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@server': '/server',
-      '@client': '/client',
-      '@shared': '/shared',
+      '@': dir,
+      '@server': path.resolve(dir, 'server'),
+      '@client': path.resolve(dir, 'client'),
+      '@shared': path.resolve(dir, 'shared'),
     },
   },
 });

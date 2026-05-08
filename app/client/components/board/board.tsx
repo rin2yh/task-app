@@ -1,3 +1,13 @@
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label as UiLabel } from '@/components/ui/label';
 import {
   DndContext,
   type DragEndEvent,
@@ -102,7 +112,10 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <div className="board" data-testid={`board-${projectId}`}>
+        <div
+          className="flex items-start gap-4 overflow-x-auto p-4"
+          data-testid={`board-${projectId}`}
+        >
           {board.state.columns.map((c) => (
             <Column
               key={c.id}
@@ -168,36 +181,45 @@ function NewTaskDialog({
   const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
   return (
-    <dialog open data-testid={`new-task-${columnId}`}>
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (!title.trim()) return;
-          setBusy(true);
-          try {
-            await onSubmit({ title: title.trim() });
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <h3>新規タスク</h3>
-        <input
-          type="text"
-          placeholder="タイトル"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          maxLength={200}
-        />
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
-          <button type="submit" className="btn btn-primary" disabled={busy}>
-            作成
-          </button>
-          <button type="button" className="btn" onClick={onCancel}>
-            キャンセル
-          </button>
-        </div>
-      </form>
-    </dialog>
+    <Dialog open onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="sm:max-w-md" data-testid={`new-task-${columnId}`}>
+        <DialogHeader>
+          <DialogTitle>新規タスク</DialogTitle>
+        </DialogHeader>
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!title.trim()) return;
+            setBusy(true);
+            try {
+              await onSubmit({ title: title.trim() });
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <div className="space-y-1.5">
+            <UiLabel htmlFor={`new-task-title-${columnId}`}>タイトル</UiLabel>
+            <Input
+              id={`new-task-title-${columnId}`}
+              type="text"
+              placeholder="タイトル"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={200}
+            />
+          </div>
+          <DialogFooter className="flex-row justify-end gap-2 sm:justify-end">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              キャンセル
+            </Button>
+            <Button type="submit" disabled={busy}>
+              作成
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
