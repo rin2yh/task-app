@@ -26,19 +26,12 @@ describe('auth flow', () => {
     expect(location).toMatch(/github\.com\/login\/oauth\/authorize/);
   });
 
-  it('test-login backdoor creates session', async () => {
-    const res = await SELF.fetch('http://localhost/auth/test-login', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ login: 'tester' }),
-    });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { ok: boolean; userId: number };
-    expect(body.ok).toBe(true);
-    expect(body.userId).toBeTypeOf('number');
-    const setCookie = res.headers.get('set-cookie') ?? '';
-    expect(setCookie).toContain('session=');
-    expect(setCookie).toContain('csrf=');
+  it('fake gh authorize is disabled in production (E2E_AUTH not set)', async () => {
+    const res = await SELF.fetch(
+      'http://localhost/auth/__fake-gh/authorize?state=s&login=l&redirect_uri=http://localhost/auth/callback',
+      { redirect: 'manual' },
+    );
+    expect(res.status).toBe(404);
   });
 
   it('logout deletes session and clears cookies', async () => {

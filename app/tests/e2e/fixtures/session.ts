@@ -3,12 +3,12 @@ import { test as base } from '@playwright/test';
 export const test = base.extend<{
   authenticate: (login: string) => Promise<void>;
 }>({
-  authenticate: async ({ context }, use) => {
+  authenticate: async ({ page }, use) => {
     const fn = async (login: string) => {
-      // context.request shares the cookie jar with the browser context, so
-      // Set-Cookie from this POST is attached to subsequent page navigation.
-      const res = await context.request.post('/auth/test-login', { data: { login } });
-      if (!res.ok()) throw new Error(`test-login failed: ${res.status()}`);
+      // 本物の /auth/github → fake authorize → /auth/callback フローを通す。
+      // E2E_AUTH=1 で起動された worker のみ /auth/__fake-gh/authorize が機能する。
+      await page.goto(`/auth/github?login=${encodeURIComponent(login)}`);
+      await page.waitForURL((url) => !url.pathname.startsWith('/auth/'));
     };
     await use(fn);
   },

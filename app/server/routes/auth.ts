@@ -2,7 +2,7 @@ import { OAuth2RequestError, generateState } from 'arctic';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
-import { createGitHubProvider, fetchGitHubUser } from '../auth/github';
+import { createOAuthClient } from '../auth/github';
 import { csrfGuard } from '../auth/middleware';
 import {
   clearOAuthStateCookie,
@@ -56,9 +56,9 @@ async function upsertUserByGithubId(
 
 authRoutes.get('/github', async (c) => {
   if (c.get('user')) return c.redirect('/');
-  const provider = createGitHubProvider(c.env);
+  const client = createOAuthClient(c);
   const state = generateState();
-  const url = provider.createAuthorizationURL(state, ['read:user']);
+  const url = client.createAuthorizationURL(state, ['read:user']);
   setOAuthStateCookie(c, STATE_COOKIE, state);
   return c.redirect(url.toString());
 });
@@ -72,10 +72,10 @@ authRoutes.get('/callback', async (c) => {
   }
   clearOAuthStateCookie(c, STATE_COOKIE);
 
-  const provider = createGitHubProvider(c.env);
+  const client = createOAuthClient(c);
   let accessToken: string;
   try {
-    const tokens = await provider.validateAuthorizationCode(code);
+    const tokens = await client.validateAuthorizationCode(code);
     accessToken = tokens.accessToken();
   } catch (err) {
     if (err instanceof OAuth2RequestError) {
@@ -83,7 +83,7 @@ authRoutes.get('/callback', async (c) => {
     }
     throw err;
   }
-  const ghUser = await fetchGitHubUser(accessToken);
+  const ghUser = await client.fetchUser(accessToken);
 
   const allowed = (c.env.ALLOWED_LOGINS ?? '').trim();
   if (
@@ -117,22 +117,17 @@ authRoutes.post('/logout', csrfGuard, async (c) => {
   return c.redirect('/auth/login', 302);
 });
 
-// E2E のみ有効。本番では env.E2E_AUTH が '1' になり得ないため 404 を返す。
-authRoutes.post('/test-login', async (c) => {
-  if (c.env.E2E_AUTH !== '1') {
-    return c.notFound();
-  }
-  const body = await c.req.json<{ login: string; githubId?: number }>();
-  const login = body.login;
-  const githubId = body.githubId ?? Math.floor(Math.random() * 1_000_000) + 1;
-  const db = createDb(c.env.DB);
-  const userId = await upsertUserByGithubId(db, {
-    id: githubId,
-    login,
-    name: login,
-    avatar_url: null,
-  });
-  const session = await createSession(db, userId);
-  setSessionCookies(c, session);
-  return c.json({ ok: true, userId, csrfToken: session.csrfToken });
+// E2E のフェイク GitHub authorize エンドポイント。E2E_AUTH=1 の時のみ機能し、
+// 受け取った login をそのまま code として redirect_uri にリダイレクトする。
+// 本番では E2E_AUTH が立たないので 404 を返し、外部からは存在しないように見える。
+authRoutes.get('/__fake-gh/authorize', (c) => {
+  if (c.env.E2E_AUTH !== '1') return c.notFound();
+  const state = c.req.query('state');
+  const login = c.req.query('login');
+  const redirectUri = c.req.query('redirect_uri');
+  if (!state || !login || !redirectUri) return c.notFound();
+  const url = new URL(redirectUri);
+  url.searchParams.set('code', login);
+  url.searchParams.set('state', state);
+  return c.redirect(url.toString());
 });
