@@ -1,9 +1,8 @@
-import type { Context, MiddlewareHandler } from 'hono';
+import type { MiddlewareHandler } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { createDb } from '../db/client';
-import type { DbUser } from '../db/schema';
 import type { AppEnv } from '../env';
-import { Forbidden, Unauthorized } from '../lib/errors';
+import { Forbidden } from '../lib/errors';
 import { CSRF_COOKIE, clearSessionCookies, findSession, SESSION_COOKIE } from './session';
 
 export const sessionLoader: MiddlewareHandler<AppEnv> = async (c, next) => {
@@ -57,9 +56,3 @@ export const csrfGuard: MiddlewareHandler<AppEnv> = async (c, next) => {
   }
   await next();
 };
-
-export function requireUser(c: Context<AppEnv>): DbUser {
-  const user = c.get('user');
-  if (!user) throw Unauthorized();
-  return user;
-}

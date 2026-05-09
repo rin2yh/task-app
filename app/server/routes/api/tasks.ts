@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { PrioritySchema } from '../../../shared/priority';
-import { csrfGuard, requireAuth, requireUser } from '../../auth/middleware';
+import { csrfGuard, requireAuth } from '../../auth/middleware';
 import { createDb } from '../../db/client';
 import {
   createTask,
@@ -42,7 +42,7 @@ export const tasksByColumnRoutes = new Hono<AppEnv>();
 tasksByColumnRoutes.use('*', requireAuth);
 
 tasksByColumnRoutes.post('/:columnId/tasks', csrfGuard, async (c) => {
-  const user = requireUser(c);
+  const user = c.var.authUser;
   const columnId = c.req.param('columnId');
   const input = await parseJson(c, CreateInput);
   const db = createDb(c.env.DB);
@@ -55,7 +55,7 @@ export const taskRoutes = new Hono<AppEnv>();
 taskRoutes.use('*', requireAuth);
 
 taskRoutes.patch('/:id', csrfGuard, async (c) => {
-  const user = requireUser(c);
+  const user = c.var.authUser;
   const id = c.req.param('id');
   const input = await parseJson(c, UpdateInput);
   const db = createDb(c.env.DB);
@@ -65,7 +65,7 @@ taskRoutes.patch('/:id', csrfGuard, async (c) => {
 });
 
 taskRoutes.delete('/:id', csrfGuard, async (c) => {
-  const user = requireUser(c);
+  const user = c.var.authUser;
   const id = c.req.param('id');
   const db = createDb(c.env.DB);
   const ok = await deleteTask(db, id, user.id);
@@ -74,7 +74,7 @@ taskRoutes.delete('/:id', csrfGuard, async (c) => {
 });
 
 taskRoutes.post('/:id/move', csrfGuard, async (c) => {
-  const user = requireUser(c);
+  const user = c.var.authUser;
   const id = c.req.param('id');
   const input = await parseJson(c, MoveInput);
   const db = createDb(c.env.DB);
@@ -84,7 +84,7 @@ taskRoutes.post('/:id/move', csrfGuard, async (c) => {
 });
 
 taskRoutes.put('/:id/labels', csrfGuard, async (c) => {
-  const user = requireUser(c);
+  const user = c.var.authUser;
   const id = c.req.param('id');
   const input = await parseJson(c, LabelsInput);
   const db = createDb(c.env.DB);
