@@ -166,7 +166,6 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
   );
   const now = Date.now();
   const projectId = ulid();
-  const projectName = DEFAULTS.projectName;
 
   const columnIdByStatus = new Map<string, string>();
   const labelIdByKey = new Map<string, string>();
@@ -179,7 +178,7 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
 
   lines.push('BEGIN TRANSACTION;');
   lines.push(
-    `INSERT INTO projects (id, owner_id, name, description, created_at, updated_at) VALUES (${sqlString(projectId)}, ${ownerId}, ${sqlString(projectName)}, NULL, ${now}, ${now});`,
+    `INSERT INTO projects (id, owner_id, name, description, created_at, updated_at) VALUES (${sqlString(projectId)}, ${ownerId}, ${sqlString(DEFAULTS.projectName)}, NULL, ${now}, ${now});`,
   );
 
   for (const item of items) {
@@ -193,7 +192,7 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
       );
     }
 
-    const itemLabels: { id: string }[] = [];
+    const itemLabelIds: string[] = [];
     for (const lab of item.content?.labels ?? []) {
       const name = typeof lab.name === 'string' ? lab.name : '';
       if (!name) continue;
@@ -207,7 +206,7 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
           `INSERT INTO labels (id, project_id, name, color) VALUES (${sqlString(labelId)}, ${sqlString(projectId)}, ${sqlString(name)}, ${sqlString(color)});`,
         );
       }
-      itemLabels.push({ id: labelId });
+      itemLabelIds.push(labelId);
     }
 
     const taskId = ulid();
@@ -223,9 +222,9 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
     lines.push(
       `INSERT INTO tasks (id, column_id, title, description, priority, due_date, position, created_at, updated_at) VALUES (${sqlString(taskId)}, ${sqlString(columnId)}, ${sqlString(title)}, ${sqlString(description)}, ${sqlString(priority)}, ${due == null ? 'NULL' : due}, ${pos}, ${now}, ${now});`,
     );
-    for (const { id } of itemLabels) {
+    for (const labelId of itemLabelIds) {
       lines.push(
-        `INSERT INTO task_labels (task_id, label_id) VALUES (${sqlString(taskId)}, ${sqlString(id)});`,
+        `INSERT INTO task_labels (task_id, label_id) VALUES (${sqlString(taskId)}, ${sqlString(labelId)});`,
       );
     }
 
@@ -283,11 +282,12 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const projectName = DEFAULTS.projectName;
-  const existing = queryDb(`SELECT id FROM projects WHERE name=${sqlString(projectName)};`);
+  const existing = queryDb(
+    `SELECT id FROM projects WHERE name=${sqlString(DEFAULTS.projectName)};`,
+  );
   if (existing.length > 0 && !args.force) {
     console.error(
-      `Project '${projectName}' already exists. Re-run with --force to add another copy alongside it.`,
+      `Project '${DEFAULTS.projectName}' already exists. Re-run with --force to add another copy alongside it.`,
     );
     process.exit(1);
   }
