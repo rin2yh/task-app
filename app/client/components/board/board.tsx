@@ -18,7 +18,9 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import type { Column as ColumnT, Label, TaskWithLabels } from '@shared/types';
+import type { Column as ColumnT } from '@shared/column';
+import type { Label } from '@shared/label';
+import type { TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
 import { buildInitialState, useOptimisticBoard } from '../../hooks/use-optimistic-board';
 import { Column } from './column';

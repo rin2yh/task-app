@@ -1,4 +1,4 @@
-import type { TaskWithLabels } from '@shared/types';
+import type { TaskWithLabels } from '@shared/task';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { TaskDialog } from './task-dialog';

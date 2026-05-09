@@ -9,7 +9,7 @@ assets = { directory = "./dist/client", binding = "ASSETS" }
 binding = "DB"
 database_name = "task-app-local"
 database_id = "00000000-0000-0000-0000-000000000000"
-migrations_dir = "./migrations"
+migrations_dir = "./server/db/migrations"
 
 [triggers]
 crons = ["0 3 * * *"]
@@ -21,4 +21,4 @@ name = "task-app"
 binding = "DB"
 database_name = "task-app-prod"
 database_id = "3605a196-43db-4276-adc9-61ef66dca5ab"
-migrations_dir = "./migrations"
+migrations_dir = "./server/db/migrations"

@@ -2,7 +2,8 @@ import { Button } from '@client/components/ui/button';
 import { Card } from '@client/components/ui/card';
 import { Input } from '@client/components/ui/input';
 import { router, usePage } from '@inertiajs/react';
-import type { Project, SharedProps } from '@shared/types';
+import type { SharedProps } from '@shared/inertia';
+import type { Project } from '@shared/project';
 import { useState } from 'react';
 
 interface Props {

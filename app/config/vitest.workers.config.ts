@@ -3,7 +3,7 @@ import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-pool-worker
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig(async () => {
-  const migrations = await readD1Migrations(path.resolve(__dirname, '..', 'migrations'));
+  const migrations = await readD1Migrations(path.resolve(__dirname, '..', 'server/db/migrations'));
   return {
     plugins: [
       cloudflareTest({
