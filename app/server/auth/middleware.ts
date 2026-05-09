@@ -35,6 +35,7 @@ export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
     }
     return c.redirect('/auth/login', 302);
   }
+  c.set('authUser', user);
   await next();
 };
 
