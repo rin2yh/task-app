@@ -1,6 +1,7 @@
 import { Button } from '@client/components/ui/button';
 import { Card } from '@client/components/ui/card';
 import { Input } from '@client/components/ui/input';
+import { useAuthentication } from '@client/hooks/use-authentication';
 import { router, usePage } from '@inertiajs/react';
 import type { SharedProps } from '@shared/inertia';
 import type { Project } from '@shared/project';
@@ -12,6 +13,7 @@ interface Props {
 
 export default function Dashboard({ projects }: Props) {
   const { props: shared } = usePage<SharedProps>();
+  const { user } = useAuthentication();
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -49,9 +51,9 @@ export default function Dashboard({ projects }: Props) {
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">プロジェクト</h1>
         <div className="flex items-center gap-2">
-          {shared.auth.user ? (
+          {user ? (
             <>
-              <span className="text-sm text-muted-foreground">{shared.auth.user.login}</span>
+              <span className="text-sm text-muted-foreground">{user.login}</span>
               <Button type="button" variant="outline" size="sm" onClick={logout}>
                 ログアウト
               </Button>
