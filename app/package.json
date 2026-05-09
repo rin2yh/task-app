@@ -14,7 +14,7 @@
     "test:e2e": "playwright test",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply task-app-local --local",
     "db:migrate:prod": "wrangler d1 migrations apply task-app-prod --remote --env production"
@@ -55,6 +55,7 @@
     "@types/node": "^22.7.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@typescript/native-preview": "^7.0.0-dev.20260424.2",
     "@vitejs/plugin-react": "^4.3.0",
     "babel-plugin-react-compiler": "^1.0.0",
     "drizzle-kit": "^0.28.0",
