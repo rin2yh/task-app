@@ -1,4 +1,6 @@
-import type { Column, Label, TaskWithLabels } from '@shared/types';
+import type { Column } from '@shared/column';
+import type { Label } from '@shared/label';
+import type { TaskWithLabels } from '@shared/task';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { Board } from './board';

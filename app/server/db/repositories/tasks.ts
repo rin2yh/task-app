@@ -1,4 +1,4 @@
-import type { Priority } from '@shared/types';
+import type { Priority } from '@shared/priority';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { computeInsertPosition, rebalance, tailPosition } from '../../lib/position';
 import type { Database } from '../client';

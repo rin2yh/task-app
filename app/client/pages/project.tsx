@@ -2,13 +2,11 @@ import { Board } from '@client/components/board/board';
 import { Button } from '@client/components/ui/button';
 import { Input } from '@client/components/ui/input';
 import { router, usePage } from '@inertiajs/react';
-import type {
-  Column,
-  Label,
-  Project as ProjectT,
-  SharedProps,
-  TaskWithLabels,
-} from '@shared/types';
+import type { Column } from '@shared/column';
+import type { SharedProps } from '@shared/inertia';
+import type { Label } from '@shared/label';
+import type { Project as ProjectT } from '@shared/project';
+import type { TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
 
 interface Props {

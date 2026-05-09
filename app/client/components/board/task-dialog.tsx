@@ -10,7 +10,9 @@ import {
 import { Input } from '@client/components/ui/input';
 import { Label as UiLabel } from '@client/components/ui/label';
 import { Textarea } from '@client/components/ui/textarea';
-import type { Label, Priority, TaskWithLabels } from '@shared/types';
+import type { Label } from '@shared/label';
+import type { Priority } from '@shared/priority';
+import type { TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
 import { LabelChip } from '../shared/label-chip';
 import { PrioritySelect } from '../shared/priority-select';
