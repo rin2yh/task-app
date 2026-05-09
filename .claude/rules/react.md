@@ -1,4 +1,10 @@
-# No premature memoization
+---
+applyTo: "**/*.{ts,tsx}"
+---
+
+# React rules
+
+## No premature memoization
 
 `useMemo` / `useCallback` / `React.memo` を投機的に追加しない。
 
