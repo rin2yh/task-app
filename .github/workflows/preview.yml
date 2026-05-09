@@ -28,7 +28,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # フォークからの PR には secrets が渡らないため、同一リポジトリの PR でだけ走らせる。
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    # vars.PREVIEW_APP_URL が空のうちは preview 基盤が未 bootstrap とみなしてスキップする。
+    if: github.event.pull_request.head.repo.full_name == github.repository && vars.PREVIEW_APP_URL != ''
     environment: preview
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
