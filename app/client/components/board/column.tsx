@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@client/components/ui/button';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import type { Column as ColumnT, TaskWithLabels } from '@shared/types';
 import { Plus, Trash2 } from 'lucide-react';
-import type { Column as ColumnT, TaskWithLabels } from '../../../shared/types';
 import { TaskCard } from './task-card';
 
 type Props = {

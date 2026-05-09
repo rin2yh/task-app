@@ -1,17 +1,17 @@
 import { inertia } from '@hono/inertia';
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { rootView } from './root-view';
-import { sessionLoader } from './server/auth/middleware';
-import { purgeExpired } from './server/auth/session';
-import { createDb } from './server/db/client';
-import type { AppEnv } from './server/env';
-import { authRoutes } from './server/routes/auth';
-import { columnRoutes, columnsByProjectRoutes } from './server/routes/columns';
-import { labelRoutes, labelsByProjectRoutes } from './server/routes/labels';
-import { pageRoutes } from './server/routes/pages';
-import { projectRoutes } from './server/routes/projects';
-import { taskRoutes, tasksByColumnRoutes } from './server/routes/tasks';
+import { rootView } from '../client/root-view';
+import { sessionLoader } from './auth/middleware';
+import { purgeExpired } from './auth/session';
+import { createDb } from './db/client';
+import type { AppEnv } from './env';
+import { authRoutes } from './routes/auth';
+import { columnRoutes, columnsByProjectRoutes } from './routes/columns';
+import { labelRoutes, labelsByProjectRoutes } from './routes/labels';
+import { pageRoutes } from './routes/pages';
+import { projectRoutes } from './routes/projects';
+import { taskRoutes, tasksByColumnRoutes } from './routes/tasks';
 
 const ASSETS_VERSION = '1';
 

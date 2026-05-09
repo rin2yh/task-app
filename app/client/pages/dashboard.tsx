@@ -1,9 +1,9 @@
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Button } from '@client/components/ui/button';
+import { Card } from '@client/components/ui/card';
+import { Input } from '@client/components/ui/input';
 import { router, usePage } from '@inertiajs/react';
+import type { Project, SharedProps } from '@shared/types';
 import { useState } from 'react';
-import type { Project, SharedProps } from '../shared/types';
 
 type Props = { projects: Project[] };
 

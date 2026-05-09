@@ -1,17 +1,17 @@
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@client/components/ui/button';
+import { Checkbox } from '@client/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label as UiLabel } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from '@client/components/ui/dialog';
+import { Input } from '@client/components/ui/input';
+import { Label as UiLabel } from '@client/components/ui/label';
+import { Textarea } from '@client/components/ui/textarea';
+import type { Label, Priority, TaskWithLabels } from '@shared/types';
 import { useState } from 'react';
-import type { Label, Priority, TaskWithLabels } from '../../../shared/types';
 import { LabelChip } from '../shared/label-chip';
 import { PrioritySelect } from '../shared/priority-select';
 
