@@ -23,5 +23,5 @@ Scripts: @app/package.json. Run all `pnpm` commands inside `app/`. Single test: 
 - **Aliases** (in `tsconfig.json`, `vite.config.ts`, both vitest configs): `@/` → `app/`, `@server/`, `@client/`, `@shared/`. Use them in new code.
 - **Frontend**: React 19 + Inertia + Tailwind v4 + shadcn/ui (`new-york`, `@/components/ui`); `@dnd-kit`; optimistic board in `client/hooks/use-optimistic-board.ts`.
 - **PWA**: `vite-plugin-pwa` injectManifest, SW at `client/pwa/sw.ts`. `register.ts` is `import.meta.env.DEV`-guarded — verify SW via `pnpm build && pnpm preview`.
-- **Test helpers**: `server/_test-helpers.ts` (`applyMigrations`, `createTestUser`) instead of poking D1 directly.
+- **Test helpers**: `tests/helpers.ts` (`applyMigrations`, `createTestUser`) instead of poking D1 directly.
 
