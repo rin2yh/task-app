@@ -1,4 +1,4 @@
-name: PR Deploy (develop)
+name: PR Deploy
 
 # PR 上の固定コメントにあるチェックボックスを「ワンクリックデプロイ」のボタンとして使う。
 # pull_request: ボタン (固定コメント) を upsert する。
@@ -56,6 +56,19 @@ jobs:
             admin|maintain|write) ;;
             *) echo "::error::User ${{ github.event.sender.login }} ($PERM) cannot trigger deploy" && exit 1 ;;
           esac
+
+      # 二重押し防止のため、デプロイ中はチェックボックスを外して進行表示にする。
+      - name: Mark deploying
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
+        with:
+          number: ${{ github.event.issue.number }}
+          header: pr-deploy-develop
+          message: |
+            <!-- pr-deploy-button -->
+            ### 🚀 develop デプロイ
+
+            ⏳ **デプロイ中…** — [run #${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            実行者: @${{ github.event.sender.login }}
 
   migrate-db:
     needs: guard
@@ -127,7 +140,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      # チェックボックスをリセットして再度押せるようにする。
+      # 結果と URL を表示し、再デプロイ用のチェックボックスを再掲する。
       - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
         with:
           number: ${{ github.event.issue.number }}
@@ -136,9 +149,11 @@ jobs:
             <!-- pr-deploy-button -->
             ### 🚀 develop デプロイ
 
+            ${{ needs.deploy.result == 'success' && '✅' || '❌' }} **${{ needs.deploy.result }}** — ${{ needs.deploy.outputs.url || 'URL 取得失敗' }}
+            実行者: @${{ github.event.sender.login }} ([run #${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}))
+
+            ---
+
             - [ ] このPRを develop 環境にデプロイする
 
-            最終結果: **${{ needs.deploy.result }}** — ${{ needs.deploy.outputs.url || 'URL不明' }}
-            実行者: @${{ github.event.sender.login }}
-
-            再デプロイするには再度チェックを入れてください。write 権限以上のユーザーのみ実行可能です。
+            再度チェックを入れると再デプロイされます。write 権限以上のユーザーのみ実行可能です。
