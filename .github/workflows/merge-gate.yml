@@ -1,0 +1,145 @@
+name: Merge Gate
+
+# Aggregates the conclusion of path-scoped CI workflows into a single required
+# status check. Branch protection should require only this workflow's `gate`
+# job; downstream workflows (Web CI / Terraform CI / Actions CI) must NOT be
+# listed as required, because their `paths:` filters mean they don't always run.
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: merge-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      terraform: ${{ steps.filter.outputs.terraform }}
+      actions: ${{ steps.filter.outputs.actions }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          fetch-depth: 0
+      - id: filter
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        # Filters must mirror the `paths:` of the downstream workflows exactly.
+        run: |
+          set -euo pipefail
+          files=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+
+          web=false
+          terraform=false
+          actions=false
+
+          while IFS= read -r f; do
+            [[ -z "$f" ]] && continue
+            case "$f" in
+              app/*|.github/workflows/ci.yml|.github/actions/setup/*|.github/actions/setup-e2e/*)
+                web=true ;;
+            esac
+            case "$f" in
+              terraform/*|.github/workflows/terraform.yml|.github/actions/terraform-init/*)
+                terraform=true ;;
+            esac
+            case "$f" in
+              .github/workflows/*|.github/actions/*)
+                actions=true ;;
+            esac
+          done <<< "$files"
+
+          echo "web=$web" >> "$GITHUB_OUTPUT"
+          echo "terraform=$terraform" >> "$GITHUB_OUTPUT"
+          echo "actions=$actions" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Merge Gate"
+            echo "- Web CI required: \`$web\`"
+            echo "- Terraform CI required: \`$terraform\`"
+            echo "- Actions CI required: \`$actions\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  gate:
+    needs: changes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Wait for required workflows
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          NEED_WEB: ${{ needs.changes.outputs.web }}
+          NEED_TERRAFORM: ${{ needs.changes.outputs.terraform }}
+          NEED_ACTIONS: ${{ needs.changes.outputs.actions }}
+        run: |
+          set -euo pipefail
+
+          required=()
+          [[ "$NEED_WEB" == "true" ]] && required+=("Web CI")
+          [[ "$NEED_TERRAFORM" == "true" ]] && required+=("Terraform CI")
+          [[ "$NEED_ACTIONS" == "true" ]] && required+=("Actions CI")
+
+          if [[ ${#required[@]} -eq 0 ]]; then
+            echo "No relevant changes; gate passes."
+            echo "result=passed (no required workflows)" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "Required workflows: ${required[*]}"
+
+          deadline=$(( $(date +%s) + 25 * 60 ))
+          interval=20
+
+          while [[ $(date +%s) -lt $deadline ]]; do
+            runs_json=$(gh api \
+              "repos/${GH_REPO}/actions/runs?head_sha=${HEAD_SHA}&event=pull_request&per_page=100")
+
+            missing=()
+            pending=()
+            failed=()
+
+            for name in "${required[@]}"; do
+              latest=$(jq --arg n "$name" \
+                '[.workflow_runs[] | select(.name == $n)]
+                 | sort_by(.run_started_at) | reverse | .[0]' \
+                <<<"$runs_json")
+              if [[ "$latest" == "null" ]]; then
+                missing+=("$name")
+                continue
+              fi
+              status=$(jq -r '.status' <<<"$latest")
+              conclusion=$(jq -r '.conclusion // ""' <<<"$latest")
+              if [[ "$status" != "completed" ]]; then
+                pending+=("$name [$status]")
+              elif [[ "$conclusion" != "success" && "$conclusion" != "skipped" ]]; then
+                failed+=("$name [$conclusion]")
+              fi
+            done
+
+            printf 'missing=(%s) pending=(%s) failed=(%s)\n' \
+              "${missing[*]:-}" "${pending[*]:-}" "${failed[*]:-}"
+
+            if [[ ${#missing[@]} -eq 0 && ${#pending[@]} -eq 0 ]]; then
+              if [[ ${#failed[@]} -gt 0 ]]; then
+                echo "::error::Required workflows failed: ${failed[*]}"
+                exit 1
+              fi
+              echo "All required workflows succeeded."
+              exit 0
+            fi
+
+            sleep "$interval"
+          done
+
+          echo "::error::Timed out waiting for required workflows."
+          exit 1
