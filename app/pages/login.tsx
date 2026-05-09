@@ -2,7 +2,9 @@ import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
-type Props = { error: string | null };
+interface Props {
+  error: string | null;
+}
 
 export default function Login({ error }: Props) {
   return (

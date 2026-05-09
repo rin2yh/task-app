@@ -56,8 +56,9 @@ export const UserSchema = z.object({
 });
 export type User = z.infer<typeof UserSchema>;
 
-export type SharedProps = {
+export interface SharedProps {
+  [key: string]: unknown;
   auth: { user: User | null };
   csrfToken: string;
   flash: { success?: string; error?: string };
-};
+}

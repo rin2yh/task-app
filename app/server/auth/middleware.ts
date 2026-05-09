@@ -4,7 +4,7 @@ import { createDb } from '../db/client';
 import type { DbUser } from '../db/schema';
 import type { AppEnv } from '../env';
 import { Forbidden, Unauthorized } from '../lib/errors';
-import { CSRF_COOKIE, SESSION_COOKIE, clearSessionCookies, findSession } from './session';
+import { CSRF_COOKIE, clearSessionCookies, findSession, SESSION_COOKIE } from './session';
 
 export const sessionLoader: MiddlewareHandler<AppEnv> = async (c, next) => {
   const token = getCookie(c, SESSION_COOKIE);

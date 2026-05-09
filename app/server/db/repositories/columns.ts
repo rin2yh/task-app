@@ -1,12 +1,12 @@
-import { and, asc, eq, max } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import {
-  REBALANCE_THRESHOLD,
   computeInsertPosition,
+  REBALANCE_THRESHOLD,
   rebalance,
   tailPosition,
 } from '../../lib/position';
 import type { Database } from '../client';
-import { type DbColumn, columns, projects } from '../schema';
+import { columns, type DbColumn, projects } from '../schema';
 import { ulid } from '../ulid';
 
 async function ensureProjectOwned(
@@ -36,10 +36,10 @@ export async function listColumnsForProject(
     .orderBy(asc(columns.position));
 }
 
-export type CreateColumnInput = {
+export interface CreateColumnInput {
   name: string;
   afterColumnId?: string | null;
-};
+}
 
 export async function createColumn(
   db: Database,
@@ -106,10 +106,10 @@ export async function deleteColumn(
   return true;
 }
 
-export type ReorderColumnInput = {
+export interface ReorderColumnInput {
   beforeColumnId?: string | null;
   afterColumnId?: string | null;
-};
+}
 
 /**
  * 列の並び替え。midpoint で挿入位置決定、衝突時は当該プロジェクト内で全列リバランス。

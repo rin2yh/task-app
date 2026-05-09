@@ -1,9 +1,9 @@
-export type GitHubUser = {
+export interface GitHubUser {
   id: number;
   login: string;
   name: string | null;
   avatar_url: string | null;
-};
+}
 
 export interface OAuthClient {
   createAuthorizationURL(state: string, scopes: string[]): URL;

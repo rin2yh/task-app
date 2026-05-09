@@ -1,7 +1,7 @@
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Board } from '../client/components/board/board';
 import type {
   Column,
@@ -11,12 +11,12 @@ import type {
   TaskWithLabels,
 } from '../shared/types';
 
-type Props = {
+interface Props {
   project: ProjectT;
   columns: Column[];
   tasks: TaskWithLabels[];
   labels: Label[];
-};
+}
 
 export default function Project({ project, columns, tasks, labels }: Props) {
   const { props: shared } = usePage<SharedProps>();

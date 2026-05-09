@@ -1,7 +1,7 @@
 import { SELF } from 'cloudflare:test';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ENV, applyMigrations, createTestUser } from '../_test-helpers';
+import { applyMigrations, createTestUser, ENV } from '../_test-helpers';
 import { createDb } from '../db/client';
 import { sessions } from '../db/schema';
 

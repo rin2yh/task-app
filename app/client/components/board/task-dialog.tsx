@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -10,19 +11,18 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label as UiLabel } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useState } from 'react';
 import type { Label, Priority, TaskWithLabels } from '../../../shared/types';
 import { LabelChip } from '../shared/label-chip';
 import { PrioritySelect } from '../shared/priority-select';
 
-type Props = {
+interface Props {
   task: TaskWithLabels;
   allLabels: Label[];
   csrfToken: string;
   onClose: () => void;
   onUpdated: (task: TaskWithLabels) => void;
   onDeleted: (task: TaskWithLabels) => void;
-};
+}
 
 export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onDeleted }: Props) {
   const [title, setTitle] = useState(task.title);

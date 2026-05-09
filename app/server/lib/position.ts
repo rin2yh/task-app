@@ -1,7 +1,10 @@
 export const POSITION_STEP = 1.0;
 export const REBALANCE_THRESHOLD = 1e-6;
 
-export type Positioned = { id: string; position: number };
+export interface Positioned {
+  id: string;
+  position: number;
+}
 
 /**
  * 末尾追加: max+STEP / 中間挿入: (prev+next)/2

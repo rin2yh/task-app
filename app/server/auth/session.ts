@@ -77,11 +77,11 @@ export function generateToken(bytes = 32): string {
   return Array.from(buf, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export type CreatedSession = {
+export interface CreatedSession {
   token: string;
   csrfToken: string;
   expiresAt: number;
-};
+}
 
 export async function createSession(db: Database, userId: number): Promise<CreatedSession> {
   const token = generateToken();

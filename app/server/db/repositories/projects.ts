@@ -1,7 +1,7 @@
 import { and, asc, eq } from 'drizzle-orm';
 import { POSITION_STEP } from '../../lib/position';
 import type { Database } from '../client';
-import { type DbProject, columns, projects } from '../schema';
+import { columns, type DbProject, projects } from '../schema';
 import { ulid } from '../ulid';
 
 export async function listProjectsByOwner(db: Database, ownerId: number): Promise<DbProject[]> {
@@ -25,10 +25,10 @@ export async function getProjectByIdForOwner(
   return rows[0] ?? null;
 }
 
-export type CreateProjectInput = {
+export interface CreateProjectInput {
   name: string;
   description?: string | null;
-};
+}
 
 export async function createProject(
   db: Database,

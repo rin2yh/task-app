@@ -1,11 +1,13 @@
+import { router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
 import type { Project, SharedProps } from '../shared/types';
 
-type Props = { projects: Project[] };
+interface Props {
+  projects: Project[];
+}
 
 export default function Dashboard({ projects }: Props) {
   const { props: shared } = usePage<SharedProps>();

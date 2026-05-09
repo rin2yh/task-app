@@ -2,7 +2,7 @@ import { and, asc, eq, inArray } from 'drizzle-orm';
 import type { Priority } from '../../../shared/types';
 import { computeInsertPosition, rebalance, tailPosition } from '../../lib/position';
 import type { Database } from '../client';
-import { type DbLabel, type DbTask, columns, labels, projects, taskLabels, tasks } from '../schema';
+import { columns, type DbLabel, type DbTask, labels, projects, taskLabels, tasks } from '../schema';
 import { ulid } from '../ulid';
 
 async function ownsColumn(
@@ -71,12 +71,12 @@ export async function listTasksForProject(
   return allTasks.map((t) => ({ ...t, labels: byTask.get(t.id) ?? [] }));
 }
 
-export type CreateTaskInput = {
+export interface CreateTaskInput {
   title: string;
   description?: string | null;
   priority?: Priority;
   dueDate?: number | null;
-};
+}
 
 export async function createTask(
   db: Database,
@@ -151,11 +151,11 @@ export async function deleteTask(db: Database, taskId: string, ownerId: number):
   return true;
 }
 
-export type MoveTaskInput = {
+export interface MoveTaskInput {
   toColumnId: string;
   beforeTaskId?: string | null;
   afterTaskId?: string | null;
-};
+}
 
 export async function moveTask(
   db: Database,
