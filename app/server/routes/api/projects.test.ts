@@ -1,6 +1,6 @@
 import { SELF } from 'cloudflare:test';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { applyMigrations, createTestUser } from '../../_test-helpers';
+import { applyMigrations, createTestUser } from '../../../tests/helpers';
 
 describe('projects CRUD', () => {
   beforeEach(async () => {

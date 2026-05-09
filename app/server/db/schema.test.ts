@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { applyMigrations, ENV } from '../_test-helpers';
+import { applyMigrations, ENV } from '../../tests/helpers';
 import { createDb } from '../db/client';
 import { users } from '../db/schema';
 
