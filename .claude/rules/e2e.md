@@ -112,3 +112,14 @@ await page.route('https://api.example.com/**', (route) =>
 
 - リトライ・ワーカー数・レポーター等は `playwright.config.ts` で `process.env.CI` を見て切り替える（既存どおり）。
 - 個別テスト内に `test.setTimeout` や `test.skip(true)` を散らさない。条件 skip は `test.skip(condition, '理由')` の形で理由付きで書く。
+
+## 参考資料
+
+- [Best Practices | Playwright](https://playwright.dev/docs/best-practices) — 全体の出典
+- [Locators | Playwright](https://playwright.dev/docs/locators) — セクション 3, 4
+- [LocatorAssertions | Playwright](https://playwright.dev/docs/api/class-locatorassertions) — セクション 5（web-first assertions）
+- [Auto-waiting | Playwright](https://playwright.dev/docs/actionability) — セクション 6（ハード待機禁止の根拠）
+- [Network | Playwright](https://playwright.dev/docs/network) — セクション 7（`page.route` によるモック）
+- [Browser contexts | Playwright](https://playwright.dev/docs/browser-contexts) — セクション 2（テスト分離）
+- [Parallelism | Playwright](https://playwright.dev/docs/test-parallel) — セクション 8
+- [Trace Viewer / UI Mode / Codegen | Playwright](https://playwright.dev/docs/trace-viewer) — セクション 9
