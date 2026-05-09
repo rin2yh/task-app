@@ -28,8 +28,8 @@ jobs:
     name: Deploy to preview
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    # vars.PREVIEW_APP_URL が空のうちは preview 基盤が未 bootstrap とみなしてスキップする。
-    if: vars.PREVIEW_APP_URL != ''
+    # preview env の vars.APP_URL が空のうちは未 bootstrap とみなしてスキップする。
+    if: vars.APP_URL != ''
     environment: preview
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -40,13 +40,14 @@ jobs:
       - uses: ./.github/actions/setup
       - run: pnpm db:migrate:preview
       - run: pnpm build
-      - run: pnpm exec wrangler deploy --env preview
+      # APP_URL は preview env の Variable から流す ([env.preview.vars] には書かない)。
+      - run: pnpm exec wrangler deploy --env preview --var "APP_URL:${{ vars.APP_URL }}"
       - name: Write run summary
         run: |
           {
             echo "### Preview deployed"
             echo
-            echo "- URL: ${{ vars.PREVIEW_APP_URL }}"
+            echo "- URL: ${{ vars.APP_URL }}"
             echo "- Ref: \`${{ github.ref_name }}\`"
             echo "- Commit: \`${{ github.sha }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -59,7 +60,7 @@ jobs:
           message: |
             ### Preview deployed
 
-            - URL: ${{ vars.PREVIEW_APP_URL }}
+            - URL: ${{ vars.APP_URL }}
             - Ref: `${{ github.ref_name }}`
             - Commit: `${{ github.sha }}`
 

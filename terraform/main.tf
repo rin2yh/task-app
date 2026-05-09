@@ -106,7 +106,7 @@ resource "cloudflare_workers_script" "task_app_preview" {
 }
 
 # OAuth App は本番と共有する。GitHub OAuth App 側に preview の callback URL
-# (${PREVIEW_APP_URL}/auth/callback) も登録しておくこと。
+# (https://<preview-worker>.<account>.workers.dev/auth/callback) も登録しておくこと。
 resource "cloudflare_workers_secret" "preview_github_client_id" {
   account_id  = var.cloudflare_account_id
   script_name = cloudflare_workers_script.task_app_preview.name
@@ -121,16 +121,19 @@ resource "cloudflare_workers_secret" "preview_github_client_secret" {
   secret_text = var.github_client_secret
 }
 
+# preview の SESSION_SECRET は terraform で自動生成する。GitHub Secret に
+# 環境名付きの秘密を持たせない方針のため、外部入力を取らない。
+resource "random_password" "preview_session_secret" {
+  length  = 64
+  special = false
+}
+
 resource "cloudflare_workers_secret" "preview_session_secret" {
   account_id  = var.cloudflare_account_id
   script_name = cloudflare_workers_script.task_app_preview.name
   name        = "SESSION_SECRET"
-  secret_text = var.preview_session_secret
+  secret_text = random_password.preview_session_secret.result
 }
 
-resource "cloudflare_workers_secret" "preview_app_url" {
-  account_id  = var.cloudflare_account_id
-  script_name = cloudflare_workers_script.task_app_preview.name
-  name        = "APP_URL"
-  secret_text = var.preview_app_url
-}
+# APP_URL は preview env の vars.APP_URL から wrangler deploy --var で
+# 注入する。Cloudflare 側のシークレットや terraform の管理対象には含めない。

@@ -48,13 +48,3 @@ variable "preview_d1_database_name" {
   type    = string
   default = "task-app-preview"
 }
-
-variable "preview_session_secret" {
-  type      = string
-  sensitive = true
-}
-
-variable "preview_app_url" {
-  type        = string
-  description = "Preview app URL (例: https://task-app-preview.<account>.workers.dev)"
-}

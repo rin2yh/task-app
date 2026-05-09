@@ -34,17 +34,25 @@ OAuth 関連は未設定です。以下の手順で本番用 OAuth App を用意
 
 ### Preview 環境の secrets / variables
 
-OAuth App は本番と共有します。本番用 OAuth App の **Authorization callback URL** に `${PREVIEW_APP_URL}/auth/callback`（例: `https://task-app-preview.<account>.workers.dev/auth/callback`）を追加で登録してください（GitHub OAuth App は callback URL を複数登録可）。
+OAuth App は本番と共有します。本番用 OAuth App の **Authorization callback URL** に `${APP_URL}/auth/callback`（例: `https://task-app-preview.<account>.workers.dev/auth/callback`）を追加で登録してください（GitHub OAuth App は callback URL を複数登録可）。
 
-リポジトリ Settings → **Environments → preview → Environment secrets / variables** に以下を登録します。
+secrets / variables の名前には環境名 (`PREVIEW_*` など) を入れず、GitHub Environment ごとに同じ名前で登録します。
+
+リポジトリ Settings → **Environments → preview → Environment secrets / variables**:
 
 | 種類 | 名前 | 値 |
 |---|---|---|
+| Variable | `APP_URL` | プレビュー Worker の公開 URL（例: `https://task-app-preview.<account>.workers.dev`） |
 | Secret | `CLOUDFLARE_API_TOKEN` | Workers / D1 編集権限を持つトークン |
 | Secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウント ID |
-| Variable | `PREVIEW_APP_URL` | プレビュー Worker の公開 URL（PR コメント表示用） |
 
-Worker 側のシークレット（`SESSION_SECRET` / `APP_URL` の preview 値）は `terraform.tfvars` の `preview_session_secret` / `preview_app_url` を埋めて `terraform-apply.yml` で適用します。`GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` は本番値を再利用するので追加登録不要です。
+Worker 側の preview シークレットの内訳:
+
+- `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`: 本番値を再利用（terraform `main.tf` 内で同じ `var.github_client_*` を bind）
+- `SESSION_SECRET`: terraform の `random_password` で自動生成（GitHub に置かない）
+- `APP_URL`: `preview.yml` が `wrangler deploy --env preview --var APP_URL:${{ vars.APP_URL }}` で注入（terraform で管理しない）
+
+terraform は preview 用に追加の入力変数を取りません (`terraform.tfvars` に `preview_*` を書く必要なし)。
 
 ## 3. ローカルで CI 同等のチェックを走らせる
 

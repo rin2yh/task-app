@@ -5,6 +5,6 @@ github_client_secret  = "REPLACE_ME"
 session_secret        = "REPLACE_ME_32+_chars"
 app_url               = "https://task-app.<account>.workers.dev"
 
-# Preview 環境用（OAuth App は本番と共有。Cookie 分離のため SESSION_SECRET は別払い出し）
-preview_session_secret = "REPLACE_ME_32+_chars"
-preview_app_url        = "https://task-app-preview.<account>.workers.dev"
+# Preview 環境は OAuth App を本番と共有、SESSION_SECRET は terraform の
+# random_password で自動生成、APP_URL は preview env の vars.APP_URL から
+# wrangler deploy --var で注入。terraform に渡す preview 専用変数は無い。
