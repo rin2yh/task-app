@@ -85,10 +85,6 @@ mcp__github__pull_request_read({ method: "get_pull_request_reviews", ... })
 3. 直さない / 直せない comment には `mcp__github__add_reply_to_pull_request_comment` で**理由を返信**する (黙って閉じない)。
 4. step 3 に戻って再度 `/gemini review` を投げる。
 
-### 8. ループ上限
-
-**最大 5 周**で打ち切る。それ以上回るなら収束していないので、ユーザに状況を報告して判断を仰ぐ。各周のコミット SHA と Gemini の主な指摘を 1 行ずつ記録しておくとレポートしやすい。
-
 ## やらないこと
 
 - **`Bash sleep` での待機。** webhook subscribe で待つ。
