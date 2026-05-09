@@ -7,11 +7,15 @@ on:
       - 'terraform/**'
       - '.github/workflows/terraform-apply.yml'
   workflow_dispatch:
-
-# production / develop は同 state bucket / 別 workspace なので、両方 apply を直列化する。
-concurrency:
-  group: terraform-apply
-  cancel-in-progress: false
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        default: production
+        options:
+          - production
+          - develop
+          - all
 
 permissions:
   contents: read
@@ -32,10 +36,28 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
 
 jobs:
-  apply-production:
+  apply:
+    name: apply ${{ matrix.environment }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: production
+            workspace: default
+          - environment: develop
+            workspace: develop
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    environment: production
+    # workflow_dispatch で 'production' / 'develop' を選んだ場合はその一方のみ。
+    # push or 'all' の場合は両方走らせる。
+    if: >-
+      github.event_name != 'workflow_dispatch'
+      || inputs.environment == 'all'
+      || inputs.environment == matrix.environment
+    environment: ${{ matrix.environment }}
+    concurrency:
+      group: terraform-apply-${{ matrix.environment }}
+      cancel-in-progress: false
     defaults:
       run:
         working-directory: terraform
@@ -47,26 +69,6 @@ jobs:
           bucket: ${{ secrets.CLOUDFLARE_R2_TFSTATE_BUCKET }}
           account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: terraform workspace select
-        run: terraform workspace select -or-create default
-      - name: terraform apply
-        run: terraform apply -auto-approve
-
-  apply-develop:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    needs: [apply-production]
-    environment: develop
-    defaults:
-      run:
-        working-directory: terraform
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
-      - uses: ./.github/actions/terraform-init
-        with:
-          bucket: ${{ secrets.CLOUDFLARE_R2_TFSTATE_BUCKET }}
-          account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      - name: terraform workspace select
-        run: terraform workspace select -or-create develop
+        run: terraform workspace select -or-create ${{ matrix.workspace }}
       - name: terraform apply
         run: terraform apply -auto-approve

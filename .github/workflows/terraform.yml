@@ -55,7 +55,7 @@ jobs:
         run: tflint --format compact
 
   plan:
-    name: plan (${{ matrix.environment }})
+    name: plan ${{ matrix.environment }}
     strategy:
       fail-fast: false
       matrix:
