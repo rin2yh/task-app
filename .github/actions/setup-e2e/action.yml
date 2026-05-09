@@ -1,0 +1,23 @@
+name: Setup E2E
+description: Cache Playwright browsers, install Playwright + chromium, stage .dev.vars and apply local D1 migrations. Run after ./.github/actions/setup.
+
+runs:
+  using: composite
+  steps:
+    - name: Cache Playwright browsers
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ hashFiles('app/pnpm-lock.yaml') }}
+    - name: Install Playwright (chromium)
+      shell: bash
+      working-directory: app
+      run: pnpm exec playwright install --with-deps chromium
+    - name: Stage .dev.vars for E2E
+      shell: bash
+      working-directory: app
+      run: cp .dev.vars.example .dev.vars
+    - name: Apply D1 migrations (local)
+      shell: bash
+      working-directory: app
+      run: pnpm db:migrate:local
