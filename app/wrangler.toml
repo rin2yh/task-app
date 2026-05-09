@@ -22,3 +22,12 @@ binding = "DB"
 database_name = "task-app-prod"
 database_id = "3605a196-43db-4276-adc9-61ef66dca5ab"
 migrations_dir = "./server/db/migrations"
+
+[env.develop]
+name = "task-app-develop"
+
+[[env.develop.d1_databases]]
+binding = "DB"
+database_name = "task-app-develop"
+database_id = "78d203ca-d97d-43a7-9ba1-0cc7572cff50"
+migrations_dir = "./server/db/migrations"
