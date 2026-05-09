@@ -16,6 +16,6 @@
 - **Auth**: OAuth factory returns the fake client on `NODE_ENV === 'test'`. Mutating routes chain `requireAuth` + `csrfGuard`. `requireAuth` → 409 + `X-Inertia-Location` for Inertia, else 302 — never JSON 401.
 - **Data**: repos must scope by `projects.ownerId`; cross-tenant lookups → `null` → `NotFound`.
 - **Ordering**: float `position` with midpoint insertion; `moveTask` falls back to `rebalance()` when the gap collapses below 1e-6.
-- **Aliases**: keep `tsconfig.json`, `config/vite.config.ts`, and both vitest configs in sync.
+- **Aliases**: keep `tsconfig.json`, `config/vite.ts`, and both vitest configs in sync.
 - **PWA**: `register.ts` is `import.meta.env.DEV`-guarded — verify SW changes via `pnpm build && pnpm preview`, not `pnpm dev`.
 - **Tests**: use `tests/helpers.ts`; don't touch D1 directly.
