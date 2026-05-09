@@ -31,7 +31,7 @@ crons = ["0 3 * * *"]
 name = "task-app"
 
 [env.production.vars]
-TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
+TURNSTILE_SITE_KEY = "0x4AAAAAADMHfCJiphMHfMtW"
 
 [[env.production.d1_databases]]
 binding = "DB"
