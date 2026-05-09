@@ -5,6 +5,8 @@ export interface Env {
   GITHUB_CLIENT_ID: string;
   GITHUB_CLIENT_SECRET: string;
   SESSION_SECRET: string;
+  TURNSTILE_SITE_KEY: string;
+  TURNSTILE_SECRET_KEY: string;
 }
 
 export interface AppVariables {
