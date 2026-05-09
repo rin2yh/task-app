@@ -24,7 +24,6 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
       "@server/*": ["./server/*"],
       "@client/*": ["./client/*"],
       "@shared/*": ["./shared/*"]

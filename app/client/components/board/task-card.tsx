@@ -1,8 +1,8 @@
+import { Card, CardContent } from '@client/components/ui/card';
+import { cn } from '@client/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import type { TaskWithLabels } from '../../../shared/types';
+import type { TaskWithLabels } from '@shared/types';
 import { LabelChip } from '../shared/label-chip';
 import { PriorityBadge } from '../shared/priority-select';
 

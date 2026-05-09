@@ -1,6 +1,12 @@
-import { buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { buttonVariants } from '@client/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@client/components/ui/card';
+import { cn } from '@client/lib/utils';
 
 interface Props {
   error: string | null;

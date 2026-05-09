@@ -1,5 +1,5 @@
+import type { Priority } from '@shared/types';
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import type { Priority } from '../../../shared/types';
 import { computeInsertPosition, rebalance, tailPosition } from '../../lib/position';
 import type { Database } from '../client';
 import { columns, type DbLabel, type DbTask, labels, projects, taskLabels, tasks } from '../schema';

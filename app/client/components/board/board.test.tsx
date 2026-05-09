@@ -1,6 +1,6 @@
+import type { Column, Label, TaskWithLabels } from '@shared/types';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { Column, Label, TaskWithLabels } from '../../../shared/types';
 import { Board } from './board';
 
 const cols: Column[] = [

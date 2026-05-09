@@ -1,3 +1,13 @@
+import { Button } from '@client/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@client/components/ui/dialog';
+import { Input } from '@client/components/ui/input';
+import { Label as UiLabel } from '@client/components/ui/label';
 import {
   closestCenter,
   DndContext,
@@ -8,18 +18,8 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import type { Column as ColumnT, Label, TaskWithLabels } from '@shared/types';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label as UiLabel } from '@/components/ui/label';
-import type { Column as ColumnT, Label, TaskWithLabels } from '../../../shared/types';
 import { buildInitialState, useOptimisticBoard } from '../../hooks/use-optimistic-board';
 import { Column } from './column';
 import { TaskDialog } from './task-dialog';
