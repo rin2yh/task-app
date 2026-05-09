@@ -1,8 +1,10 @@
 import { test as base } from '@playwright/test';
 
-export const test = base.extend<{
+interface Fixtures {
   authenticate: (login: string) => Promise<void>;
-}>({
+}
+
+export const test = base.extend<Fixtures>({
   authenticate: async ({ page }, use) => {
     const fn = async (login: string) => {
       // NODE_ENV=test でビルドされた worker は FakeGitHubOAuthClient を使い、

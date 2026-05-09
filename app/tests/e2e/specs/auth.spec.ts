@@ -1,8 +1,10 @@
-import { expect, test } from '../fixtures/session';
+import { test } from '../fixtures/session';
+import { DashboardPage } from '../pages/dashboard.page';
+import { LoginPage } from '../pages/login.page';
 
 test('未ログイン時は /auth/login にリダイレクト', async ({ page }) => {
-  const res = await page.goto('/');
-  expect(res?.url()).toContain('/auth/login');
+  await page.goto('/');
+  await new LoginPage(page).expectLoaded();
 });
 
 test('fake gh OAuth フローでログインしダッシュボードにアクセスできる', async ({
@@ -10,14 +12,11 @@ test('fake gh OAuth フローでログインしダッシュボードにアクセ
   authenticate,
 }) => {
   await authenticate('e2e-user');
-  await page.goto('/');
-  await expect(page.getByRole('banner')).toContainText('e2e-user');
-  await expect(page.getByRole('button', { name: 'ログアウト' })).toBeVisible();
+  await new DashboardPage(page).expectLoggedInAs('e2e-user');
 });
 
 test('ログアウトでセッション削除', async ({ page, authenticate }) => {
   await authenticate('logout-flow');
-  await page.goto('/');
-  await page.getByRole('button', { name: 'ログアウト' }).click();
-  await expect(page).toHaveURL(/\/auth\/login/);
+  await new DashboardPage(page).logout();
+  await new LoginPage(page).expectLoaded();
 });
