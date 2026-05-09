@@ -3,8 +3,7 @@
 ## Layout
 
 - `app/` — Cloudflare Worker + Vite/React. **Run pnpm here.**
-- `terraform/` — D1 + Worker + secrets (state outside the repo).
-- `docs/oauth.md` — GitHub OAuth setup.
+- `terraform/` — D1 + Worker scaffold (state outside the repo).
 - Toolchain: @mise.toml (`mise trust && mise install`).
 
 ## Commands

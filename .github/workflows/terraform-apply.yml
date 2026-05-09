@@ -35,11 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - environment: production
-            workspace: default
-          - environment: develop
-            workspace: develop
+        environment: [production, develop]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     if: >-
@@ -62,7 +58,7 @@ jobs:
           bucket: ${{ secrets.CLOUDFLARE_R2_TFSTATE_BUCKET }}
           account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: terraform workspace select
-        if: matrix.workspace != 'default'
-        run: terraform workspace select -or-create ${{ matrix.workspace }}
+        if: matrix.environment != 'production'
+        run: terraform workspace select -or-create ${{ matrix.environment }}
       - name: terraform apply
         run: terraform apply -auto-approve

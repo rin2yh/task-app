@@ -100,7 +100,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - uses: ./.github/actions/setup
       - run: pnpm build
-      - run: pnpm exec wrangler deploy --env ${{ matrix.environment }}
+      # secret bulk を deploy 前にやる。新コードが live になる前に最新 secret が揃っている状態を保つ。
       - name: Sync Worker secrets
         env:
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
@@ -115,3 +115,4 @@ jobs:
             --arg github_client_secret "$GITHUB_CLIENT_SECRET" \
             '{SESSION_SECRET: $session_secret, APP_URL: $app_url, GITHUB_CLIENT_ID: $github_client_id, GITHUB_CLIENT_SECRET: $github_client_secret}' \
             | pnpm exec wrangler secret bulk --env ${{ matrix.environment }}
+      - run: pnpm exec wrangler deploy --env ${{ matrix.environment }}

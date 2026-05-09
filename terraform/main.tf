@@ -2,12 +2,11 @@ provider "cloudflare" {
   api_token = var.cloudflare_api_token
 }
 
-# default workspace = production（接尾辞なし）/ それ以外 = ワークスペース名を接尾辞に使う。
-# d1_database_name のみ既存 production リソース名 "task-app-prod" との互換のため非対称。
+# d1_database_name の production 値だけは既存リソース名 "task-app-prod" 互換のため非対称。
 locals {
   suffix           = terraform.workspace == "default" ? "" : "-${terraform.workspace}"
   worker_name      = "${var.worker_name}${local.suffix}"
-  d1_database_name = local.suffix == "" ? var.d1_database_name : "${var.worker_name}${local.suffix}"
+  d1_database_name = terraform.workspace == "default" ? var.d1_database_name : "${var.worker_name}${local.suffix}"
 }
 
 resource "cloudflare_d1_database" "task_app" {
@@ -20,7 +19,6 @@ resource "cloudflare_d1_database" "task_app" {
 resource "cloudflare_workers_script" "task_app" {
   account_id = var.cloudflare_account_id
   name       = local.worker_name
-  # 初期登録用のダミー content。以後 wrangler deploy が実体を上書きする。
   content = <<-EOT
     export default {
       fetch() { return new Response('bootstrap', { status: 200 }); }
@@ -46,6 +44,3 @@ resource "cloudflare_workers_script" "task_app" {
     ]
   }
 }
-
-# Worker secret (GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET / SESSION_SECRET / APP_URL) は
-# wrangler secret bulk で deploy.yml から注入する。Terraform は触らない。
