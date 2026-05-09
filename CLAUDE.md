@@ -11,19 +11,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands (inside `app/`)
 
-```bash
-pnpm dev | build | preview         # preview = wrangler dev against built worker (use for PWA SW)
-pnpm lint | format | typecheck     # Biome + tsc
-pnpm test                          # client/pages in jsdom (vitest.config.ts, 70% gate)
-pnpm test:workers                  # server in @cloudflare/vitest-pool-workers w/ real D1 (90%/85% gate)
-pnpm test:e2e                      # Playwright; webServer auto-runs `E2E_AUTH=1 pnpm dev`
-pnpm db:generate                   # drizzle-kit → migrations/000X_*.sql (commit the SQL)
-pnpm db:migrate:local | :prod
-pnpm exec vitest run path/to.test.ts -t "name"     # single test (add --config vitest.workers.config.ts for server)
-pnpm exec playwright test specs/x.spec.ts -g "name"
-```
+Scripts are defined in @app/package.json. Notes:
 
-Project gate before declaring done: `pnpm lint && pnpm typecheck && pnpm test && pnpm test:workers`.
+- `test` = client/pages (jsdom, 70% gate); `test:workers` = server in `@cloudflare/vitest-pool-workers` w/ real D1 (90%/85% gate); `test:e2e` auto-runs `E2E_AUTH=1 pnpm dev` via Playwright `webServer`.
+- `preview` = `wrangler dev` against the built worker — use it to verify the PWA SW.
+- `db:generate` writes `migrations/000X_*.sql` from `server/db/schema.ts`; commit the SQL.
+- Single test: `pnpm exec vitest run path/to.test.ts -t "name"` (add `--config vitest.workers.config.ts` for server) or `pnpm exec playwright test specs/x.spec.ts -g "name"`.
+- Project gate before declaring done: `pnpm lint && pnpm typecheck && pnpm test && pnpm test:workers`.
 
 ## Architecture
 
