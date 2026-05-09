@@ -43,7 +43,7 @@ migrations_dir = "./server/db/migrations"
 name = "task-app-develop"
 
 [env.develop.vars]
-TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
+TURNSTILE_SITE_KEY = "0x4AAAAAADMHiuemwTRSSKpw"
 
 [[env.develop.d1_databases]]
 binding = "DB"
