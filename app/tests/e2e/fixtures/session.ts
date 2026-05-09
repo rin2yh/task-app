@@ -9,8 +9,13 @@ export const test = base.extend<Fixtures>({
     const fn = async (login: string) => {
       // NODE_ENV=test でビルドされた worker は FakeGitHubOAuthClient を使い、
       // /auth/github → /auth/callback まで一気に redirect される。
-      await page.goto(`/auth/github?login=${encodeURIComponent(login)}`);
-      await page.waitForURL((url) => !url.pathname.startsWith('/auth/'));
+      // 本番フローは Turnstile 付きの POST だが、verifier は NODE_ENV=test で
+      // 常に成功するためダミートークンで十分。
+      const res = await page.request.post('/auth/github', {
+        form: { login, 'cf-turnstile-response': 'test' },
+      });
+      if (!res.ok()) throw new Error(`fake oauth failed: ${res.status()}`);
+      await page.goto(new URL(res.url()).pathname);
     };
     await use(fn);
   },

@@ -3,9 +3,12 @@ import type { AppEnv } from '../../env';
 import type { GitHubUser, OAuthClient } from './client';
 
 export class FakeGitHubOAuthClient implements OAuthClient {
-  constructor(private readonly c: Context<AppEnv>) {}
+  constructor(
+    private readonly c: Context<AppEnv>,
+    private readonly login?: string,
+  ) {}
   createAuthorizationURL(state: string, _scopes: string[]): URL {
-    const login = this.c.req.query('login') ?? 'e2e-user';
+    const login = this.login ?? this.c.req.query('login') ?? 'e2e-user';
     // 認可画面を介さず /auth/callback に直接バウンスさせる。code に login を
     // 載せ、後段の fetchUser が同じ文字列から user を組み立てる。
     const url = new URL(`${this.c.env.APP_URL}/auth/callback`);

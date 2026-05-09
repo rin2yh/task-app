@@ -5,6 +5,12 @@ compatibility_flags = ["nodejs_compat"]
 
 assets = { directory = "./dist/client", binding = "ASSETS" }
 
+# Cloudflare Turnstile の sitekey は公開情報なので vars に置く。
+# secret は `pnpm wrangler secret put TURNSTILE_SECRET_KEY` で env ごとに登録する。
+# https://developers.cloudflare.com/turnstile/troubleshooting/testing/
+[vars]
+TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
+
 [observability]
 enabled = true
 head_sampling_rate = 1
@@ -24,6 +30,9 @@ crons = ["0 3 * * *"]
 [env.production]
 name = "task-app"
 
+[env.production.vars]
+TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
+
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "task-app-prod"
@@ -32,6 +41,9 @@ migrations_dir = "./server/db/migrations"
 
 [env.develop]
 name = "task-app-develop"
+
+[env.develop.vars]
+TURNSTILE_SITE_KEY = "1x00000000000000000000AA"
 
 [[env.develop.d1_databases]]
 binding = "DB"
