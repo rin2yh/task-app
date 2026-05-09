@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
-const dir = path.dirname(fileURLToPath(import.meta.url));
+const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 export default defineConfig({
   plugins: [react()],

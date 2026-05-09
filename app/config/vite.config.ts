@@ -7,7 +7,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-const dir = path.dirname(fileURLToPath(import.meta.url));
+const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 export default defineConfig({
   plugins: [
@@ -18,7 +18,7 @@ export default defineConfig({
       outFile: 'pages.gen.ts',
     }),
     cloudflare({
-      configPath: './wrangler.toml',
+      configPath: path.resolve(dir, 'wrangler.toml'),
     }),
     VitePWA({
       strategies: 'injectManifest',
