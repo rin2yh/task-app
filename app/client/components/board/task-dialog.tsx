@@ -15,14 +15,14 @@ import { useState } from 'react';
 import { LabelChip } from '../shared/label-chip';
 import { PrioritySelect } from '../shared/priority-select';
 
-type Props = {
+interface Props {
   task: TaskWithLabels;
   allLabels: Label[];
   csrfToken: string;
   onClose: () => void;
   onUpdated: (task: TaskWithLabels) => void;
   onDeleted: (task: TaskWithLabels) => void;
-};
+}
 
 export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onDeleted }: Props) {
   const [title, setTitle] = useState(task.title);

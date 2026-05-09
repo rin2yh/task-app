@@ -1,10 +1,10 @@
 import type { Column, Task, TaskWithLabels } from '@shared/types';
 import { useState } from 'react';
 
-export type BoardState = {
+export interface BoardState {
   columns: Column[];
   tasksByColumn: Record<string, TaskWithLabels[]>;
-};
+}
 
 export function buildInitialState(columns: Column[], tasks: TaskWithLabels[]): BoardState {
   const sortedCols = [...columns].sort((a, b) => a.position - b.position);

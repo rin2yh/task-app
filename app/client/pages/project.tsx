@@ -11,12 +11,12 @@ import type {
 } from '@shared/types';
 import { useState } from 'react';
 
-type Props = {
+interface Props {
   project: ProjectT;
   columns: Column[];
   tasks: TaskWithLabels[];
   labels: Label[];
-};
+}
 
 export default function Project({ project, columns, tasks, labels }: Props) {
   const { props: shared } = usePage<SharedProps>();

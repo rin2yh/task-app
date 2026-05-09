@@ -30,15 +30,18 @@ export async function applyMigrations(): Promise<void> {
 }
 
 // vitest-pool-workers の D1 migration 型（簡易）
-type D1Migration = { name: string; queries: string[] };
+interface D1Migration {
+  name: string;
+  queries: string[];
+}
 
-export type TestUser = {
+export interface TestUser {
   id: number;
   login: string;
   sessionToken: string;
   csrfToken: string;
   cookies: string;
-};
+}
 
 export async function createTestUser(login: string): Promise<TestUser> {
   const db = createDb(ENV.DB);

@@ -8,7 +8,9 @@ import {
 } from '@client/components/ui/card';
 import { cn } from '@client/lib/utils';
 
-type Props = { error: string | null };
+interface Props {
+  error: string | null;
+}
 
 export default function Login({ error }: Props) {
   return (

@@ -5,13 +5,13 @@ import type { Column as ColumnT, TaskWithLabels } from '@shared/types';
 import { Plus, Trash2 } from 'lucide-react';
 import { TaskCard } from './task-card';
 
-type Props = {
+interface Props {
   column: ColumnT;
   tasks: TaskWithLabels[];
   onCreateTask: (columnId: string) => void;
   onSelectTask: (task: TaskWithLabels) => void;
   onDeleteColumn: (columnId: string) => void;
-};
+}
 
 export function Column({ column, tasks, onCreateTask, onSelectTask, onDeleteColumn }: Props) {
   const { setNodeRef } = useDroppable({

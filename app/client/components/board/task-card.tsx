@@ -6,10 +6,10 @@ import type { TaskWithLabels } from '@shared/types';
 import { LabelChip } from '../shared/label-chip';
 import { PriorityBadge } from '../shared/priority-select';
 
-type Props = {
+interface Props {
   task: TaskWithLabels;
   onClick: () => void;
-};
+}
 
 export function TaskCard({ task, onClick }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -26,7 +26,6 @@ export function TaskCard({ task, onClick }: Props) {
       style={style}
       {...attributes}
       {...listeners}
-      // biome-ignore lint/a11y/useSemanticElements: dnd-kit の listeners は div に割り当てる前提のため button 化できない
       role="button"
       tabIndex={0}
       className={cn('cursor-pointer transition-opacity', isDragging && 'opacity-40')}

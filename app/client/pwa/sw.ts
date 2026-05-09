@@ -1,6 +1,9 @@
 /// <reference lib="webworker" />
 
-type WBManifestEntry = { url: string; revision: string | null };
+interface WBManifestEntry {
+  url: string;
+  revision: string | null;
+}
 type SWGlobalScope = ServiceWorkerGlobalScope & { __WB_MANIFEST: WBManifestEntry[] };
 const sw = globalThis as unknown as SWGlobalScope;
 

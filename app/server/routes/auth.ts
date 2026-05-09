@@ -1,4 +1,4 @@
-import { OAuth2RequestError, generateState } from 'arctic';
+import { generateState, OAuth2RequestError } from 'arctic';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';

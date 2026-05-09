@@ -9,11 +9,11 @@ import {
 import { Input } from '@client/components/ui/input';
 import { Label as UiLabel } from '@client/components/ui/label';
 import {
+  closestCenter,
   DndContext,
   type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
-  closestCenter,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -24,12 +24,12 @@ import { buildInitialState, useOptimisticBoard } from '../../hooks/use-optimisti
 import { Column } from './column';
 import { TaskDialog } from './task-dialog';
 
-type Props = {
+interface Props {
   columns: ColumnT[];
   tasks: TaskWithLabels[];
   labels: Label[];
   csrfToken: string;
-};
+}
 
 export function Board({ columns, tasks, labels, csrfToken }: Props) {
   const board = useOptimisticBoard(buildInitialState(columns, tasks));

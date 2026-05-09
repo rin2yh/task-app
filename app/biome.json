@@ -1,15 +1,16 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.13/schema.json",
   "vcs": { "enabled": false, "clientKind": "git", "useIgnoreFile": true },
   "files": {
-    "ignore": [
-      "node_modules",
-      "dist",
-      ".wrangler",
-      "pages.gen.ts",
-      "playwright-report",
-      "test-results",
-      "coverage"
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/.wrangler",
+      "!**/pages.gen.ts",
+      "!**/playwright-report",
+      "!**/test-results",
+      "!**/coverage"
     ]
   },
   "formatter": {
@@ -18,13 +19,17 @@
     "indentWidth": 2,
     "lineWidth": 100
   },
-  "organizeImports": { "enabled": true },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
       "style": {
-        "useImportType": "warn"
+        "useImportType": "warn",
+        "useConsistentTypeDefinitions": {
+          "level": "warn",
+          "options": { "style": "interface" }
+        }
       }
     }
   },
@@ -34,5 +39,8 @@
       "semicolons": "always",
       "trailingCommas": "all"
     }
+  },
+  "css": {
+    "parser": { "cssModules": true, "tailwindDirectives": true }
   }
 }

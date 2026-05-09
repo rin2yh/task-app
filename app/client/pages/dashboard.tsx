@@ -5,7 +5,9 @@ import { router, usePage } from '@inertiajs/react';
 import type { Project, SharedProps } from '@shared/types';
 import { useState } from 'react';
 
-type Props = { projects: Project[] };
+interface Props {
+  projects: Project[];
+}
 
 export default function Dashboard({ projects }: Props) {
   const { props: shared } = usePage<SharedProps>();

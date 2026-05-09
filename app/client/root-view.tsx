@@ -1,11 +1,11 @@
 import { renderToString } from 'react-dom/server';
 import { Link, ReactRefresh, Script, ViteClient } from 'vite-ssr-components/react';
 
-type Page = {
+interface Page {
   component: string;
   props: Record<string, unknown>;
   url: string;
-};
+}
 
 export function rootView(page: Page): string {
   const dataPage = JSON.stringify(page);
