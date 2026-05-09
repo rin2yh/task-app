@@ -1,0 +1,99 @@
+name: PR Deploy
+
+# PR 上の固定コメントにあるチェックボックスを「ワンクリックデプロイ」のボタンとして使う。
+# pull_request: ボタン (固定コメント) を upsert する。
+# issue_comment.edited: チェックが入ったら develop へデプロイする。
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  issue_comment:
+    types: [edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  upsert-button:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
+        with:
+          header: pr-deploy-develop
+          message: |
+            <!-- pr-deploy-button -->
+            ### 🚀 develop デプロイ
+
+            - [ ] このPRを develop 環境にデプロイする
+
+            チェックを入れると、このPRブランチが Cloudflare Workers の `develop` 環境にデプロイされます。write 権限以上のユーザーのみ実行可能です。
+
+  guard:
+    # 固定コメントのチェックボックスが入ったときだけ走る。
+    # Bot の更新による再帰発火は sender.type で除外する。
+    if: |
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '<!-- pr-deploy-button -->') &&
+      contains(github.event.comment.body, '- [x] このPRを develop 環境にデプロイする') &&
+      github.event.sender.type != 'Bot'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Verify actor permission
+        run: |
+          PERM=$(gh api "repos/${{ github.repository }}/collaborators/${{ github.event.sender.login }}/permission" --jq .permission)
+          echo "Actor ${{ github.event.sender.login }} permission: $PERM"
+          case "$PERM" in
+            admin|maintain|write) ;;
+            *) echo "::error::User ${{ github.event.sender.login }} ($PERM) cannot trigger deploy" && exit 1 ;;
+          esac
+
+      # 二重押し防止のため、デプロイ中はチェックボックスを外して進行表示にする。
+      - name: Mark deploying
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
+        with:
+          number: ${{ github.event.issue.number }}
+          header: pr-deploy-develop
+          message: |
+            <!-- pr-deploy-button -->
+            ### 🚀 develop デプロイ
+
+            ⏳ **デプロイ中…** — [run #${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            実行者: @${{ github.event.sender.login }}
+
+  deploy:
+    needs: guard
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: develop
+      ref: refs/pull/${{ github.event.issue.number }}/head
+    secrets: inherit
+
+  report:
+    needs: [guard, deploy]
+    if: always() && needs.guard.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # 結果と URL を表示し、再デプロイ用のチェックボックスを再掲する。
+      - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
+        with:
+          number: ${{ github.event.issue.number }}
+          header: pr-deploy-develop
+          message: |
+            <!-- pr-deploy-button -->
+            ### 🚀 develop デプロイ
+
+            ${{ needs.deploy.result == 'success' && '✅' || '❌' }} **${{ needs.deploy.result }}** — ${{ needs.deploy.outputs.url || 'URL 取得失敗' }}
+            実行者: @${{ github.event.sender.login }} ([run #${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}))
+
+            ---
+
+            - [ ] このPRを develop 環境にデプロイする
+
+            再度チェックを入れると再デプロイされます。write 権限以上のユーザーのみ実行可能です。
