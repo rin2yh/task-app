@@ -15,7 +15,6 @@ on:
         options:
           - production
           - develop
-          - all
 
 permissions:
   contents: read
@@ -40,7 +39,6 @@ jobs:
     timeout-minutes: 15
     if: >-
       github.event_name != 'workflow_dispatch'
-      || inputs.environment == 'all'
       || inputs.environment == matrix.environment
     # infra と app の Deployments を分けるため -infra サフィックスの environment を使う。
     environment: ${{ matrix.environment }}-infra
