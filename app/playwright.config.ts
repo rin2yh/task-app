@@ -13,10 +13,10 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'E2E_AUTH=1 pnpm dev',
+    command: 'pnpm dev',
     url: 'http://localhost:5173',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    env: { E2E_AUTH: '1' },
+    env: { NODE_ENV: 'test' },
   },
 });
