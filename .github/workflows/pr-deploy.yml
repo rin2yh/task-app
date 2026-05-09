@@ -1,0 +1,144 @@
+name: PR Deploy (develop)
+
+# PR 上の固定コメントにあるチェックボックスを「ワンクリックデプロイ」のボタンとして使う。
+# pull_request: ボタン (固定コメント) を upsert する。
+# issue_comment.edited: チェックが入ったら develop へデプロイする。
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  issue_comment:
+    types: [edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  upsert-button:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
+        with:
+          header: pr-deploy-develop
+          message: |
+            <!-- pr-deploy-button -->
+            ### 🚀 develop デプロイ
+
+            - [ ] このPRを develop 環境にデプロイする
+
+            チェックを入れると、このPRブランチが Cloudflare Workers の `develop` 環境にデプロイされます。write 権限以上のユーザーのみ実行可能です。
+
+  guard:
+    # 固定コメントのチェックボックスが入ったときだけ走る。
+    # Bot の更新による再帰発火は sender.type で除外する。
+    if: |
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '<!-- pr-deploy-button -->') &&
+      contains(github.event.comment.body, '- [x] このPRを develop 環境にデプロイする') &&
+      github.event.sender.type != 'Bot'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Verify actor permission
+        run: |
+          PERM=$(gh api "repos/${{ github.repository }}/collaborators/${{ github.event.sender.login }}/permission" --jq .permission)
+          echo "Actor ${{ github.event.sender.login }} permission: $PERM"
+          case "$PERM" in
+            admin|maintain|write) ;;
+            *) echo "::error::User ${{ github.event.sender.login }} ($PERM) cannot trigger deploy" && exit 1 ;;
+          esac
+
+  migrate-db:
+    needs: guard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: develop
+    concurrency:
+      group: migrate-db-develop
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
+      - uses: ./.github/actions/setup
+      - run: pnpm exec wrangler d1 migrations apply task-app-develop --remote --env develop
+
+  deploy:
+    needs: [guard, migrate-db]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment:
+      name: develop
+      url: ${{ steps.deploy.outputs.url }}
+    concurrency:
+      group: deploy-develop
+      cancel-in-progress: false
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ENV: develop
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          ref: refs/pull/${{ github.event.issue.number }}/head
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+      - name: Sync Worker secrets
+        env:
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          APP_URL: ${{ secrets.APP_URL }}
+          GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
+        run: |
+          jq -n \
+            --arg session_secret "$SESSION_SECRET" \
+            --arg app_url "$APP_URL" \
+            --arg github_client_id "$GITHUB_CLIENT_ID" \
+            --arg github_client_secret "$GITHUB_CLIENT_SECRET" \
+            '{SESSION_SECRET: $session_secret, APP_URL: $app_url, GITHUB_CLIENT_ID: $github_client_id, GITHUB_CLIENT_SECRET: $github_client_secret}' \
+            | pnpm exec wrangler secret bulk --env develop
+      - name: Deploy
+        id: deploy
+        run: |
+          pnpm exec wrangler deploy --env develop 2>&1 | tee deploy.log
+          url=$(grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' deploy.log | head -n1)
+          if [ -z "$url" ]; then
+            echo "::warning::Could not parse deploy URL from wrangler output"
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+  report:
+    needs: [guard, deploy]
+    if: always() && needs.guard.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # チェックボックスをリセットして再度押せるようにする。
+      - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
+        with:
+          number: ${{ github.event.issue.number }}
+          header: pr-deploy-develop
+          message: |
+            <!-- pr-deploy-button -->
+            ### 🚀 develop デプロイ
+
+            - [ ] このPRを develop 環境にデプロイする
+
+            最終結果: **${{ needs.deploy.result }}** — ${{ needs.deploy.outputs.url || 'URL不明' }}
+            実行者: @${{ github.event.sender.login }}
+
+            再デプロイするには再度チェックを入れてください。write 権限以上のユーザーのみ実行可能です。
