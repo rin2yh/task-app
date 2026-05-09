@@ -8,7 +8,6 @@ on:
       - '.github/workflows/deploy.yml'
       - '.github/actions/setup/**'
       - '.github/actions/setup-e2e/**'
-      - '.github/actions/resolve-develop-d1/**'
   workflow_dispatch:
     inputs:
       environment:
@@ -65,9 +64,6 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - uses: ./.github/actions/setup
-      # develop の database_id は terraform state 側にしか無いので CI 時に解決して wrangler.toml に流し込む。
-      - if: matrix.environment == 'develop'
-        uses: ./.github/actions/resolve-develop-d1
       # production の D1 名だけ既存リソース互換のため非対称 ("task-app-prod")。
       - run: pnpm exec wrangler d1 migrations apply task-app-${{ matrix.environment == 'production' && 'prod' || matrix.environment }} --remote --env ${{ matrix.environment }}
 
@@ -93,9 +89,6 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - uses: ./.github/actions/setup
-      # @cloudflare/vite-plugin は wrangler.toml を読むので build より前に実 ID に差し替える。
-      - if: matrix.environment == 'develop'
-        uses: ./.github/actions/resolve-develop-d1
       - run: pnpm build
       # secret bulk を deploy 前にやる。新コードが live になる前に最新 secret が揃っている状態を保つ。
       - name: Sync Worker secrets
