@@ -55,16 +55,15 @@ jobs:
         run: tflint --format compact
 
   plan:
+    name: plan (${{ matrix.environment }})
     strategy:
       fail-fast: false
       matrix:
         include:
           - environment: production
             workspace: default
-            comment_header: terraform-plan-production
           - environment: develop
             workspace: develop
-            comment_header: terraform-plan-develop
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment: ${{ matrix.environment }}
@@ -103,7 +102,7 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
         with:
-          header: ${{ matrix.comment_header }}
+          header: terraform-plan-${{ matrix.environment }}
           message: |
             ### terraform plan — ${{ matrix.environment }} (${{ steps.plan.outcome }})
 
