@@ -19,11 +19,11 @@ pnpm dev                  # Vite + Wrangler dev (http://localhost:5173)
 | E2E (Playwright) | `pnpm test:e2e` | フルスタックシナリオ |
 | カバレッジ | `pnpm test --coverage` | server 90%+ / client 70%+ を CI で要求 |
 
-`pnpm test:e2e` は `playwright.config.ts` の `webServer` が `E2E_AUTH=1 pnpm dev` を自動起動します。手動起動は不要です。
+`pnpm test:e2e` は `playwright.config.ts` の `webServer` が `NODE_ENV=test pnpm dev` を自動起動します。手動起動は不要です。
 
 ### E2E バックドア
 
-`E2E_AUTH=1` のときだけ `POST /auth/test-login {"login": "..."}` が有効になり、テスト用のセッションを発行します。本番ビルドでは Vite define で `import.meta.env.E2E_AUTH` が空文字に固定されるため dead-code elimination されます。
+`NODE_ENV === 'test'` のときだけ `createOAuthClient` が `FakeGitHubOAuthClient` を返し、`/auth/github?login=<name>` で任意ユーザーとしてセッションを発行できます。Vite が `process.env.NODE_ENV` をビルド時に静的置換するため、本番ビルドでは分岐ごと dead-code elimination され、フェイク実装はバンドルに含まれません。
 
 ## Lint / Format / 型
 
