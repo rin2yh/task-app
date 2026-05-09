@@ -30,7 +30,7 @@ pnpm dev                  # Vite + Wrangler dev (http://localhost:5173)
 ```bash
 pnpm lint                 # Biome check
 pnpm format               # Biome format --write
-pnpm typecheck            # tsc --noEmit
+pnpm typecheck            # tsgo --noEmit
 ```
 
 タスク完了前に `pnpm lint && pnpm typecheck && pnpm test && pnpm test:workers` を回してください (リポジトリ規約)。
