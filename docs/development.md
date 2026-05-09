@@ -44,7 +44,7 @@ pnpm db:generate          # drizzle-kit が server/db/migrations/000X_xxx.sql �
 pnpm db:migrate:local     # ローカル D1 に適用
 ```
 
-本番への適用は `pnpm db:migrate:prod` (デプロイ手順参照)。
+本番への適用は `docs/deployment.md` を参照（CI 自動 / 緊急時のみ手動 wrangler 実行）。
 
 `server/db/migrations/` は git 管理対象です。生成 SQL を必ずコミットしてください。
 

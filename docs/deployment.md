@@ -29,7 +29,7 @@ Worker 本体は `lifecycle.ignore_changes = [content, module]` のため、Terr
 
 ```bash
 cd task-app/app
-pnpm db:migrate:prod
+pnpm exec wrangler d1 migrations apply task-app-prod --remote --env production
 ```
 
 ## 3. ビルドとデプロイ
