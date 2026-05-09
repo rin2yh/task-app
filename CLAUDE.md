@@ -9,15 +9,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `docs/` — `setup.md`, `development.md`, `deployment.md`, `cicd.md`.
 - `mise.toml` pins `node 24` / `pnpm 11` / `terraform 1.9.8` / `tflint 0.55.1`.
 
-## Commands (inside `app/`)
+## Commands
 
-Scripts are defined in @app/package.json. Notes:
-
-- `test` = client/pages (jsdom, 70% gate); `test:workers` = server in `@cloudflare/vitest-pool-workers` w/ real D1 (90%/85% gate); `test:e2e` auto-runs `E2E_AUTH=1 pnpm dev` via Playwright `webServer`.
-- `preview` = `wrangler dev` against the built worker — use it to verify the PWA SW.
-- `db:generate` writes `migrations/000X_*.sql` from `server/db/schema.ts`; commit the SQL.
-- Single test: `pnpm exec vitest run path/to.test.ts -t "name"` (add `--config vitest.workers.config.ts` for server) or `pnpm exec playwright test specs/x.spec.ts -g "name"`.
-- Project gate before declaring done: `pnpm lint && pnpm typecheck && pnpm test && pnpm test:workers`.
+Scripts: @app/package.json. Run all `pnpm` commands inside `app/`. Single test: `pnpm exec vitest run <path> -t "name"` (add `--config vitest.workers.config.ts` for server tests). Project gate before declaring done: `pnpm lint && pnpm typecheck && pnpm test && pnpm test:workers`.
 
 ## Architecture
 
