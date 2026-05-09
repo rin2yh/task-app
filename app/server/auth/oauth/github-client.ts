@@ -1,6 +1,6 @@
 import { GitHub } from 'arctic';
-import type { Env } from '../env';
-import type { GitHubUser, OAuthClient } from './oauth';
+import type { Env } from '../../env';
+import type { GitHubUser, OAuthClient } from './client';
 
 export class GitHubOAuthClient implements OAuthClient {
   private readonly gh: GitHub;

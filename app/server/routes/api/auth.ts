@@ -2,9 +2,9 @@ import { generateState, OAuth2RequestError } from 'arctic';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
-import { csrfGuard } from '../auth/middleware';
-import type { GitHubUser } from '../auth/oauth';
-import { createOAuthClient } from '../auth/oauth-factory';
+import { csrfGuard } from '../../auth/middleware';
+import type { GitHubUser } from '../../auth/oauth/client';
+import { createOAuthClient } from '../../auth/oauth/factory';
 import {
   clearOAuthStateCookie,
   clearSessionCookies,
@@ -12,10 +12,10 @@ import {
   deleteSession,
   setOAuthStateCookie,
   setSessionCookies,
-} from '../auth/session';
-import { createDb } from '../db/client';
-import { users } from '../db/schema';
-import type { AppEnv } from '../env';
+} from '../../auth/session';
+import { createDb } from '../../db/client';
+import { users } from '../../db/schema';
+import type { AppEnv } from '../../env';
 
 const STATE_COOKIE = 'oauth-state';
 

@@ -1,16 +1,16 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { csrfGuard, requireAuth, requireUser } from '../auth/middleware';
-import { createDb } from '../db/client';
+import { csrfGuard, requireAuth, requireUser } from '../../auth/middleware';
+import { createDb } from '../../db/client';
 import {
   createLabel,
   deleteLabel,
   listLabelsForProject,
   updateLabel,
-} from '../db/repositories/labels';
-import type { AppEnv } from '../env';
-import { NotFound } from '../lib/errors';
-import { parseJson } from '../lib/validation';
+} from '../../db/repositories/labels';
+import type { AppEnv } from '../../env';
+import { NotFound } from '../../lib/errors';
+import { parseJson } from '../../lib/validation';
 
 const ColorRe = /^#[0-9a-fA-F]{6}$/;
 

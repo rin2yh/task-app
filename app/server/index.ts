@@ -6,12 +6,12 @@ import { sessionLoader } from './auth/middleware';
 import { purgeExpired } from './auth/session';
 import { createDb } from './db/client';
 import type { AppEnv } from './env';
-import { authRoutes } from './routes/auth';
-import { columnRoutes, columnsByProjectRoutes } from './routes/columns';
-import { labelRoutes, labelsByProjectRoutes } from './routes/labels';
+import { authRoutes } from './routes/api/auth';
+import { columnRoutes, columnsByProjectRoutes } from './routes/api/columns';
+import { labelRoutes, labelsByProjectRoutes } from './routes/api/labels';
+import { projectRoutes } from './routes/api/projects';
+import { taskRoutes, tasksByColumnRoutes } from './routes/api/tasks';
 import { pageRoutes } from './routes/pages';
-import { projectRoutes } from './routes/projects';
-import { taskRoutes, tasksByColumnRoutes } from './routes/tasks';
 
 const ASSETS_VERSION = '1';
 
