@@ -23,6 +23,7 @@ defaults:
 jobs:
   e2e-full:
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - uses: ./.github/actions/setup
@@ -39,6 +40,7 @@ jobs:
 
   migrate-db:
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     needs: [e2e-full]
     environment: production
     env:
@@ -51,6 +53,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     needs: [migrate-db]
     environment: production
     env:
