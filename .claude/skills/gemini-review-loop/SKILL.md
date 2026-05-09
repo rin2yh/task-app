@@ -33,7 +33,7 @@ mcp__github__pull_request_read({ method: "get_pull_request_review_comments", own
 ```
 
 - author が `gemini-code-assist[bot]` のレビューを抽出。
-- 最新のレビューにぶら下がる review comments のうち `resolved: false` のものを列挙し、未対応があれば**先に修正してコミット & push し、step 7 の手順 (`add_reply_to_pull_request_comment` で commit SHA 付きで返信) に従って各 comment に返信**する。
+- 返ってくる review thread の `is_resolved: false` のものを列挙し、未対応があれば**先に修正してコミット & push し、step 7 の手順 (`add_reply_to_pull_request_comment` で commit SHA 付きで返信) に従って各 comment に返信**する (`resolved` ではなく `is_resolved` なので注意)。
 - 既に全部対応済みなら次に進む。
 
 ### 3. `/gemini review` を PR コメントで投げる
