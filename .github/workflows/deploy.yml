@@ -13,10 +13,10 @@ on:
       environment:
         description: Target environment
         type: choice
-        default: production
+        default: develop
         options:
-          - production
           - develop
+          - production
 
 permissions:
   contents: read
