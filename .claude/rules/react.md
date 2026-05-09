@@ -1,5 +1,5 @@
 ---
-globs: "**/*.{ts,tsx}"
+paths: "**/*.{ts,tsx}"
 ---
 
 # React rules
