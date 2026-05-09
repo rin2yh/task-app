@@ -6,7 +6,6 @@ export interface Env {
   GITHUB_CLIENT_SECRET: string;
   SESSION_SECRET: string;
   ALLOWED_LOGINS?: string;
-  E2E_AUTH?: string;
 }
 
 export interface AppVariables {

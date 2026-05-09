@@ -23,7 +23,6 @@ GITHUB_CLIENT_SECRET="..."
 SESSION_SECRET="..."        # 32+ 文字のランダム値 (例: openssl rand -hex 32)
 APP_URL="http://localhost:5173"
 ALLOWED_LOGINS=""            # 空なら誰でもログイン可。カンマ区切りで GitHub login を制限可能
-E2E_AUTH=""                  # 通常開発は "" のまま。CI の E2E は .dev.vars.example をそのまま使う ("1")
 ```
 
 `.dev.vars` は git 管理外です。
