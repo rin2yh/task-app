@@ -32,9 +32,7 @@ jobs:
           key: playwright-${{ hashFiles('app/pnpm-lock.yaml') }}
       - run: pnpm exec playwright install --with-deps chromium
       - name: Stage .dev.vars for E2E
-        run: |
-          cp .dev.vars.example .dev.vars
-          sed -i 's/^E2E_AUTH=.*/E2E_AUTH="1"/' .dev.vars
+        run: cp .dev.vars.example .dev.vars
       - name: Apply D1 migrations (local)
         run: pnpm db:migrate:local
       - name: Playwright (full)
