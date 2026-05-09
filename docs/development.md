@@ -15,7 +15,7 @@ pnpm dev                  # Vite + Wrangler dev (http://localhost:5173)
 | 層 | コマンド | 概要 |
 |---|---|---|
 | クライアント (jsdom) | `pnpm test` | React コンポーネントと hooks |
-| サーバ (workers pool) | `pnpm test:workers` | Hono ルート、リポジトリ、認可、CSRF を実 D1 で |
+| サーバ (workers pool) | `pnpm test:server` | Hono ルート、リポジトリ、認可、CSRF を実 D1 で |
 | E2E (Playwright) | `pnpm test:e2e` | フルスタックシナリオ |
 | カバレッジ | `pnpm test --coverage` | server 90%+ / client 70%+ を CI で要求 |
 
@@ -33,7 +33,7 @@ pnpm format               # Biome format --write
 pnpm typecheck            # tsgo --noEmit
 ```
 
-タスク完了前に `pnpm lint && pnpm typecheck && pnpm test && pnpm test:workers` を回してください (リポジトリ規約)。
+タスク完了前に `pnpm lint && pnpm typecheck && pnpm test && pnpm test:server` を回してください (リポジトリ規約)。
 
 ## DB マイグレーション
 

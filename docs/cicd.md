@@ -39,7 +39,7 @@ pnpm install
 pnpm lint
 pnpm typecheck
 pnpm test
-pnpm test:workers
+pnpm test:server
 pnpm exec playwright test --only-changed=origin/main
 pnpm build
 

@@ -9,7 +9,7 @@
     "preview": "wrangler dev",
     "test": "vitest run --config config/vitest.config.ts",
     "test:watch": "vitest --config config/vitest.config.ts",
-    "test:workers": "mkdir -p dist/client && vitest run --config config/vitest.workers.config.ts",
+    "test:server": "mkdir -p dist/client && vitest run --config config/vitest.workers.config.ts",
     "test:e2e": "playwright test --config config/playwright.config.ts",
     "lint": "biome check .",
     "format": "biome format --write .",

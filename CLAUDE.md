@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-Scripts: @app/package.json. Run all `pnpm` commands inside `app/`. Tool configs (vite/vitest/playwright/drizzle) live in `app/config/`; pnpm scripts pass `--config config/...` for you. `biome.json`, `tsconfig.json`, `wrangler.toml`, `components.json` stay at `app/` per tooling convention. Single test: `pnpm exec vitest run --config config/vitest.config.ts <path> -t "name"` (use `config/vitest.workers.config.ts` for server tests). Project gate before declaring done: `pnpm lint && pnpm typecheck && pnpm test && pnpm test:workers`.
+Scripts: @app/package.json. Run all `pnpm` commands inside `app/`. Tool configs (vite/vitest/playwright/drizzle) live in `app/config/`; pnpm scripts pass `--config config/...` for you. `biome.json`, `tsconfig.json`, `wrangler.toml`, `components.json` stay at `app/` per tooling convention. Single test: `pnpm exec vitest run --config config/vitest.config.ts <path> -t "name"` (use `config/vitest.workers.config.ts` for server tests). Project gate before declaring done: `pnpm lint && pnpm typecheck && pnpm test && pnpm test:server`.
 
 ## Architecture
 
