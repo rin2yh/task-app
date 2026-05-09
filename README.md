@@ -22,6 +22,3 @@ pnpm migrate
 pnpm dev                               # http://localhost:5173
 ```
 
-## ドキュメント
-
-- [docs/oauth.md](docs/oauth.md) — GitHub OAuth App（ローカル / 本番）
