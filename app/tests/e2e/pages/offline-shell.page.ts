@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 export class OfflineShellPage {
   private readonly offlineMessage: Locator;
@@ -9,6 +9,8 @@ export class OfflineShellPage {
   }
 
   async expectVisible() {
-    await expect(this.offlineMessage).toBeVisible();
+    await test.step('オフラインシェルが表示されている', async () => {
+      await expect(this.offlineMessage).toBeVisible();
+    });
   }
 }

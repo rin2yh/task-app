@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 export class LoginPage {
   private readonly page: Page;
@@ -13,11 +13,15 @@ export class LoginPage {
   }
 
   async goto() {
-    await this.page.goto('/auth/login');
+    await test.step('ログイン画面を開く', async () => {
+      await this.page.goto('/auth/login');
+    });
   }
 
   async expectLoaded() {
-    await expect(this.heading).toBeVisible();
-    await expect(this.githubLoginLink).toBeVisible();
+    await test.step('ログイン画面が表示されている', async () => {
+      await expect(this.heading).toBeVisible();
+      await expect(this.githubLoginLink).toBeVisible();
+    });
   }
 }

@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 export class ProjectPage {
   private readonly page: Page;
@@ -15,7 +15,9 @@ export class ProjectPage {
   }
 
   async expectLoaded() {
-    await expect(this.heading).toBeVisible();
+    await test.step('プロジェクト画面が表示されている', async () => {
+      await expect(this.heading).toBeVisible();
+    });
   }
 
   private columnHeading(name: string): Locator {
@@ -31,26 +33,31 @@ export class ProjectPage {
   }
 
   async addColumn(name: string) {
-    await this.newColumnInput.fill(name);
-    await this.addColumnButton.click();
-    await expect(this.columnHeading(name)).toBeVisible();
+    await test.step(`列 "${name}" を追加`, async () => {
+      await this.newColumnInput.fill(name);
+      await this.addColumnButton.click();
+      await expect(this.columnHeading(name)).toBeVisible();
+    });
   }
 
-  /** 最初の列に対してタスク追加ダイアログを開き、タイトル入力 → 作成。 */
   async addTaskToFirstColumn(title: string) {
-    await this.page
-      .getByRole('button', { name: /タスク追加/ })
-      .first()
-      .click();
-    const dialog = this.newTaskDialog();
-    await dialog.getByPlaceholder('タイトル').fill(title);
-    await dialog.getByRole('button', { name: '作成' }).click();
-    await expect(this.taskCard(title)).toBeVisible();
+    await test.step(`最初の列にタスク "${title}" を追加`, async () => {
+      await this.page
+        .getByRole('button', { name: /タスク追加/ })
+        .first()
+        .click();
+      const dialog = this.newTaskDialog();
+      await dialog.getByPlaceholder('タイトル').fill(title);
+      await dialog.getByRole('button', { name: '作成' }).click();
+      await expect(this.taskCard(title)).toBeVisible();
+    });
   }
 
   async expectColumnsVisible(names: string[]) {
-    for (const name of names) {
-      await expect(this.columnHeading(name)).toBeVisible();
-    }
+    await test.step(`列 [${names.join(', ')}] が表示されている`, async () => {
+      for (const name of names) {
+        await expect(this.columnHeading(name)).toBeVisible();
+      }
+    });
   }
 }

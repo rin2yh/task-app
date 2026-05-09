@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { ProjectPage } from './project.page';
 
 export class DashboardPage {
@@ -18,7 +18,9 @@ export class DashboardPage {
   }
 
   async goto() {
-    await this.page.goto('/');
+    await test.step('ダッシュボードを開く', async () => {
+      await this.page.goto('/');
+    });
   }
 
   private projectLink(name: string): Locator {
@@ -26,24 +28,32 @@ export class DashboardPage {
   }
 
   async createProject(name: string) {
-    await this.projectNameInput.fill(name);
-    await this.createButton.click();
-    await expect(this.projectLink(name)).toBeVisible();
+    await test.step(`プロジェクト "${name}" を作成`, async () => {
+      await this.projectNameInput.fill(name);
+      await this.createButton.click();
+      await expect(this.projectLink(name)).toBeVisible();
+    });
   }
 
   async openProject(name: string): Promise<ProjectPage> {
-    await this.projectLink(name).click();
-    const project = new ProjectPage(this.page, name);
-    await project.expectLoaded();
-    return project;
+    return await test.step(`プロジェクト "${name}" を開く`, async () => {
+      await this.projectLink(name).click();
+      const project = new ProjectPage(this.page, name);
+      await project.expectLoaded();
+      return project;
+    });
   }
 
   async logout() {
-    await this.logoutButton.click();
+    await test.step('ログアウト', async () => {
+      await this.logoutButton.click();
+    });
   }
 
   async expectLoggedInAs(login: string) {
-    await expect(this.header).toContainText(login);
-    await expect(this.logoutButton).toBeVisible();
+    await test.step(`ユーザー "${login}" でログイン中である`, async () => {
+      await expect(this.header).toContainText(login);
+      await expect(this.logoutButton).toBeVisible();
+    });
   }
 }
