@@ -43,11 +43,11 @@ mcp__github__add_issue_comment({ owner: "rin2yh", repo: "task-app", issueNumber:
 ```
 
 - body は `/gemini review` の **1 行のみ**。前置き文 ("お願いします" 等) を付けない (Gemini bot が command として認識しないことがある)。
-- 投稿直後に PR の `updated_at` が動くので、後の polling 用に `now` を控える。
+- 投稿直後に PR の `updated_at` が動くので、後のイベントがこの投稿より新しいことを確認するために現在時刻を控える。
 
 ### 4. Gemini の新レビューを待つ
 
-`mcp__github__subscribe_pr_activity({ owner, repo, pull_number })` で PR を subscribe し、**ターンを終了する**。
+`mcp__github__subscribe_pr_activity({ owner, repo, pullNumber })` で PR を subscribe し、**ターンを終了する**。
 
 - `<github-webhook-activity>` イベントとして webhook が届いたら次のステップへ。
 - **`Bash sleep` で polling しない。** webhook で起こされるのを待つ (CLAUDE Code の規約)。
