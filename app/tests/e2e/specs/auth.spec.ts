@@ -1,23 +1,24 @@
 import { expect, test } from '../fixtures/session';
 
-test('未ログイン時は /auth/login にリダイレクト', async ({ page }) => {
+test('未ログイン時は /auth/login にリダイレクト', async ({ page, loginPage }) => {
   const res = await page.goto('/');
   expect(res?.url()).toContain('/auth/login');
+  await loginPage.expectLoaded();
 });
 
 test('fake gh OAuth フローでログインしダッシュボードにアクセスできる', async ({
-  page,
   authenticate,
+  dashboardPage,
 }) => {
   await authenticate('e2e-user');
-  await page.goto('/');
-  await expect(page.getByRole('banner')).toContainText('e2e-user');
-  await expect(page.getByRole('button', { name: 'ログアウト' })).toBeVisible();
+  await dashboardPage.goto();
+  await expect(dashboardPage.header).toContainText('e2e-user');
+  await expect(dashboardPage.logoutButton).toBeVisible();
 });
 
-test('ログアウトでセッション削除', async ({ page, authenticate }) => {
+test('ログアウトでセッション削除', async ({ page, authenticate, dashboardPage }) => {
   await authenticate('logout-flow');
-  await page.goto('/');
-  await page.getByRole('button', { name: 'ログアウト' }).click();
+  await dashboardPage.goto();
+  await dashboardPage.logout();
   await expect(page).toHaveURL(/\/auth\/login/);
 });

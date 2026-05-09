@@ -12,10 +12,11 @@ test('オフライン時にシェルが表示される（本番ビルド時の�
   page,
   context,
   authenticate,
+  dashboardPage,
 }) => {
   test.skip(process.env.E2E_ENV !== 'prod', 'PWA 検証は本番ビルド向け');
   await authenticate('pwa');
-  await page.goto('/');
+  await dashboardPage.goto();
   await context.setOffline(true);
   await page.reload();
   await expect(page.getByText(/オフライン/)).toBeVisible();
