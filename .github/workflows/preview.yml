@@ -41,6 +41,15 @@ jobs:
       - run: pnpm db:migrate:preview
       - run: pnpm build
       - run: pnpm exec wrangler deploy --env preview
+      - name: Write run summary
+        run: |
+          {
+            echo "### Preview deployed"
+            echo
+            echo "- URL: ${{ vars.PREVIEW_APP_URL }}"
+            echo "- Ref: \`${{ github.ref_name }}\`"
+            echo "- Commit: \`${{ github.sha }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Upsert preview comment
         if: inputs.pr_number != ''
         uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
