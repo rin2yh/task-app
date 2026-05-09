@@ -24,7 +24,6 @@ pnpm dev                               # http://localhost:5173
 
 ## ドキュメント
 
-- [docs/setup.md](docs/setup.md) — GitHub OAuth アプリ作成、Cloudflare アカウント、シークレット設定
 - [docs/development.md](docs/development.md) — テスト、マイグレーション、E2E、PWA、トラブルシューティング
 - [docs/deployment.md](docs/deployment.md) — Terraform + `wrangler deploy` 本番デプロイ手順（手動運用・緊急対応）
 - [docs/cicd.md](docs/cicd.md) — GitHub Actions による CI / 本番デプロイ / Terraform 自動化

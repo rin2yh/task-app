@@ -1,5 +1,9 @@
+# GitHub OAuth App: https://github.com/settings/developers
+# Authorization callback URL: http://localhost:5173/auth/callback
 GITHUB_CLIENT_ID="your-github-client-id"
 GITHUB_CLIENT_SECRET="your-github-client-secret"
+# 32+ chars (e.g. `openssl rand -hex 32`)
 SESSION_SECRET="generate-a-strong-32+-char-secret"
 APP_URL="http://localhost:5173"
+# Empty = anyone can sign in. Comma-separated GitHub logins to restrict.
 ALLOWED_LOGINS=""
