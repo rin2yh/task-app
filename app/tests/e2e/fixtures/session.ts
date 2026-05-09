@@ -1,11 +1,7 @@
 import { test as base } from '@playwright/test';
-import { DashboardPage } from '../pages/dashboard.page';
-import { LoginPage } from '../pages/login.page';
 
 interface Fixtures {
   authenticate: (login: string) => Promise<void>;
-  loginPage: LoginPage;
-  dashboardPage: DashboardPage;
 }
 
 export const test = base.extend<Fixtures>({
@@ -17,12 +13,6 @@ export const test = base.extend<Fixtures>({
       await page.waitForURL((url) => !url.pathname.startsWith('/auth/'));
     };
     await use(fn);
-  },
-  loginPage: async ({ page }, use) => {
-    await use(new LoginPage(page));
-  },
-  dashboardPage: async ({ page }, use) => {
-    await use(new DashboardPage(page));
   },
 });
 
