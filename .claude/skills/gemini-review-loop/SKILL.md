@@ -9,7 +9,7 @@ description: PR で Gemini Code Assist のレビューに対応し、`/gemini re
 
 ## 前提
 
-- 対象 PR が `rin2yh/task-app` に存在し、Gemini Code Assist app がインストールされている。
+- 対象 PR が現在のリポジトリに存在し、Gemini Code Assist app がインストールされている。
 - ユーザは「直近の Gemini レビューには既に対応済み (= push 済み)」の状態でこの skill を起動する想定。**最初の `/gemini review` 投稿は人間の review 対応より後**に行う。
 - GitHub 操作は `mcp__github__*` ツール経由 (`gh` CLI は使わない)。
 
@@ -39,11 +39,11 @@ mcp__github__pull_request_read({ method: "get_pull_request_review_comments", own
 ### 3. `/gemini review` を PR コメントで投げる
 
 ```
-mcp__github__add_issue_comment({ owner: "<owner>", repo: "<repo>", issue_number: <pr>, body: "/gemini review" })
+mcp__github__add_issue_comment({ owner, repo, issue_number: pullNumber, body: "/gemini review" })
 ```
 
 - body は `/gemini review` の **1 行のみ**。前置き文 ("お願いします" 等) を付けない (Gemini bot が command として認識しないことがある)。
-- 投稿直後に PR の `updated_at` が動くので、後のイベントがこの投稿より新しいことを確認するために現在時刻を控える。
+- 投稿直後に PR の `updated_at` が動くので、後のイベントがこの投稿より新しいことを確認するために、`add_issue_comment` のレスポンスに含まれる `created_at` を基準時刻として控える。
 
 ### 4. Gemini の新レビューを待つ
 
@@ -64,7 +64,8 @@ webhook で起きたら、まず author / event type を確認:
 ### 6. レビュー内容を読み、終了判定する
 
 ```
-mcp__github__pull_request_read({ method: "get_pull_request_reviews", ... })
+mcp__github__pull_request_read({ method: "get_pull_request_reviews", owner, repo, pullNumber })
+mcp__github__pull_request_read({ method: "get_pull_request_review_comments", owner, repo, pullNumber })
 ```
 
 最新の Gemini review について以下のいずれかなら**ループを抜ける**:
@@ -81,9 +82,12 @@ mcp__github__pull_request_read({ method: "get_pull_request_reviews", ... })
 指摘が actionable なら:
 
 1. comment ごとに「直す / 反論する」を判断。実装方針が複数ある時は `AskUserQuestion`。
-2. コードを修正してコミット & push (ブランチは現在のブランチ)。
-3. 直さない / 直せない comment には `mcp__github__add_reply_to_pull_request_comment` で**理由を返信**する (黙って閉じない)。
-4. step 3 に戻って再度 `/gemini review` を投げる。
+2. コードを修正してコミット & push (ブランチは現在のブランチ)。**push 後に `git rev-parse HEAD` で commit SHA を控える** (次のステップで使う)。
+3. **対応した comment には必ず `mcp__github__add_reply_to_pull_request_comment` で返信する**。フォーマット:
+   - 直した場合: 何を変えたかを 1〜2 文 + commit SHA (短縮 7 桁) を `Fixed in <sha>` の形で。例: `pullNumber に統一しました。Fixed in 0adef48`。
+   - 直さない場合: 理由を 1〜2 文 (黙って閉じない)。
+   1 つの commit で複数 comment に対応した場合は同じ SHA を各返信に貼る。
+4. step 3 (`/gemini review` 投稿) に戻る。
 
 ## やらないこと
 
