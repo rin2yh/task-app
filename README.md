@@ -16,7 +16,7 @@ cp .dev.vars.example .dev.vars        # 編集して GitHub OAuth 等を設定
 
 # 3. ローカル D1 を作成して migration 適用
 wrangler d1 create task-app-local      # 出力 database_id を wrangler.toml に貼る
-pnpm db:migrate:local
+pnpm migrate
 
 # 4. 起動
 pnpm dev                               # http://localhost:5173
@@ -24,7 +24,4 @@ pnpm dev                               # http://localhost:5173
 
 ## ドキュメント
 
-- [docs/setup.md](docs/setup.md) — GitHub OAuth アプリ作成、Cloudflare アカウント、シークレット設定
-- [docs/development.md](docs/development.md) — テスト、マイグレーション、E2E、PWA、トラブルシューティング
-- [docs/deployment.md](docs/deployment.md) — Terraform + `wrangler deploy` 本番デプロイ手順（手動運用・緊急対応）
-- [docs/cicd.md](docs/cicd.md) — GitHub Actions による CI / 本番デプロイ / Terraform 自動化
+- [docs/oauth.md](docs/oauth.md) — GitHub OAuth App（ローカル / 本番）
