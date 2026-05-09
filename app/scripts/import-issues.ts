@@ -4,9 +4,12 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { ulid } from '../server/db/ulid';
 
-type GhLabel = { name?: string; color?: string | null };
+interface GhLabel {
+  name?: string;
+  color?: string | null;
+}
 
-type GhContent = {
+interface GhContent {
   type?: string;
   number?: number;
   title?: string;
@@ -14,16 +17,16 @@ type GhContent = {
   url?: string;
   state?: string;
   labels?: GhLabel[];
-};
+}
 
-type GhItem = {
+interface GhItem {
   id?: string;
   content?: GhContent;
   title?: string;
   [key: string]: unknown;
-};
+}
 
-type ParsedArgs = {
+interface ParsedArgs {
   userLogin: string;
   input: string;
   output: string;
@@ -32,32 +35,9 @@ type ParsedArgs = {
   dueField: string;
   dryRun: boolean;
   force: boolean;
-};
+}
 
 type Priority = 'low' | 'medium' | 'high';
-
-type LabelEntry = { id: string; name: string; color: string };
-
-type ColumnEntry = { id: string; name: string; position: number };
-
-type BuildOpts = {
-  items: GhItem[];
-  ownerId: number;
-  now: number;
-  projectName: string;
-  statusField: string;
-  priorityField: string;
-  dueField: string;
-};
-
-type BuildResult = {
-  sql: string;
-  columns: number;
-  labels: number;
-  tasks: number;
-  issues: number;
-  drafts: number;
-};
 
 const DEFAULTS = {
   input: 'tmp/project-items.json',
@@ -77,7 +57,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   const out: Record<string, string | boolean> = {};
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (!a || !a.startsWith('--')) continue;
+    if (!a?.startsWith('--')) continue;
     const key = a.slice(2);
     if (key === 'dry-run' || key === 'force') {
       out[key] = true;
@@ -91,16 +71,15 @@ function parseArgs(argv: string[]): ParsedArgs {
       out[key] = true;
     }
   }
-  const userLogin = typeof out['user-login'] === 'string' ? out['user-login'] : '';
+  const str = (k: string, fallback: string): string =>
+    typeof out[k] === 'string' ? (out[k] as string) : fallback;
   return {
-    userLogin,
-    input: typeof out.input === 'string' ? out.input : DEFAULTS.input,
-    output: typeof out.output === 'string' ? out.output : DEFAULTS.output,
-    statusField:
-      typeof out['status-field'] === 'string' ? out['status-field'] : DEFAULTS.statusField,
-    priorityField:
-      typeof out['priority-field'] === 'string' ? out['priority-field'] : DEFAULTS.priorityField,
-    dueField: typeof out['due-field'] === 'string' ? out['due-field'] : DEFAULTS.dueField,
+    userLogin: str('user-login', ''),
+    input: str('input', DEFAULTS.input),
+    output: str('output', DEFAULTS.output),
+    statusField: str('status-field', DEFAULTS.statusField),
+    priorityField: str('priority-field', DEFAULTS.priorityField),
+    dueField: str('due-field', DEFAULTS.dueField),
     dryRun: out['dry-run'] === true,
     force: out.force === true,
   };
@@ -119,155 +98,130 @@ function normalizeKey(s: string): string {
   return s.toLowerCase().replace(/[\s_-]+/g, '');
 }
 
-function findField(item: GhItem, fieldName: string): { key: string; value: unknown } | undefined {
+function getField(item: GhItem, fieldName: string): unknown {
   const target = normalizeKey(fieldName);
   for (const [key, value] of Object.entries(item)) {
-    if (normalizeKey(key) === target) return { key, value };
+    if (normalizeKey(key) === target) return value;
   }
   return undefined;
 }
 
-function mapPriority(raw: string | null | undefined): Priority {
-  if (!raw) return 'medium';
+function mapPriority(raw: string): Priority {
   const v = raw.toLowerCase().trim();
   if (['urgent', 'critical', 'p0', 'high', '高'].includes(v)) return 'high';
-  if (['medium', 'normal', 'p1', '中'].includes(v)) return 'medium';
   if (['low', 'p2', '低'].includes(v)) return 'low';
   return 'medium';
 }
 
-function getStatus(item: GhItem, statusField: string): string | null {
-  const f = findField(item, statusField);
-  if (!f) return null;
-  if (typeof f.value === 'string' && f.value.length > 0) return f.value;
-  return null;
+function getStatus(item: GhItem, fieldName: string): string | null {
+  const v = getField(item, fieldName);
+  return typeof v === 'string' && v.length > 0 ? v : null;
 }
 
-function getPriority(item: GhItem, priorityField: string): Priority {
-  const f = findField(item, priorityField);
-  if (!f || typeof f.value !== 'string') return 'medium';
-  return mapPriority(f.value);
+function getDueMs(item: GhItem, fieldName: string): number | null {
+  const v = getField(item, fieldName);
+  if (typeof v !== 'string' || v.length === 0) return null;
+  const ms = Date.parse(v);
+  return Number.isFinite(ms) ? ms : null;
 }
 
-function getDueMs(item: GhItem, dueField: string): number | null {
-  const f = findField(item, dueField);
-  if (!f) return null;
-  if (typeof f.value === 'string' && f.value.length > 0) {
-    const ms = Date.parse(f.value);
-    return Number.isFinite(ms) ? ms : null;
+function buildDescription(item: GhItem, skip: Set<string>): string | null {
+  const parts: string[] = [];
+  const c = item.content;
+  if (c?.type === 'Issue' && c.number != null && c.url) {
+    parts.push(`[GH #${c.number}] ${c.url}`);
   }
-  return null;
-}
+  if (c?.body) parts.push(c.body);
 
-function buildOtherFieldLines(item: GhItem, skipNames: string[]): string[] {
-  const skip = new Set(skipNames.map(normalizeKey));
-  const lines: string[] = [];
+  const fields: string[] = [];
   for (const [key, value] of Object.entries(item)) {
     if (skip.has(normalizeKey(key))) continue;
-    if (typeof value === 'string') {
-      if (value.length > 0) lines.push(`${key}: ${value}`);
-    } else if (typeof value === 'number') {
-      lines.push(`${key}: ${value}`);
-    }
+    if (typeof value === 'string' && value.length > 0) fields.push(`${key}: ${value}`);
+    else if (typeof value === 'number') fields.push(`${key}: ${value}`);
   }
-  return lines;
-}
-
-function buildTitle(item: GhItem): string {
-  const t = item.content?.title ?? item.title ?? '(no title)';
-  return truncate(t, DEFAULTS.titleMax);
-}
-
-function buildDescription(item: GhItem, skipNames: string[]): string | null {
-  const content = item.content;
-  const parts: string[] = [];
-  if (content?.type === 'Issue' && content.number != null && content.url) {
-    parts.push(`[GH #${content.number}] ${content.url}`);
-  }
-  const body = content?.body ?? '';
-  if (body.length > 0) parts.push(body);
-  const fields = buildOtherFieldLines(item, skipNames);
   if (fields.length > 0) parts.push(`--- fields ---\n${fields.join('\n')}`);
+
   if (parts.length === 0) return null;
   return truncate(parts.join('\n\n'), DEFAULTS.descriptionMax);
 }
 
-function buildImportSql(opts: BuildOpts): BuildResult {
-  const { items, ownerId, now, projectName, statusField, priorityField, dueField } = opts;
-  const skipNames = ['id', 'content', 'title', statusField, priorityField, dueField];
+interface BuildResult {
+  sql: string;
+  columns: number;
+  labels: number;
+  tasks: number;
+  issues: number;
+  drafts: number;
+}
 
+function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): BuildResult {
+  const { statusField, priorityField, dueField } = args;
+  const skip = new Set(
+    ['id', 'content', 'title', statusField, priorityField, dueField].map(normalizeKey),
+  );
+  const now = Date.now();
   const projectId = ulid();
-  const columnsByStatus = new Map<string, ColumnEntry>();
-  const labelByKey = new Map<string, LabelEntry>();
+  const projectName = DEFAULTS.projectName;
+
+  const columnIdByStatus = new Map<string, string>();
+  const labelIdByKey = new Map<string, string>();
+  const taskPosByColumn = new Map<string, number>();
   const lines: string[] = [];
+  let issues = 0;
+  let drafts = 0;
+  let tasks = 0;
+  let nextColumnPos = 1;
 
   lines.push('BEGIN TRANSACTION;');
   lines.push(
     `INSERT INTO projects (id, owner_id, name, description, created_at, updated_at) VALUES (${sqlString(projectId)}, ${ownerId}, ${sqlString(projectName)}, NULL, ${now}, ${now});`,
   );
 
-  let columnPosition = 1;
   for (const item of items) {
     const status = getStatus(item, statusField) ?? DEFAULTS.noStatus;
-    if (!columnsByStatus.has(status)) {
-      const col: ColumnEntry = { id: ulid(), name: status, position: columnPosition++ };
-      columnsByStatus.set(status, col);
+    let columnId = columnIdByStatus.get(status);
+    if (!columnId) {
+      columnId = ulid();
+      columnIdByStatus.set(status, columnId);
       lines.push(
-        `INSERT INTO columns (id, project_id, name, position, created_at) VALUES (${sqlString(col.id)}, ${sqlString(projectId)}, ${sqlString(col.name)}, ${col.position}, ${now});`,
+        `INSERT INTO columns (id, project_id, name, position, created_at) VALUES (${sqlString(columnId)}, ${sqlString(projectId)}, ${sqlString(status)}, ${nextColumnPos++}, ${now});`,
       );
     }
-  }
 
-  for (const item of items) {
-    const labels = item.content?.labels ?? [];
-    for (const lab of labels) {
+    const itemLabels: { id: string }[] = [];
+    for (const lab of item.content?.labels ?? []) {
       const name = typeof lab.name === 'string' ? lab.name : '';
-      if (name.length === 0) continue;
+      if (!name) continue;
       const color =
         typeof lab.color === 'string' && lab.color.length > 0 ? lab.color : DEFAULTS.defaultColor;
       const key = `${color}:${name}`;
-      if (!labelByKey.has(key)) {
-        const entry: LabelEntry = { id: ulid(), name, color };
-        labelByKey.set(key, entry);
+      let labelId = labelIdByKey.get(key);
+      if (!labelId) {
+        labelId = ulid();
+        labelIdByKey.set(key, labelId);
         lines.push(
-          `INSERT INTO labels (id, project_id, name, color) VALUES (${sqlString(entry.id)}, ${sqlString(projectId)}, ${sqlString(entry.name)}, ${sqlString(entry.color)});`,
+          `INSERT INTO labels (id, project_id, name, color) VALUES (${sqlString(labelId)}, ${sqlString(projectId)}, ${sqlString(name)}, ${sqlString(color)});`,
         );
       }
+      itemLabels.push({ id: labelId });
     }
-  }
 
-  const taskPositionByColumn = new Map<string, number>();
-  let issues = 0;
-  let drafts = 0;
-  let tasks = 0;
-
-  for (const item of items) {
-    const status = getStatus(item, statusField) ?? DEFAULTS.noStatus;
-    const column = columnsByStatus.get(status);
-    if (!column) continue;
     const taskId = ulid();
-    const title = buildTitle(item);
-    const description = buildDescription(item, skipNames);
-    const priority = getPriority(item, priorityField);
+    const title = truncate(item.content?.title ?? item.title ?? '(no title)', DEFAULTS.titleMax);
+    const description = buildDescription(item, skip);
+    const priorityRaw = getField(item, priorityField);
+    const priority: Priority =
+      typeof priorityRaw === 'string' ? mapPriority(priorityRaw) : 'medium';
     const due = getDueMs(item, dueField);
-    const pos = (taskPositionByColumn.get(column.id) ?? 0) + 1;
-    taskPositionByColumn.set(column.id, pos);
+    const pos = (taskPosByColumn.get(columnId) ?? 0) + 1;
+    taskPosByColumn.set(columnId, pos);
 
     lines.push(
-      `INSERT INTO tasks (id, column_id, title, description, priority, due_date, position, created_at, updated_at) VALUES (${sqlString(taskId)}, ${sqlString(column.id)}, ${sqlString(title)}, ${sqlString(description)}, ${sqlString(priority)}, ${due == null ? 'NULL' : due}, ${pos}, ${now}, ${now});`,
+      `INSERT INTO tasks (id, column_id, title, description, priority, due_date, position, created_at, updated_at) VALUES (${sqlString(taskId)}, ${sqlString(columnId)}, ${sqlString(title)}, ${sqlString(description)}, ${sqlString(priority)}, ${due == null ? 'NULL' : due}, ${pos}, ${now}, ${now});`,
     );
-
-    const labels = item.content?.labels ?? [];
-    for (const lab of labels) {
-      const name = typeof lab.name === 'string' ? lab.name : '';
-      if (name.length === 0) continue;
-      const color =
-        typeof lab.color === 'string' && lab.color.length > 0 ? lab.color : DEFAULTS.defaultColor;
-      const key = `${color}:${name}`;
-      const entry = labelByKey.get(key);
-      if (!entry) continue;
+    for (const { id } of itemLabels) {
       lines.push(
-        `INSERT INTO task_labels (task_id, label_id) VALUES (${sqlString(taskId)}, ${sqlString(entry.id)});`,
+        `INSERT INTO task_labels (task_id, label_id) VALUES (${sqlString(taskId)}, ${sqlString(id)});`,
       );
     }
 
@@ -277,52 +231,28 @@ function buildImportSql(opts: BuildOpts): BuildResult {
   }
 
   lines.push('COMMIT;');
-
   return {
     sql: `${lines.join('\n')}\n`,
-    columns: columnsByStatus.size,
-    labels: labelByKey.size,
+    columns: columnIdByStatus.size,
+    labels: labelIdByKey.size,
     tasks,
     issues,
     drafts,
   };
 }
 
-function runWranglerCapture(args: string[]): string {
-  return execFileSync('wrangler', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-}
-
-function runWranglerInherit(args: string[]): void {
-  execFileSync('wrangler', args, { stdio: 'inherit' });
-}
-
-function parseWranglerJson(text: string): unknown[] {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text.trim());
-  } catch {
-    const match = text.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error(`Failed to parse wrangler JSON output: ${text}`);
-    parsed = JSON.parse(match[0]);
-  }
+function queryDb(sql: string): unknown[] {
+  const out = execFileSync(
+    'wrangler',
+    ['d1', 'execute', DEFAULTS.d1Binding, '--local', '--json', '--command', sql],
+    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+  );
+  const parsed = JSON.parse(out.trim()) as unknown;
   if (Array.isArray(parsed)) {
     const first = parsed[0] as { results?: unknown[] } | undefined;
     if (first && Array.isArray(first.results)) return first.results;
   }
   return [];
-}
-
-function queryDb(sql: string): unknown[] {
-  const out = runWranglerCapture([
-    'd1',
-    'execute',
-    DEFAULTS.d1Binding,
-    '--local',
-    '--json',
-    '--command',
-    sql,
-  ]);
-  return parseWranglerJson(out);
 }
 
 async function main(): Promise<void> {
@@ -348,7 +278,6 @@ async function main(): Promise<void> {
     );
     process.exit(1);
   }
-  const ownerId = ownerRow.id;
 
   const projectName = DEFAULTS.projectName;
   const existing = queryDb(`SELECT id FROM projects WHERE name=${sqlString(projectName)};`);
@@ -362,32 +291,24 @@ async function main(): Promise<void> {
   const inputPath = path.resolve(args.input);
   const raw = await readFile(inputPath, 'utf8');
   const parsedJson = JSON.parse(raw) as { items?: GhItem[] };
-  const allItems = parsedJson.items ?? [];
-
-  const items = allItems.filter((item) => {
+  const items = (parsedJson.items ?? []).filter((item) => {
     const t = item.content?.type;
-    if (t === 'PullRequest') return false;
     if (t === 'Issue') return item.content?.state === 'OPEN';
-    if (t === 'DraftIssue') return true;
-    return false;
+    return t === 'DraftIssue';
   });
 
-  const result = buildImportSql({
-    items,
-    ownerId,
-    now: Date.now(),
-    projectName,
-    statusField: args.statusField,
-    priorityField: args.priorityField,
-    dueField: args.dueField,
-  });
+  const result = buildImportSql(items, ownerRow.id, args);
 
   const outputPath = path.resolve(args.output);
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, result.sql, 'utf8');
 
   if (!args.dryRun) {
-    runWranglerInherit(['d1', 'execute', DEFAULTS.d1Binding, '--local', `--file=${outputPath}`]);
+    execFileSync(
+      'wrangler',
+      ['d1', 'execute', DEFAULTS.d1Binding, '--local', `--file=${outputPath}`],
+      { stdio: 'inherit' },
+    );
   }
 
   console.log(
