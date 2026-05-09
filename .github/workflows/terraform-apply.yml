@@ -7,10 +7,14 @@ on:
       - 'terraform/**'
       - '.github/workflows/terraform-apply.yml'
   workflow_dispatch:
-
-concurrency:
-  group: terraform-apply
-  cancel-in-progress: false
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        default: production
+        options:
+          - production
+          - develop
 
 permissions:
   contents: read
@@ -19,10 +23,6 @@ env:
   TF_IN_AUTOMATION: 'true'
   TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-  TF_VAR_github_client_id: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
-  TF_VAR_github_client_secret: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
-  TF_VAR_session_secret: ${{ secrets.SESSION_SECRET }}
-  TF_VAR_app_url: ${{ secrets.APP_URL }}
   # Terraform S3 backend が読む env 名は AWS_* 固定。secret 名は R2 の発行画面に
   # 揃えて Cloudflare 系で統一する。
   AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
@@ -30,9 +30,21 @@ env:
 
 jobs:
   apply:
+    name: apply ${{ matrix.environment }}
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [production, develop]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    environment: production
+    if: >-
+      github.event_name != 'workflow_dispatch'
+      || inputs.environment == matrix.environment
+    # infra と app の Deployments を分けるため -infra サフィックスの environment を使う。
+    environment: ${{ matrix.environment }}-infra
+    concurrency:
+      group: terraform-apply-${{ matrix.environment }}
+      cancel-in-progress: false
     defaults:
       run:
         working-directory: terraform
@@ -43,5 +55,8 @@ jobs:
         with:
           bucket: ${{ secrets.CLOUDFLARE_R2_TFSTATE_BUCKET }}
           account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: terraform workspace select
+        if: matrix.environment != 'production'
+        run: terraform workspace select -or-create ${{ matrix.environment }}
       - name: terraform apply
         run: terraform apply -auto-approve
