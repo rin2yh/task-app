@@ -8,28 +8,44 @@ GitHub Actions による品質ゲート・本番デプロイ・Terraform 自動�
 |---|---|---|
 | `.github/workflows/ci.yml` | `pull_request` (base: `main`) | lint / typecheck / unit (client + workers) / 関連 E2E / build |
 | `.github/workflows/deploy.yml` | `push` to `main` (`app/**`, ワークフロー自身) | E2E 全件 → 本番 D1 マイグレーション → `wrangler deploy --env production` |
-| `.github/workflows/terraform.yml` | PR (`terraform/**`) | PR で `plan` を PR コメント |
-| `.github/workflows/terraform-apply.yml` | `push` to `main` (`terraform/**`) + `workflow_dispatch` | `terraform apply -auto-approve` |
+| `.github/workflows/deploy-develop.yml` | `push` to `main` (`app/**`) + `workflow_dispatch` | E2E 全件 → develop D1 マイグレーション → `wrangler deploy --env develop` |
+| `.github/workflows/terraform.yml` | PR (`terraform/**`) | production / develop 両 workspace の `plan` を PR コメント |
+| `.github/workflows/terraform-apply.yml` | `push` to `main` (`terraform/**`) + `workflow_dispatch` | production → develop の順で `terraform apply -auto-approve` |
 
 ジョブ順序: lint → typecheck → unit (client + workers) → e2e → build → migrate → deploy。
 
 E2E は PR では `playwright test --only-changed=<base.sha>` で関連 spec のみ、デプロイ前は全件実行します。
 
-## 2. GitHub OAuth App セットアップ
+## 2. Secrets 配置
 
-OAuth 関連は未設定です。以下の手順で本番用 OAuth App を用意します。
+Cloudflare アカウント・OAuth App は production / develop で共有するため repo secret に置き、環境ごとに値が異なるものだけ Environment secret に置きます。
 
-1. https://github.com/settings/developers → **New OAuth App** で本番用 OAuth App を作成。
-   - Homepage URL: `${APP_URL}`（例: `https://task-app.<account>.workers.dev`）
+### Repo secret（Settings → Secrets and variables → Actions → Repository secrets）
+
+| Secret 名 | 用途 |
+|---|---|
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID（識別子） |
+| `CLOUDFLARE_API_TOKEN` | Workers / D1 編集権限を持つ API token |
+| `CLOUDFLARE_R2_ACCESS_KEY_ID` | tfstate 用 R2 アクセスキー |
+| `CLOUDFLARE_R2_SECRET_ACCESS_KEY` | tfstate 用 R2 シークレットキー |
+| `CLOUDFLARE_R2_TFSTATE_BUCKET` | tfstate 配置 bucket 名 |
+| `OAUTH_GITHUB_CLIENT_ID` | GitHub OAuth App の Client ID（共有） |
+| `OAUTH_GITHUB_CLIENT_SECRET` | GitHub OAuth App の Client Secret（共有） |
+
+### Environment secret（Settings → Environments → `production` / `develop`）
+
+| Secret 名 | 用途 |
+|---|---|
+| `SESSION_SECRET` | セッション署名鍵（環境ごとに別値） |
+| `APP_URL` | 各環境の公開 URL（例: production=`https://task-app.<account>.workers.dev`、develop=`https://task-app-develop.<account>.workers.dev`） |
+
+### GitHub OAuth App セットアップ
+
+1. https://github.com/settings/developers → **New OAuth App** で OAuth App を作成。production / develop で共有するため、Authorization callback URL は両環境分を登録（GitHub OAuth App は複数 callback を受け付けないので、利用するのは一つ）。本プロジェクトでは production の URL に揃え、develop からのフローも production callback を経由する想定。
+   - Homepage URL: production の `${APP_URL}`
    - Authorization callback URL: `${APP_URL}/auth/callback`
-2. 発行された Client ID / Client Secret を、リポジトリ Settings → **Environments → production → Environment secrets** に登録。
-
-   | Secret 名 | 値 |
-   |---|---|
-   | `OAUTH_GITHUB_CLIENT_ID` | OAuth App の Client ID |
-   | `OAUTH_GITHUB_CLIENT_SECRET` | OAuth App の Client Secret |
-
-3. main の `terraform/**` 変更で `terraform-apply.yml` を走らせる（または手動 `workflow_dispatch`）と、上記 secret が `cloudflare_workers_secret.github_client_id` / `github_client_secret` 経由で Worker の `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` に反映されます。
+2. 発行された Client ID / Client Secret を **Repository secrets** の `OAUTH_GITHUB_CLIENT_ID` / `OAUTH_GITHUB_CLIENT_SECRET` に登録。
+3. main の `terraform/**` 変更で `terraform-apply.yml` を走らせる（または手動 `workflow_dispatch`）と、上記 secret が `cloudflare_workers_secret.github_client_id` / `github_client_secret` 経由で Worker の `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` に反映されます（production / develop それぞれの Worker に対して）。
 
 ## 3. ローカルで CI 同等のチェックを走らせる
 

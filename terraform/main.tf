@@ -2,16 +2,24 @@ provider "cloudflare" {
   api_token = var.cloudflare_api_token
 }
 
+# default workspace = production / develop workspace = develop。
+# Cloudflare 側のリソースは別物として並走させ、Terraform 設定（変数構造）は同一を保つ。
+locals {
+  is_develop       = terraform.workspace == "develop"
+  worker_name      = local.is_develop ? "${var.worker_name}-develop" : var.worker_name
+  d1_database_name = local.is_develop ? "task-app-develop" : var.d1_database_name
+}
+
 resource "cloudflare_d1_database" "task_app" {
   account_id = var.cloudflare_account_id
-  name       = var.d1_database_name
+  name       = local.d1_database_name
 }
 
 # Worker 本体は wrangler deploy で更新するため、
 # Terraform は scaffolding（バインディング/シークレット）のみを管理する。
 resource "cloudflare_workers_script" "task_app" {
   account_id = var.cloudflare_account_id
-  name       = var.worker_name
+  name       = local.worker_name
   # 初期登録用のダミー content。以後 wrangler deploy が実体を上書きする。
   content = <<-EOT
     export default {

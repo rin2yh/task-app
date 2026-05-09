@@ -22,3 +22,13 @@ binding = "DB"
 database_name = "task-app-prod"
 database_id = "3605a196-43db-4276-adc9-61ef66dca5ab"
 migrations_dir = "./server/db/migrations"
+
+[env.develop]
+name = "task-app-develop"
+
+[[env.develop.d1_databases]]
+binding = "DB"
+database_name = "task-app-develop"
+# TODO: terraform workspace=develop の初回 apply 後に出力 d1_database_id を貼り付ける。
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "./server/db/migrations"

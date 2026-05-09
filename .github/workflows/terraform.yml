@@ -21,10 +21,13 @@ defaults:
 
 env:
   TF_IN_AUTOMATION: 'true'
+  # Cloudflare 系・OAuth はアカウント共有のため repo secret 配下。
   TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
   TF_VAR_github_client_id: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
   TF_VAR_github_client_secret: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
+  # SESSION_SECRET / APP_URL は environment(production|develop) ごとに別値。
+  # job 側の `environment:` 指定で値が解決される。
   TF_VAR_session_secret: ${{ secrets.SESSION_SECRET }}
   TF_VAR_app_url: ${{ secrets.APP_URL }}
   # Terraform S3 backend が読む env 名は AWS_* 固定。secret 名は R2 の発行画面に
@@ -52,9 +55,19 @@ jobs:
         run: tflint --format compact
 
   plan:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: production
+            workspace: default
+            comment_header: terraform-plan-production
+          - environment: develop
+            workspace: develop
+            comment_header: terraform-plan-develop
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    environment: production
+    environment: ${{ matrix.environment }}
     permissions:
       contents: read
       pull-requests: write
@@ -65,6 +78,8 @@ jobs:
         with:
           bucket: ${{ secrets.CLOUDFLARE_R2_TFSTATE_BUCKET }}
           account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: terraform workspace select
+        run: terraform workspace select -or-create ${{ matrix.workspace }}
       - name: terraform validate
         run: terraform validate
       - name: terraform plan
@@ -88,9 +103,9 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
         with:
-          header: terraform-plan
+          header: ${{ matrix.comment_header }}
           message: |
-            ### terraform plan (${{ steps.plan.outcome }})
+            ### terraform plan — ${{ matrix.environment }} (${{ steps.plan.outcome }})
 
             <details><summary>plan output</summary>
 
