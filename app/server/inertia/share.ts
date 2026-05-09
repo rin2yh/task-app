@@ -6,7 +6,7 @@ export function buildSharedProps(c: Context<AppEnv>): SharedProps {
   const user = c.get('user');
   const csrfToken = c.get('csrfToken') ?? '';
   return {
-    auth: {
+    authentication: {
       user: user
         ? {
             id: user.id,
