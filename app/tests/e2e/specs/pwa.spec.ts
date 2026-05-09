@@ -1,5 +1,4 @@
 import { expect, test } from '../fixtures/session';
-import { OfflineShellPage } from '../pages/offline-shell.page';
 
 test('manifest が配信される', async ({ page }) => {
   const res = await page.goto('/manifest.webmanifest');
@@ -13,10 +12,11 @@ test('オフライン時にシェルが表示される（本番ビルド時の�
   page,
   context,
   authenticate,
+  offlineShellPage,
 }) => {
   test.skip(process.env.E2E_ENV !== 'prod', 'PWA 検証は本番ビルド向け');
   await authenticate('pwa');
   await context.setOffline(true);
   await page.reload();
-  await new OfflineShellPage(page).expectLoaded();
+  await offlineShellPage.expectLoaded();
 });

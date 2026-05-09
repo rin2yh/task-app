@@ -1,22 +1,20 @@
 import { test } from '../fixtures/session';
-import { DashboardPage } from '../pages/dashboard.page';
-import { LoginPage } from '../pages/login.page';
 
-test('未ログイン時は /auth/login にリダイレクト', async ({ page }) => {
+test('未ログイン時は /auth/login にリダイレクト', async ({ page, loginPage }) => {
   await page.goto('/');
-  await new LoginPage(page).expectLoaded();
+  await loginPage.expectLoaded();
 });
 
 test('fake gh OAuth フローでログインしダッシュボードにアクセスできる', async ({
-  page,
   authenticate,
+  dashboardPage,
 }) => {
   await authenticate('e2e-user');
-  await new DashboardPage(page).expectLoggedInAs('e2e-user');
+  await dashboardPage.expectLoggedInAs('e2e-user');
 });
 
-test('ログアウトでセッション削除', async ({ page, authenticate }) => {
+test('ログアウトでセッション削除', async ({ authenticate, dashboardPage, loginPage }) => {
   await authenticate('logout-flow');
-  await new DashboardPage(page).logout();
-  await new LoginPage(page).expectLoaded();
+  await dashboardPage.logout();
+  await loginPage.expectLoaded();
 });
