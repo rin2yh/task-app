@@ -104,8 +104,8 @@ await page.route('https://api.example.com/**', (route) =>
 
 ## 9. デバッグは Trace Viewer / UI mode / codegen を使う
 
-- フレーク調査は `pnpm exec playwright test --trace on` でトレースを取り、`pnpm exec playwright show-trace` で確認する。
-- ローカル開発では `pnpm exec playwright test --ui`（UI mode）でステップ実行する。
+- フレーク調査は `pnpm test:e2e --trace on` でトレースを取り、`pnpm exec playwright show-trace` で確認する。
+- ローカル開発では `pnpm test:e2e --ui`（UI mode）でステップ実行する。
 - ロケーター発見は `pnpm exec playwright codegen http://localhost:5173` で当たりを付け、**そのまま貼らずに** 上記の優先順位に沿って書き直す。
 
 ## 10. CI 設定は `config/playwright.ts` に集約する
