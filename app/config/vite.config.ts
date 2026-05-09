@@ -13,6 +13,7 @@ const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // VitePWA's config() returns { ssr: { noExternal: ['workbox-window'] } }, which
 // makes Vite materialize an `ssr` environment that breaks vite-ssr-components'
 // clientFirstBuild. We don't import workbox-window, so drop that field.
+// Reference setup: https://github.com/yusukebe/hono-inertia-example/blob/main/vite.config.ts
 function pwaWithoutSsr(plugins: ReturnType<typeof VitePWA>): Plugin[] {
   return (plugins as Plugin[]).map((p) => {
     if (p.name !== 'vite-plugin-pwa' || typeof p.config !== 'function') return p;
