@@ -40,13 +40,13 @@ pnpm typecheck            # tsc --noEmit
 スキーマ (`app/server/db/schema.ts`) を編集したら:
 
 ```bash
-pnpm db:generate          # drizzle-kit が migrations/000X_xxx.sql を生成
+pnpm db:generate          # drizzle-kit が server/db/migrations/000X_xxx.sql を生成
 pnpm db:migrate:local     # ローカル D1 に適用
 ```
 
 本番への適用は `pnpm db:migrate:prod` (デプロイ手順参照)。
 
-`migrations/` は git 管理対象です。生成 SQL を必ずコミットしてください。
+`server/db/migrations/` は git 管理対象です。生成 SQL を必ずコミットしてください。
 
 ## Inertia のページ追加
 
