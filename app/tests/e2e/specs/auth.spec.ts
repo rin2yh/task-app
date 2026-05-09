@@ -1,10 +1,11 @@
-import { test } from '../fixtures/session';
+import { expect, test } from '../fixtures/session';
 import { DashboardPage } from '../pages/dashboard.page';
 import { LoginPage } from '../pages/login.page';
 
-test('未ログイン時は /auth/login にリダイレクト', async ({ page }) => {
+test('未ログイン時は / で公開トップページが表示される', async ({ page }) => {
   await page.goto('/');
-  await new LoginPage(page).expectLoaded();
+  await expect(page.getByRole('heading', { name: 'Task App' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'GitHub ではじめる' })).toBeVisible();
 });
 
 test('fake gh OAuth フローでログインしダッシュボードにアクセスできる', async ({

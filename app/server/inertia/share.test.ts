@@ -9,7 +9,7 @@ describe('Inertia protocol smoke', () => {
 
   it('returns JSON for X-Inertia: true requests', async () => {
     const u = await createTestUser('inertia');
-    const res = await SELF.fetch('http://localhost/', {
+    const res = await SELF.fetch('http://localhost/dashboard', {
       headers: {
         cookie: u.cookies,
         'X-Inertia': 'true',

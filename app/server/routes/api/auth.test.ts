@@ -10,8 +10,13 @@ describe('auth flow', () => {
     await applyMigrations();
   });
 
-  it('redirects unauthenticated users to /auth/login', async () => {
+  it('serves the public home page to unauthenticated users', async () => {
     const res = await SELF.fetch('http://localhost/', { redirect: 'manual' });
+    expect(res.status).toBe(200);
+  });
+
+  it('redirects /dashboard to /auth/login when unauthenticated', async () => {
+    const res = await SELF.fetch('http://localhost/dashboard', { redirect: 'manual' });
     expect(res.status).toBe(302);
     expect(res.headers.get('location')).toBe('/auth/login');
   });

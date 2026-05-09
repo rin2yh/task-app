@@ -12,14 +12,19 @@ import { NotFound } from '../lib/errors';
 export const pageRoutes = new Hono<AppEnv>();
 
 pageRoutes.get('/auth/login', async (c) => {
-  if (c.get('user')) return c.redirect('/');
+  if (c.get('user')) return c.redirect('/dashboard');
   return c.render('login', {
     ...buildSharedProps(c),
     error: c.req.query('error') ?? null,
   });
 });
 
-pageRoutes.get('/', requireAuth, async (c) => {
+pageRoutes.get('/', async (c) => {
+  if (c.get('user')) return c.redirect('/dashboard');
+  return c.render('home', buildSharedProps(c));
+});
+
+pageRoutes.get('/dashboard', requireAuth, async (c) => {
   const user = requireUser(c);
   const db = createDb(c.env.DB);
   const projects = await listProjectsByOwner(db, user.id);
