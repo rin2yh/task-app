@@ -11,7 +11,14 @@ runs:
         path: ~/.local/share/pnpm/store
         key: pnpm-${{ hashFiles('app/pnpm-lock.yaml') }}
         restore-keys: pnpm-
+    - name: Cache node_modules
+      id: node-modules-cache
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+      with:
+        path: app/node_modules
+        key: node-modules-${{ runner.os }}-${{ hashFiles('app/pnpm-lock.yaml', 'mise.toml') }}
     - name: pnpm install
+      if: steps.node-modules-cache.outputs.cache-hit != 'true'
       shell: bash
       working-directory: app
       run: pnpm install --frozen-lockfile

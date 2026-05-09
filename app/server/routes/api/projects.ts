@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { csrfGuard, requireAuth } from '../../auth/middleware';
+import { csrfGuard, requireAuthentication } from '../../auth/middleware';
 import { createDb } from '../../db/client';
 import {
   createProject,
@@ -24,7 +24,7 @@ const UpdateInput = z.object({
 
 export const projectRoutes = new Hono<AppEnv>();
 
-projectRoutes.use('*', requireAuth);
+projectRoutes.use('*', requireAuthentication);
 
 projectRoutes.get('/', async (c) => {
   const user = c.var.authUser;

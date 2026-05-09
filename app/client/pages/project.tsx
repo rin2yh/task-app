@@ -19,21 +19,29 @@ interface Props {
 export default function Project({ project, columns, tasks, labels }: Props) {
   const { props: shared } = usePage<SharedProps>();
   const [newColumnName, setNewColumnName] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const canAddColumn = !busy && newColumnName.trim().length > 0;
 
   const addColumn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newColumnName.trim()) return;
-    const res = await fetch(`/projects/${project.id}/columns`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': shared.csrfToken,
-      },
-      body: JSON.stringify({ name: newColumnName.trim() }),
-    });
-    if (!res.ok) throw new Error(`Failed to add column: ${res.status}`);
-    setNewColumnName('');
-    router.reload();
+    if (!canAddColumn) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/projects/${project.id}/columns`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': shared.csrfToken,
+        },
+        body: JSON.stringify({ name: newColumnName.trim() }),
+      });
+      if (!res.ok) throw new Error(`Failed to add column: ${res.status}`);
+      setNewColumnName('');
+      router.reload();
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -54,7 +62,7 @@ export default function Project({ project, columns, tasks, labels }: Props) {
             maxLength={50}
             className="w-48"
           />
-          <Button type="submit" variant="outline" size="sm">
+          <Button type="submit" variant="outline" size="sm" disabled={!canAddColumn}>
             列追加
           </Button>
         </form>

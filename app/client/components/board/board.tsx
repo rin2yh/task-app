@@ -177,6 +177,7 @@ function NewTaskDialog({
 }) {
   const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
+  const canSubmit = !busy && title.trim().length > 0;
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="sm:max-w-md">
@@ -187,7 +188,7 @@ function NewTaskDialog({
           className="flex flex-col gap-3"
           onSubmit={async (e) => {
             e.preventDefault();
-            if (!title.trim()) return;
+            if (!canSubmit) return;
             setBusy(true);
             try {
               await onSubmit({ title: title.trim() });
@@ -211,7 +212,7 @@ function NewTaskDialog({
             <Button type="button" variant="outline" onClick={onCancel}>
               キャンセル
             </Button>
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" disabled={!canSubmit}>
               作成
             </Button>
           </DialogFooter>

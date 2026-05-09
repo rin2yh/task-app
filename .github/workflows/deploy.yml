@@ -6,6 +6,7 @@ on:
     paths:
       - 'app/**'
       - '.github/workflows/deploy.yml'
+      - '.github/workflows/_deploy.yml'
       - '.github/actions/setup/**'
       - '.github/actions/setup-e2e/**'
   workflow_dispatch:
@@ -13,10 +14,10 @@ on:
       environment:
         description: Target environment
         type: choice
-        default: production
+        default: develop
         options:
-          - production
           - develop
+          - production
 
 permissions:
   contents: read
@@ -43,66 +44,16 @@ jobs:
           path: app/playwright-report/
           retention-days: 14
 
-  migrate-db:
-    name: migrate-db ${{ matrix.environment }}
+  deploy:
+    name: ${{ matrix.environment }}
+    needs: [e2e]
     # `if:` 文脈では `matrix` を参照できないため、matrix 自体を inputs から動的に組み立てて
     # workflow_dispatch のときだけ対象 env に絞り込む。push では両 env が並走する。
     strategy:
       fail-fast: false
       matrix:
         environment: ${{ fromJSON(inputs.environment && format('["{0}"]', inputs.environment) || '["production","develop"]') }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    needs: [e2e]
-    environment: ${{ matrix.environment }}
-    concurrency:
-      group: migrate-db-${{ matrix.environment }}
-      cancel-in-progress: false
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: ./.github/actions/setup
-      # production の D1 名だけ既存リソース互換のため非対称 ("task-app-prod")。
-      - run: pnpm exec wrangler d1 migrations apply task-app-${{ matrix.environment == 'production' && 'prod' || matrix.environment }} --remote --env ${{ matrix.environment }}
-
-  deploy:
-    name: deploy ${{ matrix.environment }}
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: ${{ fromJSON(inputs.environment && format('["{0}"]', inputs.environment) || '["production","develop"]') }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    needs: [migrate-db]
-    environment: ${{ matrix.environment }}
-    concurrency:
-      group: deploy-${{ matrix.environment }}
-      cancel-in-progress: false
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      # @cloudflare/vite-plugin が読む。dist/.../wrangler.json を該当 env
-      # 反映で生成しないと、wrangler deploy は top-level config を使ってしまう。
-      CLOUDFLARE_ENV: ${{ matrix.environment }}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: ./.github/actions/setup
-      - run: pnpm build
-      # secret bulk を deploy 前にやる。新コードが live になる前に最新 secret が揃っている状態を保つ。
-      - name: Sync Worker secrets
-        env:
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
-          APP_URL: ${{ secrets.APP_URL }}
-          GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
-          GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
-        run: |
-          jq -n \
-            --arg session_secret "$SESSION_SECRET" \
-            --arg app_url "$APP_URL" \
-            --arg github_client_id "$GITHUB_CLIENT_ID" \
-            --arg github_client_secret "$GITHUB_CLIENT_SECRET" \
-            '{SESSION_SECRET: $session_secret, APP_URL: $app_url, GITHUB_CLIENT_ID: $github_client_id, GITHUB_CLIENT_SECRET: $github_client_secret}' \
-            | pnpm exec wrangler secret bulk --env ${{ matrix.environment }}
-      - run: pnpm exec wrangler deploy --env ${{ matrix.environment }}
+    uses: ./.github/workflows/_deploy.yml
+    with:
+      environment: ${{ matrix.environment }}
+    secrets: inherit

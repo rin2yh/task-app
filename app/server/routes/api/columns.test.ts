@@ -1,12 +1,18 @@
-import { SELF } from 'cloudflare:test';
 import { eq, sql } from 'drizzle-orm';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { applyMigrations, createTestUser, ENV } from '../../../tests/helpers';
+import { beforeEach, describe, expect } from 'vitest';
+import {
+  applyMigrations,
+  createTestUser,
+  ENV,
+  type Fetch,
+  it,
+  type TestUser,
+} from '../../../tests/helpers';
 import { createDb } from '../../db/client';
 import { columns } from '../../db/schema';
 
-async function createProject(u: Awaited<ReturnType<typeof createTestUser>>) {
-  const res = await SELF.fetch('http://localhost/projects', {
+async function createProject(fetch: Fetch, u: TestUser) {
+  const res = await fetch('/projects', {
     method: 'POST',
     headers: {
       cookie: u.cookies,
@@ -23,10 +29,10 @@ describe('columns CRUD + reorder', () => {
     await applyMigrations();
   });
 
-  it('creates new column appended to tail', async () => {
+  it('creates new column appended to tail', async ({ fetch }) => {
     const u = await createTestUser('cu');
-    const p = await createProject(u);
-    const res = await SELF.fetch(`http://localhost/projects/${p.id}/columns`, {
+    const p = await createProject(fetch, u);
+    const res = await fetch(`/projects/${p.id}/columns`, {
       method: 'POST',
       headers: {
         cookie: u.cookies,
@@ -36,19 +42,19 @@ describe('columns CRUD + reorder', () => {
       body: JSON.stringify({ name: 'Backlog' }),
     });
     expect(res.status).toBe(201);
-    const list = await SELF.fetch(`http://localhost/projects/${p.id}/columns`, {
+    const list = await fetch(`/projects/${p.id}/columns`, {
       headers: { cookie: u.cookies },
     });
     const body = (await list.json()) as { columns: Array<{ name: string; position: number }> };
     expect(body.columns.at(-1)?.name).toBe('Backlog');
   });
 
-  it('reorders columns via midpoint', async () => {
+  it('reorders columns via midpoint', async ({ fetch }) => {
     const u = await createTestUser('reord');
-    const p = await createProject(u);
+    const p = await createProject(fetch, u);
     const list1 = (
       (await (
-        await SELF.fetch(`http://localhost/projects/${p.id}/columns`, {
+        await fetch(`/projects/${p.id}/columns`, {
           headers: { cookie: u.cookies },
         })
       ).json()) as { columns: Array<{ id: string; name: string; position: number }> }
@@ -57,7 +63,7 @@ describe('columns CRUD + reorder', () => {
     // Done を Todo の前に置く（beforeColumnId = Todo）
     const [todo, , done] = list1;
     if (!todo || !done) throw new Error('expected 3 columns');
-    const reorder = await SELF.fetch(`http://localhost/columns/${done.id}/reorder`, {
+    const reorder = await fetch(`/columns/${done.id}/reorder`, {
       method: 'POST',
       headers: {
         cookie: u.cookies,
@@ -69,7 +75,7 @@ describe('columns CRUD + reorder', () => {
     expect(reorder.status).toBe(200);
     const list2 = (
       (await (
-        await SELF.fetch(`http://localhost/projects/${p.id}/columns`, {
+        await fetch(`/projects/${p.id}/columns`, {
           headers: { cookie: u.cookies },
         })
       ).json()) as { columns: Array<{ id: string; name: string }> }
@@ -77,9 +83,9 @@ describe('columns CRUD + reorder', () => {
     expect(list2[0]?.id).toBe(done.id);
   });
 
-  it('triggers rebalance when positions collapse', async () => {
+  it('triggers rebalance when positions collapse', async ({ fetch }) => {
     const u = await createTestUser('rb');
-    const p = await createProject(u);
+    const p = await createProject(fetch, u);
     const db = createDb(ENV.DB);
     // 強制的に position を非常に近い値にする
     const cols = await db.select().from(columns).where(eq(columns.projectId, p.id));
@@ -90,7 +96,7 @@ describe('columns CRUD + reorder', () => {
     await db.update(columns).set({ position: 1.0000000001 }).where(eq(columns.id, c1.id));
     await db.update(columns).set({ position: 1.0000000002 }).where(eq(columns.id, c2.id));
 
-    const re = await SELF.fetch(`http://localhost/columns/${c2.id}/reorder`, {
+    const re = await fetch(`/columns/${c2.id}/reorder`, {
       method: 'POST',
       headers: {
         cookie: u.cookies,

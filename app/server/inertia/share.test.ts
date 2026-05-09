@@ -1,15 +1,14 @@
-import { SELF } from 'cloudflare:test';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { applyMigrations, createTestUser } from '../../tests/helpers';
+import { beforeEach, describe, expect } from 'vitest';
+import { applyMigrations, createTestUser, it } from '../../tests/helpers';
 
 describe('Inertia protocol smoke', () => {
   beforeEach(async () => {
     await applyMigrations();
   });
 
-  it('returns JSON for X-Inertia: true requests', async () => {
+  it('returns JSON for X-Inertia: true requests', async ({ fetch }) => {
     const u = await createTestUser('inertia');
-    const res = await SELF.fetch('http://localhost/', {
+    const res = await fetch('/dashboard', {
       headers: {
         cookie: u.cookies,
         'X-Inertia': 'true',
