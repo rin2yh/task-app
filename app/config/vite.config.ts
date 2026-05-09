@@ -14,16 +14,16 @@ const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // makes Vite materialize an `ssr` environment that breaks vite-ssr-components'
 // clientFirstBuild. We don't import workbox-window, so drop that field.
 // Reference setup: https://github.com/yusukebe/hono-inertia-example/blob/main/vite.config.ts
-function pwaWithoutSsr(plugins: ReturnType<typeof VitePWA>): Plugin[] {
-  return (plugins as Plugin[]).map((p) => {
+function pwaWithoutSsr(plugins: Plugin[]): Plugin[] {
+  return plugins.map((p) => {
     if (p.name !== 'vite-plugin-pwa' || typeof p.config !== 'function') return p;
     const original = p.config;
     return {
       ...p,
       config(...args: Parameters<typeof original>) {
         const result = original.apply(this, args);
-        if (result && typeof result === 'object' && 'ssr' in result) {
-          const { ssr: _drop, ...rest } = result as Record<string, unknown>;
+        if (result && typeof result === 'object' && !(result instanceof Promise)) {
+          const { ssr: _drop, ...rest } = result;
           return rest;
         }
         return result;
