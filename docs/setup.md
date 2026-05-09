@@ -38,7 +38,7 @@ ALLOWED_LOGINS=""            # 空なら誰でもログイン可。カンマ区�
 3. 出力された `database_id` を `wrangler.toml` の `[[d1_databases]]` に貼り付け
 4. マイグレーション適用:
    ```bash
-   pnpm db:migrate:local
+   pnpm migrate
    ```
 
 ## 4. 本番用シークレット (Terraform 経由)

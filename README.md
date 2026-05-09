@@ -16,7 +16,7 @@ cp .dev.vars.example .dev.vars        # 編集して GitHub OAuth 等を設定
 
 # 3. ローカル D1 を作成して migration 適用
 wrangler d1 create task-app-local      # 出力 database_id を wrangler.toml に貼る
-pnpm db:migrate:local
+pnpm migrate
 
 # 4. 起動
 pnpm dev                               # http://localhost:5173

@@ -40,8 +40,8 @@ pnpm typecheck            # tsgo --noEmit
 スキーマ (`app/server/db/schema.ts`) を編集したら:
 
 ```bash
-pnpm db:generate          # drizzle-kit が server/db/migrations/000X_xxx.sql を生成
-pnpm db:migrate:local     # ローカル D1 に適用
+pnpm generate     # drizzle-kit が server/db/migrations/000X_xxx.sql を生成
+pnpm migrate      # ローカル D1 に適用
 ```
 
 本番への適用は `docs/deployment.md` を参照（CI 自動 / 緊急時のみ手動 wrangler 実行）。
