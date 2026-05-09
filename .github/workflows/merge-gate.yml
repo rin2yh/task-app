@@ -58,9 +58,11 @@ jobs:
             esac
           done <<< "$files"
 
-          echo "web=$web" >> "$GITHUB_OUTPUT"
-          echo "terraform=$terraform" >> "$GITHUB_OUTPUT"
-          echo "actions=$actions" >> "$GITHUB_OUTPUT"
+          {
+            echo "web=$web"
+            echo "terraform=$terraform"
+            echo "actions=$actions"
+          } >> "$GITHUB_OUTPUT"
           {
             echo "### Merge Gate"
             echo "- Web CI required: \`$web\`"
