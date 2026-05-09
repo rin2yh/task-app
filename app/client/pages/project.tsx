@@ -20,9 +20,11 @@ export default function Project({ project, columns, tasks, labels }: Props) {
   const { props: shared } = usePage<SharedProps>();
   const [newColumnName, setNewColumnName] = useState('');
 
+  const canAddColumn = newColumnName.trim().length > 0;
+
   const addColumn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newColumnName.trim()) return;
+    if (!canAddColumn) return;
     const res = await fetch(`/projects/${project.id}/columns`, {
       method: 'POST',
       headers: {
@@ -54,7 +56,7 @@ export default function Project({ project, columns, tasks, labels }: Props) {
             maxLength={50}
             className="w-48"
           />
-          <Button type="submit" variant="outline" size="sm">
+          <Button type="submit" variant="outline" size="sm" disabled={!canAddColumn}>
             列追加
           </Button>
         </form>

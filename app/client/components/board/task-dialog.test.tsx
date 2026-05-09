@@ -17,7 +17,7 @@ const task: TaskWithLabels = {
 };
 
 describe('TaskDialog', () => {
-  it('shows validation error when title is blank', async () => {
+  it('disables save button when title is blank', async () => {
     const onClose = vi.fn();
     const onUpdated = vi.fn();
     const onDeleted = vi.fn();
@@ -34,8 +34,8 @@ describe('TaskDialog', () => {
     const input = screen.getByLabelText(/タイトル/);
     fireEvent.change(input, { target: { value: '' } });
     const save = screen.getByRole('button', { name: /保存/ });
+    expect(save).toHaveAttribute('aria-disabled', 'true');
     fireEvent.click(save);
-    expect(await screen.findByRole('alert')).toHaveTextContent(/必須/);
     expect(onUpdated).not.toHaveBeenCalled();
   });
 });

@@ -15,9 +15,11 @@ export default function Dashboard({ projects }: Props) {
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const canSubmit = !busy && name.trim().length > 0;
+
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!canSubmit) return;
     setBusy(true);
     try {
       const res = await fetch('/projects', {
@@ -68,7 +70,7 @@ export default function Dashboard({ projects }: Props) {
           onChange={(e) => setName(e.target.value)}
           maxLength={100}
         />
-        <Button type="submit" disabled={busy}>
+        <Button type="submit" disabled={!canSubmit}>
           作成
         </Button>
       </form>
