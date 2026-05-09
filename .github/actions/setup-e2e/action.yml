@@ -20,4 +20,4 @@ runs:
     - name: Apply D1 migrations (local)
       shell: bash
       working-directory: app
-      run: pnpm migrate
+      run: pnpm db:migrate:local
