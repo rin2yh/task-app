@@ -51,12 +51,14 @@ jobs:
     timeout-minutes: 15
     environment:
       name: ${{ inputs.environment }}
-      url: ${{ steps.deploy.outputs.url }}
+      # secret 値と一致する step output は GitHub に redact されて環境 URL に流れない。
+      # 公開 URL である APP_URL は GitHub Variables 側で管理する。
+      url: ${{ vars.APP_URL }}
     concurrency:
       group: deploy-${{ inputs.environment }}
       cancel-in-progress: false
     outputs:
-      url: ${{ steps.deploy.outputs.url }}
+      url: ${{ vars.APP_URL }}
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -73,7 +75,7 @@ jobs:
       - name: Sync Worker secrets
         env:
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
-          APP_URL: ${{ secrets.APP_URL }}
+          APP_URL: ${{ vars.APP_URL }}
           GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
           GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
         run: |
@@ -85,13 +87,4 @@ jobs:
             '{SESSION_SECRET: $session_secret, APP_URL: $app_url, GITHUB_CLIENT_ID: $github_client_id, GITHUB_CLIENT_SECRET: $github_client_secret}' \
             | pnpm exec wrangler secret bulk --env ${{ inputs.environment }}
       - name: Deploy
-        id: deploy
-        # GitHub Deployments の URL 欄に表示するため、wrangler 出力から
-        # workers.dev URL を抜き出して step output に流す。
-        run: |
-          pnpm exec wrangler deploy --env ${{ inputs.environment }} 2>&1 | tee deploy.log
-          url=$(grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' deploy.log | head -n1)
-          if [ -z "$url" ]; then
-            echo "::warning::Could not parse deploy URL from wrangler output"
-          fi
-          echo "url=$url" >> "$GITHUB_OUTPUT"
+        run: pnpm exec wrangler deploy --env ${{ inputs.environment }}
