@@ -1,5 +1,5 @@
 ---
-description: E2E (Playwright) テストの方針。要素取得は意味的ロケーターを優先し、data-testid 等のテスト専用属性をプロダクトコードに足さない
+description: E2E (Playwright) テストおよびそこから操作されるプロダクトコードに対する方針
 globs:
   - "app/client/**/*.{ts,tsx}"
   - "app/pages/**/*.{ts,tsx}"
