@@ -1,8 +1,7 @@
 ---
 description: E2E (Playwright) テストの執筆・修正に関する方針。Playwright 公式 Best Practices に準拠
-globs:
+paths:
   - "app/tests/e2e/**/*.{ts,tsx}"
-  - "app/config/playwright.ts"
 ---
 
 # E2E (Playwright) ルール
@@ -87,7 +86,7 @@ await expect(page.getByText('welcome')).toBeVisible();
 ## 7. サードパーティに依存しない
 
 - 外部 API（GitHub OAuth、決済等）への実呼び出しを E2E に含めない。レート制限・ネットワーク不安定・コストでフレークする。
-- 認可フローは `NODE_ENV === 'test'` 時に `factory.ts` が返すフェイク OAuth クライアント（`server/auth/oauth/fake-github-client.ts`）に切り替える。`NODE_ENV` は `config/playwright.ts` の `webServer.env` で注入済み。
+- 認可フローは `NODE_ENV === 'test'` 時に `factory.ts` が返すフェイク OAuth クライアント（`server/auth/oauth/fake-github-client.ts`）に切り替える。`NODE_ENV` は Playwright 設定の `webServer.env` で注入済み。
 - それ以外の外部依存は `page.route()` で**ネットワークをモック**する。
 
 ```ts
@@ -98,7 +97,7 @@ await page.route('https://api.example.com/**', (route) =>
 
 ## 8. テストを並列で安全に動かす
 
-- `config/playwright.ts` の `fullyParallel: true` を維持する。
+- Playwright 設定の `fullyParallel: true` を維持する。
 - 外部状態（共有 DB の固定 ID 等）に依存しない。各テストは自分でリソースを作る。
 - どうしても直列が必要な一連のシナリオは `test.describe.configure({ mode: 'serial' })` でローカルに直列化する（最小スコープに留める）。
 
@@ -106,11 +105,11 @@ await page.route('https://api.example.com/**', (route) =>
 
 - フレーク調査は `pnpm test:e2e --trace on` でトレースを取り、`pnpm exec playwright show-trace` で確認する。
 - ローカル開発では `pnpm test:e2e --ui`（UI mode）でステップ実行する。
-- ロケーター発見は `pnpm exec playwright codegen --config config/playwright.ts http://localhost:5173` で当たりを付け、**そのまま貼らずに** 上記の優先順位に沿って書き直す。
+- ロケーター発見は `pnpm exec playwright codegen http://localhost:5173` で当たりを付け、**そのまま貼らずに** 上記の優先順位に沿って書き直す。
 
-## 10. CI 設定は `config/playwright.ts` に集約する
+## 10. CI 設定は Playwright 設定に集約する
 
-- リトライ・ワーカー数・レポーター等は `config/playwright.ts` で `process.env.CI` を見て切り替える（既存どおり）。
+- リトライ・ワーカー数・レポーター等は Playwright 設定で `process.env.CI` を見て切り替える（既存どおり）。
 - 個別テスト内に `test.setTimeout` や `test.skip(true)` を散らさない。条件 skip は `test.skip(condition, '理由')` の形で理由付きで書く。
 
 ## 参考資料
