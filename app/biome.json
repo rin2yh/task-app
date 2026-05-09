@@ -29,9 +29,6 @@
       },
       "suspicious": {
         "noExplicitAny": "warn"
-      },
-      "correctness": {
-        "noUnusedVariables": "warn"
       }
     }
   },
