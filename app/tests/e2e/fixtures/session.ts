@@ -7,13 +7,9 @@ interface Fixtures {
 export const test = base.extend<Fixtures>({
   authenticate: async ({ page }, use) => {
     const fn = async (login: string) => {
-      // NODE_ENV=test でビルドされた worker は FakeGitHubOAuthClient を使い、
-      // /auth/github → /auth/callback まで一気に redirect される。
-      // 本番フローは Turnstile 付きの POST だが、verifier は NODE_ENV=test で
-      // 常に成功するためダミートークンで十分。
-      const res = await page.request.post('/auth/github', {
-        form: { login, 'cf-turnstile-response': 'test' },
-      });
+      // NODE_ENV=test では FakeGitHubOAuthClient が /auth/callback に直接
+      // バウンスし、Turnstile verifier も常に成功する。
+      const res = await page.request.post('/auth/github', { form: { login } });
       if (!res.ok()) throw new Error(`fake oauth failed: ${res.status()}`);
       await page.goto(new URL(res.url()).pathname);
     };

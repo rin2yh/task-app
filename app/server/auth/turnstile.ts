@@ -12,7 +12,6 @@ export async function verifyTurnstileToken(
   token: string,
   remoteIp: string | undefined,
 ): Promise<boolean> {
-  // OAuth factory と同じ判定。test 実行時は外部呼び出しを行わない。
   if (process.env.NODE_ENV === 'test') return true;
   if (!env.TURNSTILE_SECRET_KEY) return true;
   if (!token) return false;
@@ -22,12 +21,17 @@ export async function verifyTurnstileToken(
   body.set('response', token);
   if (remoteIp) body.set('remoteip', remoteIp);
 
-  const res = await fetch(SITEVERIFY_URL, {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body,
-  });
-  if (!res.ok) return false;
-  const json = (await res.json()) as SiteverifyResponse;
-  return json.success === true;
+  try {
+    const res = await fetch(SITEVERIFY_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body,
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!res.ok) return false;
+    const json = (await res.json()) as SiteverifyResponse;
+    return json.success === true;
+  } catch {
+    return false;
+  }
 }
