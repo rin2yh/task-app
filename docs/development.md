@@ -44,7 +44,7 @@ pnpm generate     # drizzle-kit が server/db/migrations/000X_xxx.sql を生成
 pnpm migrate      # ローカル D1 に適用
 ```
 
-本番への適用は `docs/deployment.md` を参照（CI 自動 / 緊急時のみ手動 wrangler 実行）。
+本番は `deploy.yml` (push to main) が自動適用します。
 
 `server/db/migrations/` は git 管理対象です。生成 SQL を必ずコミットしてください。
 

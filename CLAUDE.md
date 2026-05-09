@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `app/` — Cloudflare Worker + Vite/React client. **All `pnpm` commands run here.**
 - `terraform/` — D1 + Worker + secrets scaffolding (state lives outside the repo).
-- `docs/` — `development.md`, `deployment.md`, `cicd.md`.
+- `docs/` — `development.md`, `oauth.md`.
 - Toolchain pins: @mise.toml (bootstrap with `mise trust && mise install`).
 
 ## Commands

@@ -25,5 +25,4 @@ pnpm dev                               # http://localhost:5173
 ## ドキュメント
 
 - [docs/development.md](docs/development.md) — テスト、マイグレーション、E2E、PWA、トラブルシューティング
-- [docs/deployment.md](docs/deployment.md) — Terraform + `wrangler deploy` 本番デプロイ手順（手動運用・緊急対応）
-- [docs/cicd.md](docs/cicd.md) — GitHub Actions による CI / 本番デプロイ / Terraform 自動化
+- [docs/oauth.md](docs/oauth.md) — GitHub OAuth App（ローカル / 本番）
