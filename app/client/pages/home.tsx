@@ -23,7 +23,7 @@ export default function Home() {
         </CardHeader>
         <CardContent>
           <a
-            href={isAuthenticated ? '/dashboard' : '/auth/github'}
+            href={isAuthenticated ? '/dashboard' : '/auth/login'}
             className={cn(buttonVariants(), 'w-full')}
           >
             {isAuthenticated ? 'ダッシュボードへ' : 'GitHub ではじめる'}
