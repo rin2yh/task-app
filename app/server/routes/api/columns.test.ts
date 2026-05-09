@@ -1,10 +1,17 @@
 import { eq, sql } from 'drizzle-orm';
 import { beforeEach, describe, expect } from 'vitest';
-import { applyMigrations, createTestUser, ENV, type Fetch, it } from '../../../tests/helpers';
+import {
+  applyMigrations,
+  createTestUser,
+  ENV,
+  type Fetch,
+  it,
+  type TestUser,
+} from '../../../tests/helpers';
 import { createDb } from '../../db/client';
 import { columns } from '../../db/schema';
 
-async function createProject(fetch: Fetch, u: Awaited<ReturnType<typeof createTestUser>>) {
+async function createProject(fetch: Fetch, u: TestUser) {
   const res = await fetch('/projects', {
     method: 'POST',
     headers: {
