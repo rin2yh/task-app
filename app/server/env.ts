@@ -9,6 +9,7 @@ export interface Env {
 
 export interface AppVariables {
   user: import('./db/schema').DbUser | null;
+  authUser: import('./db/schema').DbUser;
   sessionToken: string | null;
   csrfToken: string | null;
 }
