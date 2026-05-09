@@ -23,10 +23,6 @@ export class DashboardPage {
     });
   }
 
-  private projectLink(name: string): Locator {
-    return this.page.getByRole('link', { name });
-  }
-
   async createProject(name: string) {
     await test.step(`プロジェクト "${name}" を作成`, async () => {
       await this.projectNameInput.fill(name);
@@ -55,5 +51,9 @@ export class DashboardPage {
       await expect(this.header).toContainText(login);
       await expect(this.logoutButton).toBeVisible();
     });
+  }
+
+  private projectLink(name: string): Locator {
+    return this.page.getByRole('link', { name });
   }
 }

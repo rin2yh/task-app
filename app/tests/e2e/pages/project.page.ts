@@ -20,18 +20,6 @@ export class ProjectPage {
     });
   }
 
-  private columnHeading(name: string): Locator {
-    return this.page.getByRole('heading', { name, exact: true });
-  }
-
-  private taskCard(title: string): Locator {
-    return this.page.getByText(title, { exact: true });
-  }
-
-  private newTaskDialog(): Locator {
-    return this.page.getByRole('dialog', { name: '新規タスク' });
-  }
-
   async addColumn(name: string) {
     await test.step(`列 "${name}" を追加`, async () => {
       await this.newColumnInput.fill(name);
@@ -59,5 +47,17 @@ export class ProjectPage {
         await expect(this.columnHeading(name)).toBeVisible();
       }
     });
+  }
+
+  private columnHeading(name: string): Locator {
+    return this.page.getByRole('heading', { name, exact: true });
+  }
+
+  private taskCard(title: string): Locator {
+    return this.page.getByText(title, { exact: true });
+  }
+
+  private newTaskDialog(): Locator {
+    return this.page.getByRole('dialog', { name: '新規タスク' });
   }
 }
