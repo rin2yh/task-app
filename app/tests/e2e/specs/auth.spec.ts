@@ -12,15 +12,11 @@ test('fake gh OAuth フローでログインしダッシュボードにアクセ
   authenticate,
 }) => {
   await authenticate('e2e-user');
-  const dashboard = new DashboardPage(page);
-  await dashboard.goto();
-  await dashboard.expectLoggedInAs('e2e-user');
+  await new DashboardPage(page).expectLoggedInAs('e2e-user');
 });
 
 test('ログアウトでセッション削除', async ({ page, authenticate }) => {
   await authenticate('logout-flow');
-  const dashboard = new DashboardPage(page);
-  await dashboard.goto();
-  await dashboard.logout();
+  await new DashboardPage(page).logout();
   await new LoginPage(page).expectLoaded();
 });

@@ -4,24 +4,14 @@ import { expect } from '@playwright/test';
 export class ProjectPage {
   private readonly page: Page;
   private readonly heading: Locator;
-  private readonly newColumnInput: Locator;
-  private readonly addColumnButton: Locator;
 
   constructor(page: Page, projectName: string) {
     this.page = page;
     this.heading = page.getByRole('heading', { name: projectName });
-    this.newColumnInput = page.getByPlaceholder('新しい列名');
-    this.addColumnButton = page.getByRole('button', { name: '列追加' });
   }
 
   async expectLoaded() {
     await expect(this.heading).toBeVisible();
-  }
-
-  async addColumn(name: string) {
-    await this.newColumnInput.fill(name);
-    await this.addColumnButton.click();
-    await expect(this.columnHeading(name)).toBeVisible();
   }
 
   async addTaskToFirstColumn(title: string) {

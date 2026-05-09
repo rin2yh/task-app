@@ -17,10 +17,6 @@ export class DashboardPage {
     this.logoutButton = page.getByRole('button', { name: 'ログアウト' });
   }
 
-  async goto() {
-    await this.page.goto('/');
-  }
-
   async createProject(name: string) {
     await this.projectNameInput.fill(name);
     await this.createButton.click();

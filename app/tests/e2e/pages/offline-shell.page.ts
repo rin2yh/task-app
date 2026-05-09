@@ -8,7 +8,7 @@ export class OfflineShellPage {
     this.offlineMessage = page.getByText(/オフライン/);
   }
 
-  async expectVisible() {
+  async expectLoaded() {
     await expect(this.offlineMessage).toBeVisible();
   }
 }

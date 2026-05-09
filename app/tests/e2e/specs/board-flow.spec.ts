@@ -1,14 +1,11 @@
 import { test } from '../fixtures/session';
 import { DashboardPage } from '../pages/dashboard.page';
 
-test.describe.configure({ mode: 'serial' });
-
 test('プロジェクト作成→列・タスク CRUD→DnD→削除', async ({ page, authenticate }) => {
   await authenticate('board-flow');
   const dashboard = new DashboardPage(page);
 
   await test.step('プロジェクトを作成して開く', async () => {
-    await dashboard.goto();
     await dashboard.createProject('Demo Project');
   });
 
