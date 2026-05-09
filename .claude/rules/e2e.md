@@ -1,8 +1,6 @@
 ---
 description: E2E (Playwright) テストおよびそこから操作されるプロダクトコードに対する方針
 globs:
-  - "app/client/**/*.{ts,tsx}"
-  - "app/pages/**/*.{ts,tsx}"
   - "app/tests/e2e/**/*.{ts,tsx}"
   - "app/playwright.config.ts"
 ---
