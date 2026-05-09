@@ -51,7 +51,7 @@ async function upsertUserByGithubId(
 }
 
 authRoutes.get('/github', async (c) => {
-  if (c.get('user')) return c.redirect('/');
+  if (c.get('user')) return c.redirect('/dashboard');
   const client = createOAuthClient(c);
   const state = generateState();
   const url = client.createAuthorizationURL(state, ['read:user']);
@@ -84,7 +84,7 @@ authRoutes.get('/callback', async (c) => {
   const userId = await upsertUserByGithubId(db, ghUser);
   const session = await createSession(db, userId);
   setSessionCookies(c, session);
-  return c.redirect('/', 302);
+  return c.redirect('/dashboard', 302);
 });
 
 authRoutes.post('/logout', csrfGuard, async (c) => {

@@ -1,15 +1,14 @@
-import { SELF } from 'cloudflare:test';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { applyMigrations, createTestUser } from '../../../tests/helpers';
+import { beforeEach, describe, expect } from 'vitest';
+import { applyMigrations, createTestUser, type Fetch, it } from '../../../tests/helpers';
 
-async function setup() {
+async function setup(fetch: Fetch) {
   const u = await createTestUser('lab');
   const headers = {
     cookie: u.cookies,
     'X-CSRF-Token': u.csrfToken,
     'content-type': 'application/json',
   };
-  const proj = await SELF.fetch('http://localhost/projects', {
+  const proj = await fetch('/projects', {
     method: 'POST',
     headers,
     body: JSON.stringify({ name: 'p' }),
@@ -17,14 +16,14 @@ async function setup() {
   const projId = ((await proj.json()) as { project: { id: string } }).project.id;
   const cols = (
     (await (
-      await SELF.fetch(`http://localhost/projects/${projId}/columns`, {
+      await fetch(`/projects/${projId}/columns`, {
         headers: { cookie: u.cookies },
       })
     ).json()) as { columns: Array<{ id: string }> }
   ).columns;
   const firstCol = cols[0];
   if (!firstCol) throw new Error('expected at least one column');
-  const t = await SELF.fetch(`http://localhost/columns/${firstCol.id}/tasks`, {
+  const t = await fetch(`/columns/${firstCol.id}/tasks`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ title: 'task' }),
@@ -38,38 +37,38 @@ describe('labels', () => {
     await applyMigrations();
   });
 
-  it('CRUD lifecycle', async () => {
-    const { u, headers, projId } = await setup();
-    const create = await SELF.fetch(`http://localhost/projects/${projId}/labels`, {
+  it('CRUD lifecycle', async ({ fetch }) => {
+    const { u, headers, projId } = await setup(fetch);
+    const create = await fetch(`/projects/${projId}/labels`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ name: 'bug', color: '#ff0000' }),
     });
     expect(create.status).toBe(201);
     const label = ((await create.json()) as { label: { id: string; name: string } }).label;
-    const list = await SELF.fetch(`http://localhost/projects/${projId}/labels`, {
+    const list = await fetch(`/projects/${projId}/labels`, {
       headers: { cookie: u.cookies },
     });
     const body = (await list.json()) as { labels: Array<{ id: string }> };
     expect(body.labels.map((l) => l.id)).toContain(label.id);
 
-    const patch = await SELF.fetch(`http://localhost/labels/${label.id}`, {
+    const patch = await fetch(`/labels/${label.id}`, {
       method: 'PATCH',
       headers,
       body: JSON.stringify({ color: '#00ff00' }),
     });
     expect(patch.status).toBe(200);
 
-    const del = await SELF.fetch(`http://localhost/labels/${label.id}`, {
+    const del = await fetch(`/labels/${label.id}`, {
       method: 'DELETE',
       headers,
     });
     expect(del.status).toBe(200);
   });
 
-  it('rejects invalid color format', async () => {
-    const { headers, projId } = await setup();
-    const r = await SELF.fetch(`http://localhost/projects/${projId}/labels`, {
+  it('rejects invalid color format', async ({ fetch }) => {
+    const { headers, projId } = await setup(fetch);
+    const r = await fetch(`/projects/${projId}/labels`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ name: 'x', color: 'red' }),
@@ -77,11 +76,11 @@ describe('labels', () => {
     expect(r.status).toBe(400);
   });
 
-  it('attach and detach labels to a task', async () => {
-    const { headers, projId, taskId } = await setup();
+  it('attach and detach labels to a task', async ({ fetch }) => {
+    const { headers, projId, taskId } = await setup(fetch);
     const a = (
       (await (
-        await SELF.fetch(`http://localhost/projects/${projId}/labels`, {
+        await fetch(`/projects/${projId}/labels`, {
           method: 'POST',
           headers,
           body: JSON.stringify({ name: 'a', color: '#111111' }),
@@ -90,14 +89,14 @@ describe('labels', () => {
     ).label;
     const b = (
       (await (
-        await SELF.fetch(`http://localhost/projects/${projId}/labels`, {
+        await fetch(`/projects/${projId}/labels`, {
           method: 'POST',
           headers,
           body: JSON.stringify({ name: 'b', color: '#222222' }),
         })
       ).json()) as { label: { id: string } }
     ).label;
-    const put = await SELF.fetch(`http://localhost/tasks/${taskId}/labels`, {
+    const put = await fetch(`/tasks/${taskId}/labels`, {
       method: 'PUT',
       headers,
       body: JSON.stringify({ labelIds: [a.id, b.id] }),
@@ -106,7 +105,7 @@ describe('labels', () => {
     const body = (await put.json()) as { labels: Array<{ id: string }> };
     expect(body.labels.map((l) => l.id).sort()).toEqual([a.id, b.id].sort());
 
-    const detach = await SELF.fetch(`http://localhost/tasks/${taskId}/labels`, {
+    const detach = await fetch(`/tasks/${taskId}/labels`, {
       method: 'PUT',
       headers,
       body: JSON.stringify({ labelIds: [] }),

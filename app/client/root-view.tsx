@@ -1,5 +1,5 @@
 import { renderToString } from 'react-dom/server';
-import { Link, ReactRefresh, Script, ViteClient } from 'vite-ssr-components/react';
+import { ReactRefresh, Script, ViteClient } from 'vite-ssr-components/react';
 
 interface Page {
   component: string;
@@ -20,7 +20,6 @@ export function rootView(page: Page): string {
         <title>Task App</title>
         <ViteClient />
         <ReactRefresh />
-        <Link rel="stylesheet" href="/client/styles/tailwind.css" />
       </head>
       <body className="bg-background text-foreground antialiased">
         <div id="app" data-page={dataPage} />
