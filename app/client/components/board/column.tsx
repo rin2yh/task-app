@@ -2,7 +2,6 @@ import { Button } from '@/components/ui/button';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Plus, Trash2 } from 'lucide-react';
-import { useMemo } from 'react';
 import type { Column as ColumnT, TaskWithLabels } from '../../../shared/types';
 import { TaskCard } from './task-card';
 
@@ -19,7 +18,6 @@ export function Column({ column, tasks, onCreateTask, onSelectTask, onDeleteColu
     id: `col-${column.id}`,
     data: { type: 'column', columnId: column.id },
   });
-  const taskIds = useMemo(() => tasks.map((t) => t.id), [tasks]);
   return (
     <div
       className="flex w-80 shrink-0 flex-col gap-2 rounded-xl bg-secondary p-3"
@@ -39,7 +37,7 @@ export function Column({ column, tasks, onCreateTask, onSelectTask, onDeleteColu
           削除
         </Button>
       </header>
-      <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+      <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className="flex min-h-10 flex-col gap-2">
           {tasks.map((t) => (
             <TaskCard key={t.id} task={t} onClick={() => onSelectTask(t)} />
