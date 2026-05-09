@@ -22,7 +22,7 @@ import type { Column as ColumnT } from '@shared/column';
 import type { Label } from '@shared/label';
 import type { TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
-import { buildInitialState, useOptimisticBoard } from '../../hooks/use-optimistic-board';
+import { buildInitialState, useOptimisticBoard } from '../hooks/use-optimistic-board';
 import { Column } from './column';
 import { TaskDialog } from './task-dialog';
 
