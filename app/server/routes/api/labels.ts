@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { csrfGuard, requireAuth, requireUser } from '../../auth/middleware';
+import { csrfGuard, requireAuthentication, requireUser } from '../../auth/middleware';
 import { createDb } from '../../db/client';
 import {
   createLabel,
@@ -25,7 +25,7 @@ const UpdateInput = z.object({
 });
 
 export const labelsByProjectRoutes = new Hono<AppEnv>();
-labelsByProjectRoutes.use('*', requireAuth);
+labelsByProjectRoutes.use('*', requireAuthentication);
 
 labelsByProjectRoutes.get('/:projectId/labels', async (c) => {
   const user = requireUser(c);
@@ -47,7 +47,7 @@ labelsByProjectRoutes.post('/:projectId/labels', csrfGuard, async (c) => {
 });
 
 export const labelRoutes = new Hono<AppEnv>();
-labelRoutes.use('*', requireAuth);
+labelRoutes.use('*', requireAuthentication);
 
 labelRoutes.patch('/:id', csrfGuard, async (c) => {
   const user = requireUser(c);

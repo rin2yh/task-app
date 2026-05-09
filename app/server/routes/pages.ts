@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { requireAuth, requireUser } from '../auth/middleware';
+import { requireAuthentication, requireUser } from '../auth/middleware';
 import { createDb } from '../db/client';
 import { listColumnsForProject } from '../db/repositories/columns';
 import { listLabelsForProject } from '../db/repositories/labels';
@@ -24,14 +24,14 @@ pageRoutes.get('/', async (c) => {
   return c.render('home', buildSharedProps(c));
 });
 
-pageRoutes.get('/dashboard', requireAuth, async (c) => {
+pageRoutes.get('/dashboard', requireAuthentication, async (c) => {
   const user = requireUser(c);
   const db = createDb(c.env.DB);
   const projects = await listProjectsByOwner(db, user.id);
   return c.render('dashboard', { ...buildSharedProps(c), projects });
 });
 
-pageRoutes.get('/projects/:id', requireAuth, async (c) => {
+pageRoutes.get('/projects/:id', requireAuthentication, async (c) => {
   const user = requireUser(c);
   const id = c.req.param('id');
   const db = createDb(c.env.DB);

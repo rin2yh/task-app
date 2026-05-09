@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { csrfGuard, requireAuth, requireUser } from '../../auth/middleware';
+import { csrfGuard, requireAuthentication, requireUser } from '../../auth/middleware';
 import { createDb } from '../../db/client';
 import {
   createColumn,
@@ -25,7 +25,7 @@ const ReorderInput = z.object({
 });
 
 export const columnsByProjectRoutes = new Hono<AppEnv>();
-columnsByProjectRoutes.use('*', requireAuth);
+columnsByProjectRoutes.use('*', requireAuthentication);
 
 columnsByProjectRoutes.get('/:projectId/columns', async (c) => {
   const user = requireUser(c);
@@ -47,7 +47,7 @@ columnsByProjectRoutes.post('/:projectId/columns', csrfGuard, async (c) => {
 });
 
 export const columnRoutes = new Hono<AppEnv>();
-columnRoutes.use('*', requireAuth);
+columnRoutes.use('*', requireAuthentication);
 
 columnRoutes.patch('/:id', csrfGuard, async (c) => {
   const user = requireUser(c);

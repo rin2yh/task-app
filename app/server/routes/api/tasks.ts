@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { PrioritySchema } from '../../../shared/priority';
-import { csrfGuard, requireAuth, requireUser } from '../../auth/middleware';
+import { csrfGuard, requireAuthentication, requireUser } from '../../auth/middleware';
 import { createDb } from '../../db/client';
 import {
   createTask,
@@ -39,7 +39,7 @@ const LabelsInput = z.object({
 });
 
 export const tasksByColumnRoutes = new Hono<AppEnv>();
-tasksByColumnRoutes.use('*', requireAuth);
+tasksByColumnRoutes.use('*', requireAuthentication);
 
 tasksByColumnRoutes.post('/:columnId/tasks', csrfGuard, async (c) => {
   const user = requireUser(c);
@@ -52,7 +52,7 @@ tasksByColumnRoutes.post('/:columnId/tasks', csrfGuard, async (c) => {
 });
 
 export const taskRoutes = new Hono<AppEnv>();
-taskRoutes.use('*', requireAuth);
+taskRoutes.use('*', requireAuthentication);
 
 taskRoutes.patch('/:id', csrfGuard, async (c) => {
   const user = requireUser(c);

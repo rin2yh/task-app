@@ -6,13 +6,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@client/components/ui/card';
+import { useAuthentication } from '@client/hooks/use-authentication';
 import { cn } from '@client/lib/utils';
-import { usePage } from '@inertiajs/react';
-import type { SharedProps } from '@shared/inertia';
 
 export default function Home() {
-  const { props: shared } = usePage<SharedProps>();
-  const isAuthed = shared.auth.user !== null;
+  const { isAuthenticated } = useAuthentication();
 
   return (
     <main className="flex min-h-screen items-center justify-center p-8">
@@ -25,10 +23,10 @@ export default function Home() {
         </CardHeader>
         <CardContent>
           <a
-            href={isAuthed ? '/dashboard' : '/auth/github'}
+            href={isAuthenticated ? '/dashboard' : '/auth/github'}
             className={cn(buttonVariants(), 'w-full')}
           >
-            {isAuthed ? 'ダッシュボードへ' : 'GitHub ではじめる'}
+            {isAuthenticated ? 'ダッシュボードへ' : 'GitHub ではじめる'}
           </a>
         </CardContent>
       </Card>

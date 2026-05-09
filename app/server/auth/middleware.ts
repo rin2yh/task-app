@@ -25,7 +25,7 @@ export const sessionLoader: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next();
 };
 
-export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
+export const requireAuthentication: MiddlewareHandler<AppEnv> = async (c, next) => {
   const user = c.get('user');
   if (!user) {
     if (c.req.header('X-Inertia')) {
