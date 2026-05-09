@@ -80,9 +80,9 @@ export default function Dashboard({ projects }: Props) {
           <li key={p.id}>
             <a
               href={`/projects/${p.id}`}
-              className="block rounded-lg transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Card className="p-4">
+              <Card className="p-4 transition-colors hover:bg-accent/50">
                 <span className="font-medium text-primary">{p.name}</span>
                 {p.description ? (
                   <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
