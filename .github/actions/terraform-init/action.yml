@@ -1,5 +1,5 @@
 name: Terraform init (Cloudflare R2 backend)
-description: Run terraform init with R2 (S3-compatible) backend config.
+description: Derive S3-compatible creds from a Cloudflare API token, then run terraform init against the R2 backend.
 
 inputs:
   bucket:
@@ -8,11 +8,40 @@ inputs:
   account-id:
     description: Cloudflare account id (used to build the R2 endpoint URL)
     required: true
+  api-token:
+    description: |
+      Cloudflare API token with Workers Scripts:Edit + D1:Edit + Workers R2 Storage:Edit
+      + Account Settings:Read. R2 の S3 互換認証で必要な Access Key ID / Secret Access Key は
+      この token から派生（id = token id / secret = SHA-256(token value)）。
+    required: true
 
 runs:
   using: composite
   steps:
-    - shell: bash
+    - name: Derive R2 S3 credentials from Cloudflare API token
+      shell: bash
+      env:
+        CF_API_TOKEN: ${{ inputs.api-token }}
+      run: |
+        set -euo pipefail
+        verify=$(curl -sS -H "Authorization: Bearer ${CF_API_TOKEN}" \
+          https://api.cloudflare.com/client/v4/user/tokens/verify)
+        if [ "$(jq -r '.success' <<<"$verify")" != "true" ]; then
+          echo "Cloudflare API token verification failed:" >&2
+          echo "$verify" >&2
+          exit 1
+        fi
+        access_key_id=$(jq -r '.result.id' <<<"$verify")
+        secret_access_key=$(printf '%s' "${CF_API_TOKEN}" | sha256sum | awk '{print $1}')
+        echo "::add-mask::${access_key_id}"
+        echo "::add-mask::${secret_access_key}"
+        {
+          echo "AWS_ACCESS_KEY_ID=${access_key_id}"
+          echo "AWS_SECRET_ACCESS_KEY=${secret_access_key}"
+          echo "AWS_DEFAULT_REGION=auto"
+        } >> "$GITHUB_ENV"
+    - name: terraform init
+      shell: bash
       working-directory: terraform
       run: |
         terraform init \

@@ -25,10 +25,8 @@ Cloudflare アカウント・OAuth App は production / develop で共有する�
 | Secret 名 | 用途 |
 |---|---|
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID（識別子） |
-| `CLOUDFLARE_API_TOKEN` | Workers / D1 編集権限を持つ API token |
-| `CLOUDFLARE_R2_ACCESS_KEY_ID` | tfstate 用 R2 アクセスキー |
-| `CLOUDFLARE_R2_SECRET_ACCESS_KEY` | tfstate 用 R2 シークレットキー |
-| `CLOUDFLARE_R2_TFSTATE_BUCKET` | tfstate 配置 bucket 名 |
+| `CLOUDFLARE_API_TOKEN` | Workers Scripts:Edit + D1:Edit + Workers R2 Storage:Edit + Account Settings:Read を付与した API token。tfstate の S3 互換認証も `id` と `SHA-256(value)` から派生して使う |
+| `CLOUDFLARE_R2_TFSTATE_BUCKET` | tfstate 配置 bucket 名（production / develop で同 bucket、workspace ごとに key が分離） |
 | `OAUTH_GITHUB_CLIENT_ID` | GitHub OAuth App の Client ID（共有） |
 | `OAUTH_GITHUB_CLIENT_SECRET` | GitHub OAuth App の Client Secret（共有） |
 
