@@ -147,6 +147,7 @@ vite.config.ts.timestamp-*
 .dev.vars
 .dev.vars.*
 !.dev.vars.example
+!.dev.vars.e2e
 
 # Playwright
 playwright-report/

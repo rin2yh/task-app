@@ -1,5 +1,7 @@
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { router, usePage } from '@inertiajs/react';
-import axios from 'axios';
 import { useState } from 'react';
 import type { Project, SharedProps } from '../shared/types';
 
@@ -15,10 +17,16 @@ export default function Dashboard({ projects }: Props) {
     if (!name.trim()) return;
     setBusy(true);
     try {
-      await axios.post('/projects', { name }, {
-        headers: { 'X-CSRF-Token': shared.csrfToken },
+      const res = await fetch('/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': shared.csrfToken,
+        },
+        body: JSON.stringify({ name }),
       });
-      router.reload();
+      if (!res.ok) throw new Error(`Failed to create project: ${res.status}`);
+      router.reload({ only: ['projects'] });
       setName('');
     } finally {
       setBusy(false);
@@ -26,50 +34,57 @@ export default function Dashboard({ projects }: Props) {
   };
 
   const logout = async () => {
-    await axios.post('/auth/logout', null, { headers: { 'X-CSRF-Token': shared.csrfToken } });
+    await fetch('/auth/logout', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': shared.csrfToken },
+    });
     window.location.href = '/auth/login';
   };
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', padding: '2rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ margin: 0 }}>プロジェクト</h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+    <div className="mx-auto max-w-5xl p-8">
+      <header className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">プロジェクト</h1>
+        <div className="flex items-center gap-2">
           {shared.auth.user ? (
             <>
-              <span data-testid="auth-login">{shared.auth.user.login}</span>
-              <button type="button" className="btn" onClick={logout}>
+              <span className="text-sm text-muted-foreground">{shared.auth.user.login}</span>
+              <Button type="button" variant="outline" size="sm" onClick={logout}>
                 ログアウト
-              </button>
+              </Button>
             </>
           ) : null}
         </div>
       </header>
 
-      <form onSubmit={create} style={{ marginTop: '1.5rem', display: 'flex', gap: '0.5rem' }}>
-        <input
+      <form onSubmit={create} className="mt-6 flex gap-2">
+        <Input
           type="text"
           placeholder="プロジェクト名"
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={100}
         />
-        <button type="submit" className="btn btn-primary" disabled={busy}>
+        <Button type="submit" disabled={busy}>
           作成
-        </button>
+        </Button>
       </form>
 
-      <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem' }}>
+      <ul className="mt-4 space-y-2.5">
         {projects.map((p) => (
-          <li key={p.id} className="card" style={{ marginBottom: '0.6rem' }}>
-            <a href={`/projects/${p.id}`}>{p.name}</a>
-            {p.description ? (
-              <p style={{ margin: '0.3rem 0 0', color: 'var(--c-muted)' }}>{p.description}</p>
-            ) : null}
+          <li key={p.id}>
+            <Card className="p-4">
+              <a href={`/projects/${p.id}`} className="font-medium text-primary hover:underline">
+                {p.name}
+              </a>
+              {p.description ? (
+                <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
+              ) : null}
+            </Card>
           </li>
         ))}
         {projects.length === 0 ? (
-          <li style={{ color: 'var(--c-muted)' }}>まだプロジェクトがありません。</li>
+          <li className="text-sm text-muted-foreground">まだプロジェクトがありません。</li>
         ) : null}
       </ul>
     </div>

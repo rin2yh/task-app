@@ -1,12 +1,13 @@
 import { and, asc, eq, max } from 'drizzle-orm';
-import { ulid } from 'ulid';
-import type { Database } from '../client';
-import { columns, projects, type DbColumn } from '../schema';
 import {
+  REBALANCE_THRESHOLD,
   computeInsertPosition,
   rebalance,
   tailPosition,
 } from '../../lib/position';
+import type { Database } from '../client';
+import { type DbColumn, columns, projects } from '../schema';
+import { ulid } from '../ulid';
 
 async function ensureProjectOwned(
   db: Database,
@@ -131,11 +132,13 @@ export async function reorderColumn(
   const beforeIdx = input.beforeColumnId
     ? others.findIndex((c) => c.id === input.beforeColumnId)
     : -1;
-  const afterIdx = input.afterColumnId
-    ? others.findIndex((c) => c.id === input.afterColumnId)
-    : -1;
+  const afterIdx = input.afterColumnId ? others.findIndex((c) => c.id === input.afterColumnId) : -1;
   const prevPos =
-    beforeIdx >= 0 ? others[beforeIdx]!.position : afterIdx > 0 ? others[afterIdx - 1]!.position : null;
+    beforeIdx >= 0
+      ? others[beforeIdx]!.position
+      : afterIdx > 0
+        ? others[afterIdx - 1]!.position
+        : null;
   const nextPos =
     afterIdx >= 0
       ? others[afterIdx]!.position
@@ -144,7 +147,10 @@ export async function reorderColumn(
         : null;
   const maxPos = others.at(-1)?.position ?? 0;
   const newPos = computeInsertPosition(prevPos, nextPos, maxPos);
-  if (newPos == null) {
+  const existingCollapsed = others.some(
+    (c, i) => i > 0 && c.position - others[i - 1]!.position < REBALANCE_THRESHOLD,
+  );
+  if (newPos == null || existingCollapsed) {
     // 全列リバランス：論理順に並べたうえで対象列を target index に配置
     const logical = others.slice();
     let insertAt: number;

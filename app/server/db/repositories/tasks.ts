@@ -1,21 +1,9 @@
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import { ulid } from 'ulid';
-import type { Database } from '../client';
-import {
-  columns,
-  labels,
-  projects,
-  taskLabels,
-  tasks,
-  type DbLabel,
-  type DbTask,
-} from '../schema';
-import {
-  computeInsertPosition,
-  rebalance,
-  tailPosition,
-} from '../../lib/position';
 import type { Priority } from '../../../shared/types';
+import { computeInsertPosition, rebalance, tailPosition } from '../../lib/position';
+import type { Database } from '../client';
+import { type DbLabel, type DbTask, columns, labels, projects, taskLabels, tasks } from '../schema';
+import { ulid } from '../ulid';
 
 async function ownsColumn(
   db: Database,
@@ -33,7 +21,7 @@ async function ownsColumn(
   return { column: row.column, projectId: row.column.projectId };
 }
 
-export async function ownsTask(
+async function ownsTask(
   db: Database,
   taskId: string,
   ownerId: number,
@@ -156,11 +144,7 @@ export async function updateTask(
   return next;
 }
 
-export async function deleteTask(
-  db: Database,
-  taskId: string,
-  ownerId: number,
-): Promise<boolean> {
+export async function deleteTask(db: Database, taskId: string, ownerId: number): Promise<boolean> {
   const owned = await ownsTask(db, taskId, ownerId);
   if (!owned) return false;
   await db.delete(tasks).where(eq(tasks.id, taskId));
@@ -192,14 +176,14 @@ export async function moveTask(
       .where(eq(tasks.columnId, input.toColumnId))
       .orderBy(asc(tasks.position))
   ).filter((t) => t.id !== taskId);
-  const beforeIdx = input.beforeTaskId
-    ? others.findIndex((t) => t.id === input.beforeTaskId)
-    : -1;
-  const afterIdx = input.afterTaskId
-    ? others.findIndex((t) => t.id === input.afterTaskId)
-    : -1;
+  const beforeIdx = input.beforeTaskId ? others.findIndex((t) => t.id === input.beforeTaskId) : -1;
+  const afterIdx = input.afterTaskId ? others.findIndex((t) => t.id === input.afterTaskId) : -1;
   const prevPos =
-    beforeIdx >= 0 ? others[beforeIdx]!.position : afterIdx > 0 ? others[afterIdx - 1]!.position : null;
+    beforeIdx >= 0
+      ? others[beforeIdx]!.position
+      : afterIdx > 0
+        ? others[afterIdx - 1]!.position
+        : null;
   const nextPos =
     afterIdx >= 0
       ? others[afterIdx]!.position
@@ -242,9 +226,7 @@ export async function moveTask(
       .set({ columnId: input.toColumnId, position: newPos, updatedAt: now })
       .where(eq(tasks.id, taskId));
   }
-  const updated = (
-    await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1)
-  )[0]!;
+  const updated = (await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1))[0]!;
   const tasksInColumn = await db
     .select()
     .from(tasks)

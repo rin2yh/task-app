@@ -1,14 +1,15 @@
 import { and, asc, eq } from 'drizzle-orm';
-import { ulid } from 'ulid';
-import type { Database } from '../client';
-import { columns, projects, type DbProject } from '../schema';
 import { POSITION_STEP } from '../../lib/position';
+import type { Database } from '../client';
+import { type DbProject, columns, projects } from '../schema';
+import { ulid } from '../ulid';
 
-export async function listProjectsByOwner(
-  db: Database,
-  ownerId: number,
-): Promise<DbProject[]> {
-  return db.select().from(projects).where(eq(projects.ownerId, ownerId)).orderBy(asc(projects.createdAt));
+export async function listProjectsByOwner(db: Database, ownerId: number): Promise<DbProject[]> {
+  return db
+    .select()
+    .from(projects)
+    .where(eq(projects.ownerId, ownerId))
+    .orderBy(asc(projects.createdAt));
 }
 
 export async function getProjectByIdForOwner(
@@ -84,11 +85,7 @@ export async function updateProject(
   return updated;
 }
 
-export async function deleteProject(
-  db: Database,
-  id: string,
-  ownerId: number,
-): Promise<boolean> {
+export async function deleteProject(db: Database, id: string, ownerId: number): Promise<boolean> {
   const existing = await getProjectByIdForOwner(db, id, ownerId);
   if (!existing) return false;
   await db.delete(projects).where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)));

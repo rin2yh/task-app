@@ -16,7 +16,12 @@
     "verbatimModuleSyntax": false,
     "allowImportingTsExtensions": false,
     "noEmit": true,
-    "types": ["@cloudflare/workers-types", "vite/client", "vitest/globals"],
+    "types": [
+      "@cloudflare/workers-types",
+      "@cloudflare/vitest-pool-workers/types",
+      "vite/client",
+      "vitest/globals"
+    ],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
@@ -25,10 +30,6 @@
       "@shared/*": ["./shared/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "pages.gen.ts"
-  ],
+  "include": ["**/*.ts", "**/*.tsx", "pages.gen.ts"],
   "exclude": ["node_modules", "dist", ".wrangler"]
 }

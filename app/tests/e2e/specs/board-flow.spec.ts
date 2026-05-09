@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/session';
+import { expect, test } from '../fixtures/session';
 
 test.describe.configure({ mode: 'serial' });
 

@@ -6,3 +6,6 @@
 .idea/
 *.swp
 *.swo
+.claude/*
+!.claude/settings.json
+!.claude/rules/

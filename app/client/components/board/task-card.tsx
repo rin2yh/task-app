@@ -1,3 +1,5 @@
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { TaskWithLabels } from '../../../shared/types';
@@ -17,39 +19,40 @@ export function TaskCard({ task, onClick }: Props) {
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
   };
   return (
-    <div
+    <Card
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
+      // biome-ignore lint/a11y/useSemanticElements: dnd-kit の listeners は div に割り当てる前提のため button 化できない
       role="button"
       tabIndex={0}
-      data-testid={`task-${task.id}`}
-      className="card"
+      className={cn('cursor-pointer transition-opacity', isDragging && 'opacity-40')}
       onKeyDown={(e) => {
         if (e.key === 'Enter') onClick();
       }}
       onClick={onClick}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.4rem' }}>
-        <strong>{task.title}</strong>
-        <PriorityBadge priority={task.priority} />
-      </div>
-      {task.labels.length > 0 ? (
-        <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
-          {task.labels.map((l) => (
-            <LabelChip key={l.id} label={l} />
-          ))}
+      <CardContent className="space-y-2 p-3">
+        <div className="flex items-start justify-between gap-2">
+          <strong className="text-sm font-semibold leading-snug">{task.title}</strong>
+          <PriorityBadge priority={task.priority} />
         </div>
-      ) : null}
-      {task.dueDate ? (
-        <div style={{ marginTop: '0.4rem', fontSize: '0.8rem', color: 'var(--c-muted)' }}>
-          期限: {new Date(task.dueDate).toLocaleDateString('ja-JP')}
-        </div>
-      ) : null}
-    </div>
+        {task.labels.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {task.labels.map((l) => (
+              <LabelChip key={l.id} label={l} />
+            ))}
+          </div>
+        ) : null}
+        {task.dueDate ? (
+          <div className="text-xs text-muted-foreground">
+            期限: {new Date(task.dueDate).toLocaleDateString('ja-JP')}
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

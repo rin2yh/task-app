@@ -1,17 +1,18 @@
-import { test, expect } from '../fixtures/session';
+import { expect, test } from '../fixtures/session';
 
 test('未ログイン時は /auth/login にリダイレクト', async ({ page }) => {
   const res = await page.goto('/');
   expect(res?.url()).toContain('/auth/login');
 });
 
-test('test-login バックドアでログインしダッシュボードにアクセスできる', async ({
+test('fake gh OAuth フローでログインしダッシュボードにアクセスできる', async ({
   page,
   authenticate,
 }) => {
   await authenticate('e2e-user');
   await page.goto('/');
-  await expect(page.getByTestId('auth-login')).toContainText('e2e-user');
+  await expect(page.getByRole('banner')).toContainText('e2e-user');
+  await expect(page.getByRole('button', { name: 'ログアウト' })).toBeVisible();
 });
 
 test('ログアウトでセッション削除', async ({ page, authenticate }) => {

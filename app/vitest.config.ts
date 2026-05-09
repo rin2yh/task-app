@@ -1,13 +1,17 @@
-import { defineConfig } from 'vitest/config';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vitest/config';
+
+const dir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
     globals: true,
-    include: ['tests/unit/client/**/*.test.{ts,tsx}'],
-    setupFiles: ['./tests/unit/client/setup.ts'],
+    include: ['client/**/*.test.{ts,tsx}', 'pages/**/*.test.{ts,tsx}'],
+    setupFiles: ['./client/test-setup.ts'],
     coverage: {
       reporter: ['text', 'json', 'html'],
       include: ['client/**/*.{ts,tsx}'],
@@ -21,9 +25,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@server': '/server',
-      '@client': '/client',
-      '@shared': '/shared',
+      '@': dir,
+      '@server': path.resolve(dir, 'server'),
+      '@client': path.resolve(dir, 'client'),
+      '@shared': path.resolve(dir, 'shared'),
     },
   },
 });

@@ -14,7 +14,9 @@ export async function parseJson<T extends z.ZodTypeAny>(
   }
   const result = schema.safeParse(body);
   if (!result.success) {
-    throw BadRequest(result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', '));
+    throw BadRequest(
+      result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join(', '),
+    );
   }
   return result.data;
 }

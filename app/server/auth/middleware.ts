@@ -1,9 +1,10 @@
-import type { MiddlewareHandler } from 'hono';
-import { getCookie, setCookie } from 'hono/cookie';
-import type { AppEnv } from '../env';
+import type { Context, MiddlewareHandler } from 'hono';
+import { getCookie } from 'hono/cookie';
 import { createDb } from '../db/client';
-import { CSRF_COOKIE, findSession, SESSION_COOKIE } from './session';
-import { Unauthorized, Forbidden } from '../lib/errors';
+import type { DbUser } from '../db/schema';
+import type { AppEnv } from '../env';
+import { Forbidden, Unauthorized } from '../lib/errors';
+import { CSRF_COOKIE, SESSION_COOKIE, clearSessionCookies, findSession } from './session';
 
 export const sessionLoader: MiddlewareHandler<AppEnv> = async (c, next) => {
   const token = getCookie(c, SESSION_COOKIE);
@@ -18,14 +19,7 @@ export const sessionLoader: MiddlewareHandler<AppEnv> = async (c, next) => {
       c.set('sessionToken', token);
       c.set('csrfToken', session.csrfToken);
     } else {
-      // expired/missing → clear cookie
-      setCookie(c, SESSION_COOKIE, '', {
-        path: '/',
-        httpOnly: true,
-        secure: true,
-        sameSite: 'Lax',
-        maxAge: 0,
-      });
+      clearSessionCookies(c);
     }
   }
   await next();
@@ -63,8 +57,8 @@ export const csrfGuard: MiddlewareHandler<AppEnv> = async (c, next) => {
   await next();
 };
 
-export function requireUser(c: { get(k: 'user'): unknown }) {
+export function requireUser(c: Context<AppEnv>): DbUser {
   const user = c.get('user');
   if (!user) throw Unauthorized();
-  return user as import('../db/schema').DbUser;
+  return user;
 }

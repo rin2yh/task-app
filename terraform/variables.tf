@@ -38,9 +38,3 @@ variable "app_url" {
   type        = string
   description = "Public app URL (例: https://task-app.<account>.workers.dev)"
 }
-
-variable "custom_domain" {
-  type        = string
-  default     = ""
-  description = "カスタムドメインを利用する場合のみ指定。空文字で *.workers.dev のみで公開。"
-}

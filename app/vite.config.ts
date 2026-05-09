@@ -1,21 +1,24 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { cloudflare } from '@cloudflare/vite-plugin';
 import { inertiaPages } from '@hono/inertia/vite';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
-const isE2E = process.env.E2E_AUTH === '1';
+const dir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     inertiaPages({
       pagesDir: 'pages',
-      output: 'pages.gen.ts',
+      outFile: 'pages.gen.ts',
     }),
     cloudflare({
       configPath: './wrangler.toml',
-      experimental: { remoteBindings: false },
     }),
     VitePWA({
       strategies: 'injectManifest',
@@ -45,20 +48,18 @@ export default defineConfig({
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
       },
+      devOptions: { enabled: true, type: 'module' },
     }),
   ],
-  define: {
-    'import.meta.env.E2E_AUTH': JSON.stringify(isE2E ? '1' : ''),
-  },
   build: {
     target: 'es2022',
   },
   resolve: {
     alias: {
-      '@': '/.',
-      '@server': '/server',
-      '@client': '/client',
-      '@shared': '/shared',
+      '@': dir,
+      '@server': path.resolve(dir, 'server'),
+      '@client': path.resolve(dir, 'client'),
+      '@shared': path.resolve(dir, 'shared'),
     },
   },
 });

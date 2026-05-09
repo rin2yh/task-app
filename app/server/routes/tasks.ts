@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import type { AppEnv } from '../env';
+import { PrioritySchema } from '../../shared/types';
+import { csrfGuard, requireAuth, requireUser } from '../auth/middleware';
 import { createDb } from '../db/client';
 import {
   createTask,
@@ -9,10 +10,9 @@ import {
   setTaskLabels,
   updateTask,
 } from '../db/repositories/tasks';
-import { csrfGuard, requireAuth, requireUser } from '../auth/middleware';
-import { parseJson } from '../lib/validation';
+import type { AppEnv } from '../env';
 import { NotFound } from '../lib/errors';
-import { PrioritySchema } from '../../shared/types';
+import { parseJson } from '../lib/validation';
 
 const CreateInput = z.object({
   title: z.string().min(1).max(200),

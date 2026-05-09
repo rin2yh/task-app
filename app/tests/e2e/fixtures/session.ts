@@ -1,29 +1,17 @@
-import { test as base, type APIRequestContext, type BrowserContext } from '@playwright/test';
+import { test as base } from '@playwright/test';
 
 export const test = base.extend<{
   authenticate: (login: string) => Promise<void>;
 }>({
-  authenticate: async ({ context, request }, use) => {
+  authenticate: async ({ page }, use) => {
     const fn = async (login: string) => {
-      const res = await request.post('/auth/test-login', { data: { login } });
-      if (!res.ok()) throw new Error(`test-login failed: ${res.status()}`);
-      const cookies = res.headers()['set-cookie'];
-      if (cookies) {
-        await context.addCookies(parseSetCookies(cookies, 'localhost'));
-      }
+      // E2E_AUTH=1 で起動された worker は FakeGitHubOAuthClient を使い、
+      // /auth/github → /auth/callback まで一気に redirect される。
+      await page.goto(`/auth/github?login=${encodeURIComponent(login)}`);
+      await page.waitForURL((url) => !url.pathname.startsWith('/auth/'));
     };
     await use(fn);
   },
 });
 
 export const expect = test.expect;
-
-function parseSetCookies(header: string, domain: string) {
-  return header
-    .split(/, (?=[^,]+=)/)
-    .map((part) => {
-      const [kv] = part.split(';');
-      const [name, ...rest] = kv!.split('=');
-      return { name: name!.trim(), value: rest.join('='), domain, path: '/' };
-    });
-}

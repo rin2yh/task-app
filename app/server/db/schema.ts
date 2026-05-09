@@ -1,12 +1,5 @@
 import { relations } from 'drizzle-orm';
-import {
-  index,
-  integer,
-  primaryKey,
-  real,
-  sqliteTable,
-  text,
-} from 'drizzle-orm/sqlite-core';
+import { index, integer, primaryKey, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -153,9 +146,7 @@ export const taskLabelsRelations = relations(taskLabels, ({ one }) => ({
 }));
 
 export type DbUser = typeof users.$inferSelect;
-export type DbSession = typeof sessions.$inferSelect;
 export type DbProject = typeof projects.$inferSelect;
 export type DbColumn = typeof columns.$inferSelect;
 export type DbTask = typeof tasks.$inferSelect;
 export type DbLabel = typeof labels.$inferSelect;
-export type DbTaskLabel = typeof taskLabels.$inferSelect;

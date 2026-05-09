@@ -1,5 +1,6 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { router, usePage } from '@inertiajs/react';
-import axios from 'axios';
 import { useState } from 'react';
 import { Board } from '../client/components/board/board';
 import type {
@@ -21,52 +22,46 @@ export default function Project({ project, columns, tasks, labels }: Props) {
   const { props: shared } = usePage<SharedProps>();
   const [newColumnName, setNewColumnName] = useState('');
 
-  const headers = { 'X-CSRF-Token': shared.csrfToken };
-
   const addColumn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newColumnName.trim()) return;
-    await axios.post(`/projects/${project.id}/columns`, { name: newColumnName.trim() }, { headers });
+    const res = await fetch(`/projects/${project.id}/columns`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': shared.csrfToken,
+      },
+      body: JSON.stringify({ name: newColumnName.trim() }),
+    });
+    if (!res.ok) throw new Error(`Failed to add column: ${res.status}`);
     setNewColumnName('');
     router.reload();
   };
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <header
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '1rem 1.5rem',
-          background: 'white',
-          borderBottom: '1px solid var(--c-border)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <a href="/">← 戻る</a>
-          <h1 style={{ margin: 0, fontSize: '1.2rem' }}>{project.name}</h1>
+    <div className="min-h-screen">
+      <header className="flex items-center justify-between border-b bg-card px-6 py-4">
+        <div className="flex items-center gap-4">
+          <a href="/" className="text-sm text-primary hover:underline">
+            ← 戻る
+          </a>
+          <h1 className="text-lg font-semibold tracking-tight">{project.name}</h1>
         </div>
-        <form onSubmit={addColumn} style={{ display: 'flex', gap: '0.4rem' }}>
-          <input
+        <form onSubmit={addColumn} className="flex gap-2">
+          <Input
             type="text"
             placeholder="新しい列名"
             value={newColumnName}
             onChange={(e) => setNewColumnName(e.target.value)}
             maxLength={50}
+            className="w-48"
           />
-          <button type="submit" className="btn">
+          <Button type="submit" variant="outline" size="sm">
             列追加
-          </button>
+          </Button>
         </form>
       </header>
-      <Board
-        projectId={project.id}
-        columns={columns}
-        tasks={tasks}
-        labels={labels}
-        csrfToken={shared.csrfToken}
-      />
+      <Board columns={columns} tasks={tasks} labels={labels} csrfToken={shared.csrfToken} />
     </div>
   );
 }

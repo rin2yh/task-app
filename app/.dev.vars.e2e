@@ -1,0 +1,6 @@
+GITHUB_CLIENT_ID="e2e-dummy-id"
+GITHUB_CLIENT_SECRET="e2e-dummy-secret"
+SESSION_SECRET="e2e-session-secret-32-chars-padding"
+APP_URL="http://localhost:5173"
+ALLOWED_LOGINS=""
+E2E_AUTH="1"

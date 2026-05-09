@@ -1,0 +1,101 @@
+name: Terraform
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform.yml'
+      - '.github/actions/terraform-init/**'
+
+concurrency:
+  group: terraform-plan-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: terraform
+
+env:
+  TF_IN_AUTOMATION: 'true'
+  TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  TF_VAR_github_client_id: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
+  TF_VAR_github_client_secret: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
+  TF_VAR_session_secret: ${{ secrets.SESSION_SECRET }}
+  TF_VAR_app_url: ${{ secrets.APP_URL }}
+  # Terraform S3 backend が読む env 名は AWS_* 固定。secret 名は R2 の発行画面に
+  # 揃えて Cloudflare 系で統一する。
+  AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+
+jobs:
+  fmt:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
+      - name: terraform fmt -check
+        run: terraform fmt -check
+
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
+      - name: tflint
+        run: tflint --format compact
+
+  plan:
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151  # v4.0.1
+      - uses: ./.github/actions/terraform-init
+        with:
+          bucket: ${{ secrets.CLOUDFLARE_R2_TFSTATE_BUCKET }}
+          account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: terraform validate
+        run: terraform validate
+      - name: terraform plan
+        id: plan
+        run: |
+          set -o pipefail
+          terraform plan -no-color -out=tfplan 2>&1 | tee plan.txt
+        continue-on-error: true
+      - name: Read plan output
+        id: plan_output
+        if: github.event_name == 'pull_request'
+        run: |
+          # 60KB を超えると GitHub のコメント上限に近づくため切り詰め。
+          plan=$(head -c 60000 plan.txt)
+          {
+            echo 'plan<<EOF'
+            echo "$plan"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+      - name: Upsert plan comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
+        with:
+          header: terraform-plan
+          message: |
+            ### terraform plan (${{ steps.plan.outcome }})
+
+            <details><summary>plan output</summary>
+
+            ```terraform
+            ${{ steps.plan_output.outputs.plan }}
+            ```
+
+            </details>
+      - name: Fail if plan failed
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
