@@ -1,22 +1,5 @@
 name: Import Issues (manual)
 
-# GitHub Projects v2 → task-app importer (PR #2 で追加された
-# `app/scripts/import-issues.ts`) を、選択した remote D1 に対して
-# 手動で 1 回だけ走らせるためのワークフロー。
-#
-# 統制:
-#   - `task_project (imported)` プロジェクトが target D1 に既に存在する
-#     場合は全工程を skip する (重複 column / task の生成を防ぐ)。
-#   - `environment:` で本番 secret を保護し、必要なら Required reviewers
-#     を GitHub 側で付ける。
-#
-# 前提:
-#   - PR #2 マージ後、`pnpm import:issues` が
-#     `--remote / --env / --binding` を解釈すること
-#     (現状 `--local` ハードコードなので最小拡張が必要)。
-#   - Projects v2 read 権限を持つ PAT を `PROJECTS_READ_TOKEN` として
-#     リポジトリ secret に登録すること。
-
 on:
   workflow_dispatch:
     inputs:
@@ -69,9 +52,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - uses: ./.github/actions/setup
 
-      # 統制 (idempotency): target D1 に同名 project が既にあれば全工程 skip。
-      # importer 側の重複防止 (--force なしで即終了) と同じ条件をワークフロー
-      # 入口にも置くことで、CI 上で誤って 2 回押しても副作用ゼロにする。
+      # importer 自身の重複チェック (--force なしで即終了) と同じ条件をワークフロー
+      # 入口にも置く。CI 上で誤って 2 回押されても重複 column / task が生成されない。
       - name: Check existing import
         id: check
         run: |
@@ -84,32 +66,32 @@ jobs:
           echo "existing project rows: $count"
           if [ "$count" -gt 0 ]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::task_project (imported) already exists in ${CLOUDFLARE_ENV}. Skipping import."
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Skip notice
-        if: steps.check.outputs.skip == 'true'
-        run: echo "::notice::task_project (imported) already exists in ${CLOUDFLARE_ENV}. Skipping import."
-
       - name: Fetch GH project items
         if: steps.check.outputs.skip != 'true'
+        env:
+          PROJECT_OWNER: ${{ inputs.project_owner || github.repository_owner }}
+          PROJECT_NUMBER: ${{ inputs.project_number }}
         run: |
           set -euo pipefail
           mkdir -p tmp
-          owner="${{ inputs.project_owner }}"
-          if [ -z "$owner" ]; then owner="${{ github.repository_owner }}"; fi
-          gh project item-list "${{ inputs.project_number }}" \
-            --owner "$owner" \
+          gh project item-list "$PROJECT_NUMBER" \
+            --owner "$PROJECT_OWNER" \
             --format json \
             --limit 1000 \
             > tmp/project-items.json
 
       - name: Run importer
         if: steps.check.outputs.skip != 'true'
+        env:
+          USER_LOGIN: ${{ inputs.user_login }}
         run: |
           pnpm import:issues \
-            --user-login "${{ inputs.user_login }}" \
+            --user-login "$USER_LOGIN" \
             --remote \
             --env "$CLOUDFLARE_ENV" \
             --binding "$D1_NAME"
