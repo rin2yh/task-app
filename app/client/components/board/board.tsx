@@ -15,7 +15,6 @@ import { Column } from './column';
 import { TaskDialog } from './task-dialog';
 
 type Props = {
-  projectId: string;
   columns: ColumnT[];
   tasks: TaskWithLabels[];
   labels: Label[];

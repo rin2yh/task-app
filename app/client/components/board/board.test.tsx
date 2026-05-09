@@ -27,9 +27,9 @@ const labels: Label[] = [];
 
 describe('Board', () => {
   it('renders columns and tasks', () => {
-    render(<Board projectId="p" columns={cols} tasks={tasks} labels={labels} csrfToken="x" />);
+    render(<Board columns={cols} tasks={tasks} labels={labels} csrfToken="x" />);
     expect(screen.getByRole('heading', { name: 'Todo' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Done' })).toBeInTheDocument();
-    expect(screen.getByText('first')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /first/ })).toBeInTheDocument();
   });
 });

@@ -65,13 +65,7 @@ export default function Project({ project, columns, tasks, labels }: Props) {
           </button>
         </form>
       </header>
-      <Board
-        projectId={project.id}
-        columns={columns}
-        tasks={tasks}
-        labels={labels}
-        csrfToken={shared.csrfToken}
-      />
+      <Board columns={columns} tasks={tasks} labels={labels} csrfToken={shared.csrfToken} />
     </div>
   );
 }
