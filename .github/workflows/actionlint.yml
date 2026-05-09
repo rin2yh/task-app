@@ -1,4 +1,4 @@
-name: Actionlint
+name: Actions CI
 
 on:
   pull_request:
@@ -8,14 +8,14 @@ on:
       - '.github/actions/**'
 
 concurrency:
-  group: actionlint-${{ github.ref }}
+  group: actions-ci-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  actionlint:
+  lint:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
