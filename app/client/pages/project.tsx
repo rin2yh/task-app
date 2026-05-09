@@ -19,23 +19,29 @@ interface Props {
 export default function Project({ project, columns, tasks, labels }: Props) {
   const { props: shared } = usePage<SharedProps>();
   const [newColumnName, setNewColumnName] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const canAddColumn = newColumnName.trim().length > 0;
+  const canAddColumn = !busy && newColumnName.trim().length > 0;
 
   const addColumn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canAddColumn) return;
-    const res = await fetch(`/projects/${project.id}/columns`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': shared.csrfToken,
-      },
-      body: JSON.stringify({ name: newColumnName.trim() }),
-    });
-    if (!res.ok) throw new Error(`Failed to add column: ${res.status}`);
-    setNewColumnName('');
-    router.reload();
+    setBusy(true);
+    try {
+      const res = await fetch(`/projects/${project.id}/columns`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': shared.csrfToken,
+        },
+        body: JSON.stringify({ name: newColumnName.trim() }),
+      });
+      if (!res.ok) throw new Error(`Failed to add column: ${res.status}`);
+      setNewColumnName('');
+      router.reload();
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
