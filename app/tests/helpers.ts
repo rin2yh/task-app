@@ -12,7 +12,7 @@ export const ENV = env as unknown as import('../server/env').Env & {
 export type Fetch = (path: string, init?: RequestInit) => Promise<Response>;
 
 export const it = base.extend<{ fetch: Fetch }>({
-  // biome-ignore lint/correctness/noEmptyPattern: vitest fixture signature requires the fixtures arg
+  // biome-ignore lint/correctness/noEmptyPattern: vitest enforces a destructuring pattern for the fixtures arg
   fetch: async ({}, use) => {
     await use((path, init) => SELF.fetch(`http://localhost${path}`, init));
   },
