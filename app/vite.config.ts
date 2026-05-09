@@ -1,12 +1,18 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { cloudflare } from '@cloudflare/vite-plugin';
 import { inertiaPages } from '@hono/inertia/vite';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const dir = path.dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig({
   plugins: [
     react(),
+    tailwindcss(),
     inertiaPages({
       pagesDir: 'pages',
       outFile: 'pages.gen.ts',
@@ -50,10 +56,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': '/.',
-      '@server': '/server',
-      '@client': '/client',
-      '@shared': '/shared',
+      '@': dir,
+      '@server': path.resolve(dir, 'server'),
+      '@client': path.resolve(dir, 'client'),
+      '@shared': path.resolve(dir, 'shared'),
     },
   },
 });

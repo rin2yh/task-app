@@ -1,4 +1,19 @@
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import type { Priority } from '../../../shared/types';
+
+const PRIORITY_OPTIONS: { value: Priority; label: string; badgeClass: string }[] = [
+  { value: 'low', label: 'Low', badgeClass: 'bg-slate-400 text-white' },
+  { value: 'medium', label: 'Medium', badgeClass: 'bg-sky-500 text-white' },
+  { value: 'high', label: 'High', badgeClass: 'bg-red-500 text-white' },
+];
 
 export function PrioritySelect({
   id,
@@ -10,34 +25,26 @@ export function PrioritySelect({
   onChange: (v: Priority) => void;
 }) {
   return (
-    <select id={id} value={value} onChange={(e) => onChange(e.target.value as Priority)}>
-      <option value="low">Low</option>
-      <option value="medium">Medium</option>
-      <option value="high">High</option>
-    </select>
+    <Select value={value} onValueChange={(v) => onChange(v as Priority)}>
+      <SelectTrigger id={id} className="w-full">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {PRIORITY_OPTIONS.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
-const COLORS: Record<Priority, string> = {
-  low: '#94a3b8',
-  medium: '#0ea5e9',
-  high: '#ef4444',
-};
-
 export function PriorityBadge({ priority }: { priority: Priority }) {
+  const opt = PRIORITY_OPTIONS.find((o) => o.value === priority);
   return (
-    <span
-      data-testid="priority"
-      style={{
-        fontSize: '0.7rem',
-        padding: '2px 6px',
-        borderRadius: 4,
-        background: COLORS[priority],
-        color: 'white',
-        textTransform: 'uppercase',
-      }}
-    >
+    <Badge data-testid="priority" className={cn('border-transparent uppercase', opt?.badgeClass)}>
       {priority}
-    </span>
+    </Badge>
   );
 }

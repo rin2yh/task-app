@@ -22,7 +22,7 @@ export function rootView(page: Page): string {
         <ReactRefresh />
         <Link rel="stylesheet" href="/client/styles/tailwind.css" />
       </head>
-      <body className="bg-slate-50 text-slate-900 antialiased">
+      <body className="bg-background text-foreground antialiased">
         <div id="app" data-page={dataPage} />
         <Script src="/client/client.tsx" type="module" />
       </body>
