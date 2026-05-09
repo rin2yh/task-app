@@ -63,13 +63,15 @@ jobs:
           APP_URL: ${{ vars.APP_URL }}
           GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
           GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
         run: |
           jq -n \
             --arg session_secret "$SESSION_SECRET" \
             --arg app_url "$APP_URL" \
             --arg github_client_id "$GITHUB_CLIENT_ID" \
             --arg github_client_secret "$GITHUB_CLIENT_SECRET" \
-            '{SESSION_SECRET: $session_secret, APP_URL: $app_url, GITHUB_CLIENT_ID: $github_client_id, GITHUB_CLIENT_SECRET: $github_client_secret}' \
+            --arg turnstile_secret_key "$TURNSTILE_SECRET_KEY" \
+            '{SESSION_SECRET: $session_secret, APP_URL: $app_url, GITHUB_CLIENT_ID: $github_client_id, GITHUB_CLIENT_SECRET: $github_client_secret, TURNSTILE_SECRET_KEY: $turnstile_secret_key}' \
             | pnpm exec wrangler secret bulk --env ${{ inputs.environment }}
       - name: Deploy
         run: pnpm exec wrangler deploy --env ${{ inputs.environment }}
