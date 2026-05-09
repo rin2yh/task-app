@@ -97,11 +97,7 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent
-        className="sm:max-w-md"
-        data-testid={`task-dialog-${task.id}`}
-        aria-labelledby="task-dialog-title"
-      >
+      <DialogContent className="sm:max-w-md" aria-labelledby="task-dialog-title">
         <DialogHeader>
           <DialogTitle id="task-dialog-title">タスク編集</DialogTitle>
         </DialogHeader>

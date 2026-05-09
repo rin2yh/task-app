@@ -19,10 +19,7 @@ export function Column({ column, tasks, onCreateTask, onSelectTask, onDeleteColu
     data: { type: 'column', columnId: column.id },
   });
   return (
-    <div
-      className="flex w-80 shrink-0 flex-col gap-2 rounded-xl bg-secondary p-3"
-      data-testid={`column-${column.id}`}
-    >
+    <div className="flex w-80 shrink-0 flex-col gap-2 rounded-xl bg-secondary p-3">
       <header className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">{column.name}</h2>
         <Button

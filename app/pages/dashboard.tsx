@@ -48,9 +48,7 @@ export default function Dashboard({ projects }: Props) {
         <div className="flex items-center gap-2">
           {shared.auth.user ? (
             <>
-              <span className="text-sm text-muted-foreground" data-testid="auth-login">
-                {shared.auth.user.login}
-              </span>
+              <span className="text-sm text-muted-foreground">{shared.auth.user.login}</span>
               <Button type="button" variant="outline" size="sm" onClick={logout}>
                 ログアウト
               </Button>

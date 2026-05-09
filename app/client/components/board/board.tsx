@@ -25,14 +25,13 @@ import { Column } from './column';
 import { TaskDialog } from './task-dialog';
 
 type Props = {
-  projectId: string;
   columns: ColumnT[];
   tasks: TaskWithLabels[];
   labels: Label[];
   csrfToken: string;
 };
 
-export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
+export function Board({ columns, tasks, labels, csrfToken }: Props) {
   const board = useOptimisticBoard(buildInitialState(columns, tasks));
   const [openTask, setOpenTask] = useState<TaskWithLabels | null>(null);
   const [creatingInColumn, setCreatingInColumn] = useState<string | null>(null);
@@ -111,10 +110,7 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <div
-          className="flex items-start gap-4 overflow-x-auto p-4"
-          data-testid={`board-${projectId}`}
-        >
+        <div className="flex items-start gap-4 overflow-x-auto p-4">
           {board.state.columns.map((c) => (
             <Column
               key={c.id}
@@ -181,7 +177,7 @@ function NewTaskDialog({
   const [busy, setBusy] = useState(false);
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="sm:max-w-md" data-testid={`new-task-${columnId}`}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>新規タスク</DialogTitle>
         </DialogHeader>

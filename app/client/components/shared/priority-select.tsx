@@ -42,9 +42,5 @@ export function PrioritySelect({
 
 export function PriorityBadge({ priority }: { priority: Priority }) {
   const opt = PRIORITY_OPTIONS.find((o) => o.value === priority);
-  return (
-    <Badge data-testid="priority" className={cn('border-transparent uppercase', opt?.badgeClass)}>
-      {priority}
-    </Badge>
-  );
+  return <Badge className={cn('border-transparent uppercase', opt?.badgeClass)}>{priority}</Badge>;
 }
