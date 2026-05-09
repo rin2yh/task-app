@@ -1,0 +1,13 @@
+# 参考: https://zenn.dev/yagiryuuu/articles/456c1668a7a62b
+# https://developers.google.com/gemini-code-assist/docs/customize-gemini-behavior-github?hl=ja#default-configuration
+have_fun: true # ポエムを入れる
+code_review:
+  disable: false
+  comment_severity_threshold: LOW
+  max_review_comments: 20
+  pull_request_opened:
+    help: false
+    summary: true
+    code_review: true
+    include_drafts: true
+ignore_patterns: []
