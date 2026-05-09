@@ -4,6 +4,10 @@ name: Merge Gate
 # status check. Branch protection should require only this workflow's `gate`
 # job; downstream workflows (Web CI / Terraform CI / Actions CI) must NOT be
 # listed as required, because their `paths:` filters mean they don't always run.
+#
+# The gate observes which workflows GitHub actually triggered for this PR via
+# the actions/runs API — it does not reimplement the `paths:` filters. So a
+# workflow that didn't trigger is treated as "skipped (not required)".
 
 on:
   pull_request:
@@ -18,60 +22,7 @@ permissions:
   actions: read
 
 jobs:
-  changes:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    outputs:
-      web: ${{ steps.filter.outputs.web }}
-      terraform: ${{ steps.filter.outputs.terraform }}
-      actions: ${{ steps.filter.outputs.actions }}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-        with:
-          fetch-depth: 0
-      - id: filter
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        # Filters must mirror the `paths:` of the downstream workflows exactly.
-        run: |
-          set -euo pipefail
-          files=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-
-          web=false
-          terraform=false
-          actions=false
-
-          while IFS= read -r f; do
-            [[ -z "$f" ]] && continue
-            case "$f" in
-              app/*|.github/workflows/ci.yml|.github/actions/setup/*|.github/actions/setup-e2e/*)
-                web=true ;;
-            esac
-            case "$f" in
-              terraform/*|.github/workflows/terraform.yml|.github/actions/terraform-init/*)
-                terraform=true ;;
-            esac
-            case "$f" in
-              .github/workflows/*|.github/actions/*)
-                actions=true ;;
-            esac
-          done <<< "$files"
-
-          {
-            echo "web=$web"
-            echo "terraform=$terraform"
-            echo "actions=$actions"
-          } >> "$GITHUB_OUTPUT"
-          {
-            echo "### Merge Gate"
-            echo "- Web CI required: \`$web\`"
-            echo "- Terraform CI required: \`$terraform\`"
-            echo "- Actions CI required: \`$actions\`"
-          } >> "$GITHUB_STEP_SUMMARY"
-
   gate:
-    needs: changes
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -80,20 +31,42 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          NEED_WEB: ${{ needs.changes.outputs.web }}
-          NEED_TERRAFORM: ${{ needs.changes.outputs.terraform }}
-          NEED_ACTIONS: ${{ needs.changes.outputs.actions }}
+        # Workflows that gate merging when triggered. To add another blocker,
+        # append its `name:` here. Workflows not in this list never block.
         run: |
           set -euo pipefail
 
+          KNOWN=("Web CI" "Terraform CI" "Actions CI")
+
+          # GitHub registers all workflow runs from one event nearly together,
+          # but the gate's own job can start a few seconds before its siblings
+          # appear in the API. Sleep briefly so the initial snapshot is stable.
+          sleep 20
+
+          runs_json=$(gh api \
+            "repos/${GH_REPO}/actions/runs?head_sha=${HEAD_SHA}&event=pull_request&per_page=100")
+
           required=()
-          [[ "$NEED_WEB" == "true" ]] && required+=("Web CI")
-          [[ "$NEED_TERRAFORM" == "true" ]] && required+=("Terraform CI")
-          [[ "$NEED_ACTIONS" == "true" ]] && required+=("Actions CI")
+          for name in "${KNOWN[@]}"; do
+            count=$(jq --arg n "$name" \
+              '[.workflow_runs[] | select(.name == $n)] | length' \
+              <<<"$runs_json")
+            if (( count > 0 )); then
+              required+=("$name")
+            fi
+          done
+
+          {
+            echo "### Merge Gate"
+            if [[ ${#required[@]} -eq 0 ]]; then
+              echo "No CI workflows triggered for this PR — gate passes."
+            else
+              echo "Required workflows (observed): ${required[*]}"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
           if [[ ${#required[@]} -eq 0 ]]; then
-            echo "No relevant changes; gate passes."
-            echo "result=passed (no required workflows)" >> "$GITHUB_STEP_SUMMARY"
+            echo "No CI workflows triggered for this PR; gate passes."
             exit 0
           fi
 
@@ -106,7 +79,6 @@ jobs:
             runs_json=$(gh api \
               "repos/${GH_REPO}/actions/runs?head_sha=${HEAD_SHA}&event=pull_request&per_page=100")
 
-            missing=()
             pending=()
             failed=()
 
@@ -115,10 +87,6 @@ jobs:
                 '[.workflow_runs[] | select(.name == $n)]
                  | sort_by(.run_started_at) | reverse | .[0]' \
                 <<<"$runs_json")
-              if [[ "$latest" == "null" ]]; then
-                missing+=("$name")
-                continue
-              fi
               status=$(jq -r '.status' <<<"$latest")
               conclusion=$(jq -r '.conclusion // ""' <<<"$latest")
               if [[ "$status" != "completed" ]]; then
@@ -128,10 +96,10 @@ jobs:
               fi
             done
 
-            printf 'missing=(%s) pending=(%s) failed=(%s)\n' \
-              "${missing[*]:-}" "${pending[*]:-}" "${failed[*]:-}"
+            printf 'pending=(%s) failed=(%s)\n' \
+              "${pending[*]:-}" "${failed[*]:-}"
 
-            if [[ ${#missing[@]} -eq 0 && ${#pending[@]} -eq 0 ]]; then
+            if [[ ${#pending[@]} -eq 0 ]]; then
               if [[ ${#failed[@]} -gt 0 ]]; then
                 echo "::error::Required workflows failed: ${failed[*]}"
                 exit 1
