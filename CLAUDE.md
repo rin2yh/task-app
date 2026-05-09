@@ -25,11 +25,6 @@ Scripts: @app/package.json. Run all `pnpm` commands inside `app/`. Single test: 
 - **PWA**: `vite-plugin-pwa` injectManifest, SW at `client/pwa/sw.ts`. `register.ts` is `import.meta.env.DEV`-guarded — verify SW via `pnpm build && pnpm preview`.
 - **Test helpers**: `server/_test-helpers.ts` (`applyMigrations`, `createTestUser`) instead of poking D1 directly.
 
-## Project rules (`.claude/rules/`)
-
-- **`react.md`**: NO `useMemo` / `useCallback` / `React.memo`. Don't add for "new identity" review feedback. Remove existing.
-- **`e2e.md`**: NO `data-testid` (in product code or tests) — remove on sight. Locator priority: role+name → label/placeholder → text → landmark → (last resort) `aria-label`. Web-first assertions only (`await expect(locator).toBeVisible()`). No `page.waitForTimeout`. Mock externals with `page.route()`; for auth use the `authenticate(login)` fixture (`tests/e2e/fixtures/session.ts`). Tests independent — set up data per test.
-
 ## Gotchas
 
 - `wrangler.toml` ships placeholder `database_id = "00000000-..."` for local D1 (per-developer; don't commit your real id).
