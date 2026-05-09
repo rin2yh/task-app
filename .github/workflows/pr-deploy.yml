@@ -9,9 +9,6 @@ name: PR Deploy
 on:
   pull_request:
     types: [opened, reopened]
-    # app を実際にデプロイする workflow なので、app に触らない PR (docs のみ等) では
-    # ボタンを生やさない。paths は `pull_request` イベントにしか効かないが、
-    # ボタンが無ければ issue_comment 側の guard も自然に落ちるので実質 skip になる。
     paths:
       - 'app/**'
       - '.github/workflows/pr-deploy.yml'
