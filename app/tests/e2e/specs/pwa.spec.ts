@@ -1,5 +1,6 @@
 import { expect, test } from '../fixtures/session';
 import { DashboardPage } from '../pages/dashboard.page';
+import { OfflineShellPage } from '../pages/offline-shell.page';
 
 test('manifest が配信される', async ({ page }) => {
   const res = await page.goto('/manifest.webmanifest');
@@ -19,5 +20,5 @@ test('オフライン時にシェルが表示される（本番ビルド時の�
   await new DashboardPage(page).goto();
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByText(/オフライン/)).toBeVisible();
+  await new OfflineShellPage(page).expectVisible();
 });

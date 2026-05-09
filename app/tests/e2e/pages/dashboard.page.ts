@@ -3,17 +3,15 @@ import { expect } from '@playwright/test';
 import { ProjectPage } from './project.page';
 
 export class DashboardPage {
-  readonly page: Page;
-  readonly header: Locator;
-  readonly heading: Locator;
-  readonly projectNameInput: Locator;
-  readonly createButton: Locator;
-  readonly logoutButton: Locator;
+  private readonly page: Page;
+  private readonly header: Locator;
+  private readonly projectNameInput: Locator;
+  private readonly createButton: Locator;
+  private readonly logoutButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.header = page.getByRole('banner');
-    this.heading = page.getByRole('heading', { name: 'プロジェクト' });
     this.projectNameInput = page.getByPlaceholder('プロジェクト名');
     this.createButton = page.getByRole('button', { name: '作成' });
     this.logoutButton = page.getByRole('button', { name: 'ログアウト' });
@@ -23,7 +21,7 @@ export class DashboardPage {
     await this.page.goto('/');
   }
 
-  projectLink(name: string): Locator {
+  private projectLink(name: string): Locator {
     return this.page.getByRole('link', { name });
   }
 
@@ -42,6 +40,10 @@ export class DashboardPage {
 
   async logout() {
     await this.logoutButton.click();
-    await this.page.waitForURL(/\/auth\/login/);
+  }
+
+  async expectLoggedInAs(login: string) {
+    await expect(this.header).toContainText(login);
+    await expect(this.logoutButton).toBeVisible();
   }
 }
