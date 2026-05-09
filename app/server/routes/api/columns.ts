@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { csrfGuard, requireAuth, requireUser } from '../../auth/middleware';
+import { csrfGuard, requireAuth } from '../../auth/middleware';
 import { createDb } from '../../db/client';
 import {
   createColumn,
@@ -28,7 +28,7 @@ export const columnsByProjectRoutes = new Hono<AppEnv>();
 columnsByProjectRoutes.use('*', requireAuth);
 
 columnsByProjectRoutes.get('/:projectId/columns', async (c) => {
-  const user = requireUser(c);
+  const user = c.var.authUser;
   const projectId = c.req.param('projectId');
   const db = createDb(c.env.DB);
   const cols = await listColumnsForProject(db, projectId, user.id);
@@ -37,7 +37,7 @@ columnsByProjectRoutes.get('/:projectId/columns', async (c) => {
 });
 
 columnsByProjectRoutes.post('/:projectId/columns', csrfGuard, async (c) => {
-  const user = requireUser(c);
+  const user = c.var.authUser;
   const projectId = c.req.param('projectId');
   const input = await parseJson(c, CreateInput);
   const db = createDb(c.env.DB);
@@ -50,7 +50,7 @@ export const columnRoutes = new Hono<AppEnv>();
 columnRoutes.use('*', requireAuth);
 
 columnRoutes.patch('/:id', csrfGuard, async (c) => {
-  const user = requireUser(c);
+  const user = c.var.authUser;
   const id = c.req.param('id');
   const input = await parseJson(c, UpdateInput);
   const db = createDb(c.env.DB);
@@ -60,7 +60,7 @@ columnRoutes.patch('/:id', csrfGuard, async (c) => {
 });
 
 columnRoutes.delete('/:id', csrfGuard, async (c) => {
-  const user = requireUser(c);
+  const user = c.var.authUser;
   const id = c.req.param('id');
   const db = createDb(c.env.DB);
   const ok = await deleteColumn(db, id, user.id);
@@ -69,7 +69,7 @@ columnRoutes.delete('/:id', csrfGuard, async (c) => {
 });
 
 columnRoutes.post('/:id/reorder', csrfGuard, async (c) => {
-  const user = requireUser(c);
+  const user = c.var.authUser;
   const id = c.req.param('id');
   const input = await parseJson(c, ReorderInput);
   const db = createDb(c.env.DB);
