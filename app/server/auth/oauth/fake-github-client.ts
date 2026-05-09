@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
-import type { AppEnv } from '../env';
-import type { GitHubUser, OAuthClient } from './oauth';
+import type { AppEnv } from '../../env';
+import type { GitHubUser, OAuthClient } from './client';
 
 export class FakeGitHubOAuthClient implements OAuthClient {
   constructor(private readonly c: Context<AppEnv>) {}
