@@ -50,8 +50,24 @@ wrangler deploy --env production
 
 ## 5. ロールバック
 
-- アプリ側: `wrangler rollback <version-id>` で前バージョンの Worker に戻せます
-- DB: マイグレーションは前進のみ。破壊的変更は先に互換 migration → コードデプロイ → cleanup migration の順を徹底してください
+### アプリ側（Worker）
+
+```bash
+cd app
+wrangler rollback --env production <version-id>
+```
+
+直近にデプロイしたバージョンの ID は Cloudflare ダッシュボード → Workers & Pages → task-app → Deployments で確認できます。
+
+### DB
+
+マイグレーションは前進のみ。破壊的変更は次のフローを徹底します。
+
+1. 互換 migration（旧スキーマと共存可能な変更）をデプロイ
+2. アプリコードの参照を新スキーマに切り替えてデプロイ
+3. cleanup migration（旧カラム削除など）をデプロイ
+
+ロールバック時は (2) のコードのみ巻き戻して (1) の互換状態に留め、データを失わないようにします。
 
 ## 6. cron トリガ
 
