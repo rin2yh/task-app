@@ -31,15 +31,14 @@ env:
 jobs:
   apply:
     name: apply ${{ matrix.environment }}
+    # `if:` 文脈では `matrix` を参照できないため、matrix 自体を inputs から動的に組み立てて
+    # workflow_dispatch のときだけ対象 env に絞り込む。push では両 env が並走する。
     strategy:
       fail-fast: false
       matrix:
-        environment: [production, develop]
+        environment: ${{ fromJSON(inputs.environment && format('["{0}"]', inputs.environment) || '["production","develop"]') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    if: >-
-      github.event_name != 'workflow_dispatch'
-      || inputs.environment == matrix.environment
     # infra と app の Deployments を分けるため -infra サフィックスの environment を使う。
     environment: ${{ matrix.environment }}-infra
     concurrency:

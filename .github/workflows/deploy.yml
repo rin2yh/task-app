@@ -45,20 +45,15 @@ jobs:
 
   migrate-db:
     name: migrate-db ${{ matrix.environment }}
+    # `if:` 文脈では `matrix` を参照できないため、matrix 自体を inputs から動的に組み立てて
+    # workflow_dispatch のときだけ対象 env に絞り込む。push では両 env が並走する。
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - environment: production
-            d1_database: task-app-prod
-          - environment: develop
-            d1_database: task-app-develop
+        environment: ${{ fromJSON(inputs.environment && format('["{0}"]', inputs.environment) || '["production","develop"]') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: [e2e]
-    if: >-
-      github.event_name != 'workflow_dispatch'
-      || inputs.environment == matrix.environment
     environment: ${{ matrix.environment }}
     concurrency:
       group: migrate-db-${{ matrix.environment }}
@@ -69,20 +64,18 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - uses: ./.github/actions/setup
-      - run: pnpm exec wrangler d1 migrations apply ${{ matrix.d1_database }} --remote --env ${{ matrix.environment }}
+      # production の D1 名だけ既存リソース互換のため非対称 ("task-app-prod")。
+      - run: pnpm exec wrangler d1 migrations apply task-app-${{ matrix.environment == 'production' && 'prod' || matrix.environment }} --remote --env ${{ matrix.environment }}
 
   deploy:
     name: deploy ${{ matrix.environment }}
     strategy:
       fail-fast: false
       matrix:
-        environment: [production, develop]
+        environment: ${{ fromJSON(inputs.environment && format('["{0}"]', inputs.environment) || '["production","develop"]') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: [migrate-db]
-    if: >-
-      github.event_name != 'workflow_dispatch'
-      || inputs.environment == matrix.environment
     environment: ${{ matrix.environment }}
     concurrency:
       group: deploy-${{ matrix.environment }}
