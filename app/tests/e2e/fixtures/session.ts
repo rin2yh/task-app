@@ -7,10 +7,8 @@ interface Fixtures {
 export const test = base.extend<Fixtures>({
   authenticate: async ({ page }, use) => {
     const fn = async (login: string) => {
-      await base.step(`fake GitHub OAuth でログイン (${login})`, async () => {
-        await page.goto(`/auth/github?login=${encodeURIComponent(login)}`);
-        await page.waitForURL((url) => !url.pathname.startsWith('/auth/'));
-      });
+      await page.goto(`/auth/github?login=${encodeURIComponent(login)}`);
+      await page.waitForURL((url) => !url.pathname.startsWith('/auth/'));
     };
     await use(fn);
   },
