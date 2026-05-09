@@ -50,8 +50,13 @@ const DEFAULTS = {
   noStatus: '(no status)',
   titleMax: 200,
   descriptionMax: 10_000,
-  defaultColor: '999999',
+  defaultColor: '#999999',
 };
+
+function normalizeColor(raw: string | null | undefined): string {
+  if (typeof raw !== 'string' || raw.length === 0) return DEFAULTS.defaultColor;
+  return /^[0-9a-fA-F]{6}$/.test(raw) ? `#${raw}` : raw;
+}
 
 function parseArgs(argv: string[]): ParsedArgs {
   const out: Record<string, string | boolean> = {};
@@ -192,8 +197,7 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
     for (const lab of item.content?.labels ?? []) {
       const name = typeof lab.name === 'string' ? lab.name : '';
       if (!name) continue;
-      const color =
-        typeof lab.color === 'string' && lab.color.length > 0 ? lab.color : DEFAULTS.defaultColor;
+      const color = normalizeColor(lab.color);
       const key = `${color}:${name}`;
       let labelId = labelIdByKey.get(key);
       if (!labelId) {
