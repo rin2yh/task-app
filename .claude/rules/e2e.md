@@ -1,0 +1,56 @@
+---
+description: E2E / 単体テストでは data-testid を使わず意味的ロケーターでテストを書く
+globs:
+  - "app/client/**/*.{ts,tsx}"
+  - "app/pages/**/*.{ts,tsx}"
+  - "app/tests/**/*.{ts,tsx}"
+---
+
+# E2E / 単体テストで data-testid を使わない
+
+## ルール
+
+- React コンポーネント / ページに `data-testid` 属性を**追加しない**。
+- Playwright (`tests/e2e/**`) と Testing Library (`*.test.tsx`) では `getByTestId` を**使わない**。
+- 既存の `data-testid` を見つけた場合は削除し、テストを意味的ロケーターに書き換える。
+
+## 代替の優先順位
+
+テストから要素を取得する際は次の順で検討する:
+
+1. **role + accessible name** — `getByRole('button', { name: '保存' })`, `getByRole('heading', { name: 'Todo' })`
+2. **ラベル / プレースホルダー** — `getByLabelText('タイトル')`, `getByPlaceholder('プロジェクト名')`
+3. **表示テキスト** — `getByText('My Task')`
+4. **landmark role** — `getByRole('banner')`（ヘッダー）, `getByRole('navigation')` 等
+5. **やむを得ない場合のみ** `aria-label` / `aria-labelledby` をプロダクトコードに追加してアクセシビリティと両立させる
+
+## 理由
+
+- `data-testid` はテスト専用の漏れた抽象化で、プロダクトコードを汚染し JSX を肥大化させる。
+- 意味的ロケーターは「ユーザーがどう要素を識別するか」と一致するため、a11y 改善とテスト保守性を同時に向上させる。
+- 意味的に取得できないということは、しばしばプロダクト側のアクセシビリティ不足のサイン。
+
+## 例外
+
+明確な理由（DnD 内部識別子、外部ライブラリの制約等）がある場合は、`data-testid` ではなく意味的な `data-*` 属性または `aria-*` 属性を使う。新規追加時はレビューで合意を取る。
+
+## 例
+
+```tsx
+// NG
+<span data-testid="auth-login">{user.login}</span>
+expect(page.getByTestId('auth-login')).toContainText('alice');
+
+// OK
+{user.login}
+await expect(page.getByRole('banner')).toContainText('alice');
+```
+
+```tsx
+// NG
+<div className="card" data-testid={`task-${task.id}`}>...</div>
+screen.getByTestId('task-t1');
+
+// OK — TaskCard は role="button" を持つので accessible name で取得
+screen.getByRole('button', { name: /first/ });
+```
