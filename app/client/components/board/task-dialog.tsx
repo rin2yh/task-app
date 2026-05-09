@@ -43,8 +43,11 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
     'X-CSRF-Token': csrfToken,
   };
 
+  const canSave = !busy && title.trim().length > 0;
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy) return;
     if (!title.trim()) {
       setError('タイトル必須');
       return;
@@ -173,7 +176,7 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
               <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
                 キャンセル
               </Button>
-              <Button type="submit" disabled={busy}>
+              <Button type="submit" disabled={!canSave}>
                 保存
               </Button>
             </div>
