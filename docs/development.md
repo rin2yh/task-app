@@ -19,7 +19,7 @@ pnpm dev                  # Vite + Wrangler dev (http://localhost:5173)
 | E2E (Playwright) | `pnpm test:e2e` | フルスタックシナリオ |
 | カバレッジ | `pnpm test --coverage` | server 90%+ / client 70%+ を CI で要求 |
 
-`pnpm test:e2e` は `playwright.config.ts` の `webServer` が `NODE_ENV=test pnpm dev` を自動起動します。手動起動は不要です。
+`pnpm test:e2e` は `config/playwright.config.ts` の `webServer` が `NODE_ENV=test pnpm dev` を自動起動します。手動起動は不要です。
 
 ### E2E バックドア
 
