@@ -21,15 +21,8 @@ defaults:
 
 env:
   TF_IN_AUTOMATION: 'true'
-  # Cloudflare 系・OAuth はアカウント共有のため repo secret 配下。
   TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-  TF_VAR_github_client_id: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
-  TF_VAR_github_client_secret: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
-  # SESSION_SECRET / APP_URL は environment(production|develop) ごとに別値。
-  # job 側の `environment:` 指定で値が解決される。
-  TF_VAR_session_secret: ${{ secrets.SESSION_SECRET }}
-  TF_VAR_app_url: ${{ secrets.APP_URL }}
   # Terraform S3 backend が読む env 名は AWS_* 固定。secret 名は R2 の発行画面に
   # 揃えて Cloudflare 系で統一する。
   AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
@@ -66,7 +59,8 @@ jobs:
             workspace: develop
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    environment: ${{ matrix.environment }}
+    # plan は read-only で env-scoped secret を必要としないため `environment:` は付けない
+    # （Deployments タブに plan の記録が並ぶのを避ける）。
     permissions:
       contents: read
       pull-requests: write

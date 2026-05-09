@@ -47,30 +47,5 @@ resource "cloudflare_workers_script" "task_app" {
   }
 }
 
-resource "cloudflare_workers_secret" "github_client_id" {
-  account_id  = var.cloudflare_account_id
-  script_name = cloudflare_workers_script.task_app.name
-  name        = "GITHUB_CLIENT_ID"
-  secret_text = var.github_client_id
-}
-
-resource "cloudflare_workers_secret" "github_client_secret" {
-  account_id  = var.cloudflare_account_id
-  script_name = cloudflare_workers_script.task_app.name
-  name        = "GITHUB_CLIENT_SECRET"
-  secret_text = var.github_client_secret
-}
-
-resource "cloudflare_workers_secret" "session_secret" {
-  account_id  = var.cloudflare_account_id
-  script_name = cloudflare_workers_script.task_app.name
-  name        = "SESSION_SECRET"
-  secret_text = var.session_secret
-}
-
-resource "cloudflare_workers_secret" "app_url" {
-  account_id  = var.cloudflare_account_id
-  script_name = cloudflare_workers_script.task_app.name
-  name        = "APP_URL"
-  secret_text = var.app_url
-}
+# Worker secret (GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET / SESSION_SECRET / APP_URL) は
+# wrangler secret bulk で deploy.yml から注入する。Terraform は触らない。

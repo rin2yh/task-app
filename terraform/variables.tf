@@ -19,22 +19,3 @@ variable "d1_database_name" {
   default = "task-app-prod"
 }
 
-variable "github_client_id" {
-  type      = string
-  sensitive = true
-}
-
-variable "github_client_secret" {
-  type      = string
-  sensitive = true
-}
-
-variable "session_secret" {
-  type      = string
-  sensitive = true
-}
-
-variable "app_url" {
-  type        = string
-  description = "Public app URL (例: https://task-app.<account>.workers.dev)"
-}
