@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { PrioritySchema } from '../../../shared/types';
+import { PrioritySchema } from '../../../shared/priority';
 import { csrfGuard, requireAuth, requireUser } from '../../auth/middleware';
 import { createDb } from '../../db/client';
 import {

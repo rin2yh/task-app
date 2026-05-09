@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from '@client/components/ui/select';
 import { cn } from '@client/lib/utils';
-import type { Priority } from '@shared/types';
+import type { Priority } from '@shared/priority';
 
 const PRIORITY_OPTIONS: { value: Priority; label: string; badgeClass: string }[] = [
   { value: 'low', label: 'Low', badgeClass: 'bg-slate-400 text-white' },

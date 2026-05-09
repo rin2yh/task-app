@@ -1,4 +1,5 @@
-import type { Column, Task, TaskWithLabels } from '@shared/types';
+import type { Column } from '@shared/column';
+import type { Task, TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
 
 export interface BoardState {

@@ -1,4 +1,4 @@
-import type { SharedProps } from '@shared/types';
+import type { SharedProps } from '@shared/inertia';
 import type { Context } from 'hono';
 import type { AppEnv } from '../env';
 

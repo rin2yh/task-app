@@ -1,5 +1,5 @@
 import { Badge } from '@client/components/ui/badge';
-import type { Label } from '@shared/types';
+import type { Label } from '@shared/label';
 
 export function LabelChip({ label }: { label: Label }) {
   return (
