@@ -14,8 +14,8 @@ export function LabelChip({ label }: { label: Label }) {
 
 function pickFg(hex: string): string {
   const m = hex.match(/^#([0-9a-fA-F]{6})$/);
-  if (!m) return '#000';
-  const v = m[1]!;
+  const v = m?.[1];
+  if (!v) return '#000';
   const r = Number.parseInt(v.slice(0, 2), 16);
   const g = Number.parseInt(v.slice(2, 4), 16);
   const b = Number.parseInt(v.slice(4, 6), 16);

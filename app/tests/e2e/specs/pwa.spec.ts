@@ -3,7 +3,8 @@ import { expect, test } from '../fixtures/session';
 test('manifest が配信される', async ({ page }) => {
   const res = await page.goto('/manifest.webmanifest');
   expect(res?.status()).toBe(200);
-  const json = (await res!.json()) as { name?: string };
+  if (!res) throw new Error('expected response');
+  const json = (await res.json()) as { name?: string };
   expect(json.name).toBeTruthy();
 });
 

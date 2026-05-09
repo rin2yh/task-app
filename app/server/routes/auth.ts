@@ -45,7 +45,9 @@ async function upsertUserByGithubId(
       createdAt: Date.now(),
     })
     .returning();
-  return inserted[0]!.id;
+  const created = inserted[0];
+  if (!created) throw new Error('failed to upsert user');
+  return created.id;
 }
 
 authRoutes.get('/github', async (c) => {

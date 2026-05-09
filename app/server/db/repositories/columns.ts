@@ -135,21 +135,23 @@ export async function reorderColumn(
   const afterIdx = input.afterColumnId ? others.findIndex((c) => c.id === input.afterColumnId) : -1;
   const prevPos =
     beforeIdx >= 0
-      ? others[beforeIdx]!.position
+      ? (others[beforeIdx]?.position ?? null)
       : afterIdx > 0
-        ? others[afterIdx - 1]!.position
+        ? (others[afterIdx - 1]?.position ?? null)
         : null;
   const nextPos =
     afterIdx >= 0
-      ? others[afterIdx]!.position
+      ? (others[afterIdx]?.position ?? null)
       : beforeIdx >= 0 && beforeIdx + 1 < others.length
-        ? others[beforeIdx + 1]!.position
+        ? (others[beforeIdx + 1]?.position ?? null)
         : null;
   const maxPos = others.at(-1)?.position ?? 0;
   const newPos = computeInsertPosition(prevPos, nextPos, maxPos);
-  const existingCollapsed = others.some(
-    (c, i) => i > 0 && c.position - others[i - 1]!.position < REBALANCE_THRESHOLD,
-  );
+  const existingCollapsed = others.some((c, i) => {
+    if (i === 0) return false;
+    const prev = others[i - 1];
+    return prev != null && c.position - prev.position < REBALANCE_THRESHOLD;
+  });
   if (newPos == null || existingCollapsed) {
     // 全列リバランス：論理順に並べたうえで対象列を target index に配置
     const logical = others.slice();
