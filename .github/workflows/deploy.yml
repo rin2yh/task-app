@@ -1,4 +1,4 @@
-name: Deploy production
+name: Deploy
 
 on:
   push:
@@ -8,10 +8,7 @@ on:
       - '.github/workflows/deploy.yml'
       - '.github/actions/setup/**'
       - '.github/actions/setup-e2e/**'
-
-concurrency:
-  group: deploy-production
-  cancel-in-progress: false
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -39,31 +36,51 @@ jobs:
           retention-days: 14
 
   migrate-db:
+    name: migrate-db (${{ matrix.environment }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: production
+            d1_database: task-app-prod
+          - environment: develop
+            d1_database: task-app-develop
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: [e2e]
-    environment: production
+    environment: ${{ matrix.environment }}
+    concurrency:
+      group: migrate-db-${{ matrix.environment }}
+      cancel-in-progress: false
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - uses: ./.github/actions/setup
-      - run: pnpm exec wrangler d1 migrations apply task-app-prod --remote --env production
+      - run: pnpm exec wrangler d1 migrations apply ${{ matrix.d1_database }} --remote --env ${{ matrix.environment }}
 
   deploy:
+    name: deploy (${{ matrix.environment }})
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [production, develop]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: [migrate-db]
-    environment: production
+    environment: ${{ matrix.environment }}
+    concurrency:
+      group: deploy-${{ matrix.environment }}
+      cancel-in-progress: false
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      # @cloudflare/vite-plugin が読む。dist/.../wrangler.json を env.production
-      # 反映で生成しないと、wrangler deploy は top-level config (task-app-local) を使ってしまう。
-      CLOUDFLARE_ENV: production
+      # @cloudflare/vite-plugin が読む。dist/.../wrangler.json を該当 env
+      # 反映で生成しないと、wrangler deploy は top-level config を使ってしまう。
+      CLOUDFLARE_ENV: ${{ matrix.environment }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - uses: ./.github/actions/setup
       - run: pnpm build
-      - run: pnpm exec wrangler deploy --env production
+      - run: pnpm exec wrangler deploy --env ${{ matrix.environment }}
