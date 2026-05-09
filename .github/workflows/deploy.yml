@@ -76,7 +76,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: [migrate-db]
-    environment: ${{ matrix.environment }}
+    environment:
+      name: ${{ matrix.environment }}
+      url: ${{ steps.deploy.outputs.url }}
     concurrency:
       group: deploy-${{ matrix.environment }}
       cancel-in-progress: false
@@ -105,4 +107,14 @@ jobs:
             --arg github_client_secret "$GITHUB_CLIENT_SECRET" \
             '{SESSION_SECRET: $session_secret, APP_URL: $app_url, GITHUB_CLIENT_ID: $github_client_id, GITHUB_CLIENT_SECRET: $github_client_secret}' \
             | pnpm exec wrangler secret bulk --env ${{ matrix.environment }}
-      - run: pnpm exec wrangler deploy --env ${{ matrix.environment }}
+      - name: Deploy
+        id: deploy
+        # GitHub Deployments の URL 欄に表示するため、wrangler 出力から
+        # workers.dev URL を抜き出して step output に流す。
+        run: |
+          pnpm exec wrangler deploy --env ${{ matrix.environment }} 2>&1 | tee deploy.log
+          url=$(grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' deploy.log | head -n1)
+          if [ -z "$url" ]; then
+            echo "::warning::Could not parse deploy URL from wrangler output"
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
