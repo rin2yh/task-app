@@ -11,8 +11,12 @@ const PRECACHE = 'precache-v1';
 const PAGES_CACHE = 'pages-v1';
 const STATIC_CACHE = 'static-assets-v1';
 
-// vite-plugin-pwa が `self.__WB_MANIFEST` リテラルを置換するためここで参照する
-const PRECACHE_URLS = (self as unknown as SWGlobalScope).__WB_MANIFEST.map((e) => e.url);
+// vite-plugin-pwa が `self.__WB_MANIFEST` リテラルを置換するためここで参照する。
+// glob マッチと manifest icons の自動注入で同じ URL が二重に並ぶことがあり、
+// `Cache.addAll` は重複を拒否するので URL で de-dupe する。
+const PRECACHE_URLS = Array.from(
+  new Set((self as unknown as SWGlobalScope).__WB_MANIFEST.map((e) => e.url)),
+);
 
 const NETWORK_ONLY_PREFIXES = ['/projects', '/columns', '/tasks', '/labels', '/auth'];
 const STATIC_DESTINATIONS = new Set(['style', 'script', 'font']);
