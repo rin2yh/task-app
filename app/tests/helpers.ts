@@ -1,5 +1,6 @@
-import { applyD1Migrations, env } from 'cloudflare:test';
+import { applyD1Migrations, env, SELF } from 'cloudflare:test';
 import { sql } from 'drizzle-orm';
+import { test as base } from 'vitest';
 import { createSession } from '../server/auth/session';
 import { createDb } from '../server/db/client';
 import { users } from '../server/db/schema';
@@ -7,6 +8,15 @@ import { users } from '../server/db/schema';
 export const ENV = env as unknown as import('../server/env').Env & {
   TEST_MIGRATIONS?: D1Migration[];
 };
+
+export type Fetch = (path: string, init?: RequestInit) => Promise<Response>;
+
+export const it = base.extend<{ fetch: Fetch }>({
+  // biome-ignore lint/correctness/noEmptyPattern: vitest fixture signature requires the fixtures arg
+  fetch: async ({}, use) => {
+    await use((path, init) => SELF.fetch(`http://localhost${path}`, init));
+  },
+});
 
 export async function applyMigrations(): Promise<void> {
   const db = createDb(ENV.DB);

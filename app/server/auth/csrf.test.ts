@@ -1,15 +1,14 @@
-import { SELF } from 'cloudflare:test';
-import { beforeEach, describe, expect, it } from 'vitest';
-import { applyMigrations, createTestUser } from '../../tests/helpers';
+import { beforeEach, describe, expect } from 'vitest';
+import { applyMigrations, createTestUser, it } from '../../tests/helpers';
 
 describe('CSRF protection', () => {
   beforeEach(async () => {
     await applyMigrations();
   });
 
-  it('rejects POST without CSRF header (403)', async () => {
+  it('rejects POST without CSRF header (403)', async ({ fetch }) => {
     const u = await createTestUser('csrf');
-    const res = await SELF.fetch('http://localhost/projects', {
+    const res = await fetch('/projects', {
       method: 'POST',
       headers: { cookie: u.cookies, 'content-type': 'application/json' },
       body: JSON.stringify({ name: 'p' }),
@@ -17,9 +16,9 @@ describe('CSRF protection', () => {
     expect(res.status).toBe(403);
   });
 
-  it('rejects when header != cookie', async () => {
+  it('rejects when header != cookie', async ({ fetch }) => {
     const u = await createTestUser('csrf2');
-    const res = await SELF.fetch('http://localhost/projects', {
+    const res = await fetch('/projects', {
       method: 'POST',
       headers: {
         cookie: u.cookies,
@@ -31,9 +30,9 @@ describe('CSRF protection', () => {
     expect(res.status).toBe(403);
   });
 
-  it('accepts when CSRF matches', async () => {
+  it('accepts when CSRF matches', async ({ fetch }) => {
     const u = await createTestUser('csrf3');
-    const res = await SELF.fetch('http://localhost/projects', {
+    const res = await fetch('/projects', {
       method: 'POST',
       headers: {
         cookie: u.cookies,
