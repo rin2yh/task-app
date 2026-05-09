@@ -7,6 +7,7 @@ GitHub Actions による品質ゲート・本番デプロイ・Terraform 自動�
 | Workflow | トリガー | 主な責務 |
 |---|---|---|
 | `.github/workflows/ci.yml` | `pull_request` (base: `main`) | lint / typecheck / unit (client + workers) / 関連 E2E / build |
+| `.github/workflows/preview.yml` | `pull_request` (base: `main`, `app/**`) | preview D1 マイグレーション → `wrangler deploy --env preview` → PR に URL コメント |
 | `.github/workflows/deploy.yml` | `push` to `main` (`app/**`, ワークフロー自身) | E2E 全件 → 本番 D1 マイグレーション → `wrangler deploy --env production` |
 | `.github/workflows/terraform.yml` | PR (`terraform/**`) | PR で `plan` を PR コメント |
 | `.github/workflows/terraform-apply.yml` | `push` to `main` (`terraform/**`) + `workflow_dispatch` | `terraform apply -auto-approve` |
@@ -30,6 +31,18 @@ OAuth 関連は未設定です。以下の手順で本番用 OAuth App を用意
    | `OAUTH_GITHUB_CLIENT_SECRET` | OAuth App の Client Secret |
 
 3. main の `terraform/**` 変更で `terraform-apply.yml` を走らせる（または手動 `workflow_dispatch`）と、上記 secret が `cloudflare_workers_secret.github_client_id` / `github_client_secret` 経由で Worker の `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` に反映されます。
+
+### Preview 環境の secrets / variables
+
+Preview 用に **別の OAuth App** を発行し、callback URL を `${PREVIEW_APP_URL}/auth/callback`（例: `https://task-app-preview.<account>.workers.dev/auth/callback`）に設定します。値は Settings → **Environments → preview → Environment secrets / variables** に登録します。
+
+| 種類 | 名前 | 値 |
+|---|---|---|
+| Secret | `CLOUDFLARE_API_TOKEN` | Workers / D1 編集権限を持つトークン |
+| Secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウント ID |
+| Variable | `PREVIEW_APP_URL` | プレビュー Worker の公開 URL（PR コメント表示用） |
+
+OAuth Client / SESSION_SECRET / APP_URL は Worker 側のシークレットなので、`terraform.tfvars` の `preview_*` を埋めて `terraform-apply.yml` で適用してください。
 
 ## 3. ローカルで CI 同等のチェックを走らせる
 

@@ -56,3 +56,18 @@ wrangler deploy --env production
 ## 6. cron トリガ
 
 `wrangler.toml` の `[triggers] crons = ["0 3 * * *"]` で毎日 03:00 UTC に `scheduled` ハンドラ (期限切れセッションの purge) が走ります。
+
+## 7. Preview 環境
+
+PR ごとに動作確認できる共有 preview 環境（Worker `task-app-preview` + D1 `task-app-preview`）を持っています。`.github/workflows/preview.yml` が `pull_request` で自動デプロイし、PR にプレビュー URL をコメントします。
+
+緊急時の手動操作:
+
+```bash
+cd task-app/app
+pnpm db:migrate:preview
+pnpm build
+wrangler deploy --env preview
+```
+
+Worker 名・D1 名・シークレットは `terraform/main.tf` の `*_preview` 系リソースで管理しています。本番とは独立した OAuth App / SESSION_SECRET を払い出すこと。データは preview 専用 D1 に閉じるので本番に影響しません。

@@ -1,0 +1,53 @@
+name: Deploy preview
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/preview.yml'
+      - '.github/actions/setup/**'
+
+# 同一 PR 内では古いデプロイをキャンセルし、最新の HEAD だけ反映する。
+# preview 環境は単一の共有 Worker なので、PR をまたぐと「最後にデプロイした PR が勝つ」点に注意。
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  deploy:
+    name: Deploy to preview
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # フォークからの PR には secrets が渡らないため、同一リポジトリの PR でだけ走らせる。
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    environment: preview
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ENV: preview
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: ./.github/actions/setup
+      - run: pnpm db:migrate:preview
+      - run: pnpm build
+      - run: pnpm exec wrangler deploy --env preview
+      - name: Upsert preview comment
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
+        with:
+          header: preview-deployment
+          message: |
+            ### Preview deployed
+
+            - URL: ${{ vars.PREVIEW_APP_URL }}
+            - Commit: `${{ github.event.pull_request.head.sha }}`
+
+            > このプレビュー Worker は PR 間で共有されます。最後に走ったジョブの内容が反映される点に注意してください。

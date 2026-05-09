@@ -17,6 +17,7 @@
     "typecheck": "tsgo --noEmit",
     "db:generate": "drizzle-kit generate --config config/drizzle.config.ts",
     "db:migrate:local": "wrangler d1 migrations apply task-app-local --local",
+    "db:migrate:preview": "wrangler d1 migrations apply task-app-preview --remote --env preview",
     "db:migrate:prod": "wrangler d1 migrations apply task-app-prod --remote --env production"
   },
   "dependencies": {

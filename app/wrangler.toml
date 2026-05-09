@@ -22,3 +22,14 @@ binding = "DB"
 database_name = "task-app-prod"
 database_id = "3605a196-43db-4276-adc9-61ef66dca5ab"
 migrations_dir = "./server/db/migrations"
+
+# プレビュー環境: PR ごとに同じ Worker を上書きデプロイする共有環境。
+# database_id は terraform apply 後に terraform/outputs.tf の preview_d1_database_id を貼り付ける。
+[env.preview]
+name = "task-app-preview"
+
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "task-app-preview"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "./server/db/migrations"
