@@ -1,18 +1,19 @@
 name: Deploy preview
 
+# 手動実行のみ。Actions タブの "Deploy preview" → "Run workflow" でブランチを選び、
+# 必要なら関連 PR 番号を入れて実行する。PR 番号を渡すとデプロイ後に sticky コメントを書く。
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'app/**'
-      - '.github/workflows/preview.yml'
-      - '.github/actions/setup/**'
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: '関連 PR 番号（指定するとその PR にコメント）'
+        required: false
+        type: string
 
-# 同一 PR 内では古いデプロイをキャンセルし、最新の HEAD だけ反映する。
-# preview 環境は単一の共有 Worker なので、PR をまたぐと「最後にデプロイした PR が勝つ」点に注意。
+# preview Worker は単一なので、複数の手動実行が重ならないようグローバルにシリアライズする。
 concurrency:
-  group: preview-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: preview-deploy
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -27,9 +28,8 @@ jobs:
     name: Deploy to preview
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    # フォークからの PR には secrets が渡らないため、同一リポジトリの PR でだけ走らせる。
     # vars.PREVIEW_APP_URL が空のうちは preview 基盤が未 bootstrap とみなしてスキップする。
-    if: github.event.pull_request.head.repo.full_name == github.repository && vars.PREVIEW_APP_URL != ''
+    if: vars.PREVIEW_APP_URL != ''
     environment: preview
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -42,13 +42,16 @@ jobs:
       - run: pnpm build
       - run: pnpm exec wrangler deploy --env preview
       - name: Upsert preview comment
+        if: inputs.pr_number != ''
         uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0  # v3.0.4
         with:
           header: preview-deployment
+          number: ${{ inputs.pr_number }}
           message: |
             ### Preview deployed
 
             - URL: ${{ vars.PREVIEW_APP_URL }}
-            - Commit: `${{ github.event.pull_request.head.sha }}`
+            - Ref: `${{ github.ref_name }}`
+            - Commit: `${{ github.sha }}`
 
-            > このプレビュー Worker は PR 間で共有されます。最後に走ったジョブの内容が反映される点に注意してください。
+            > preview Worker は単一の共有環境です。最後に手動デプロイされた内容が反映されます。

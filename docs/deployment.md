@@ -59,9 +59,21 @@ wrangler deploy --env production
 
 ## 7. Preview 環境
 
-PR ごとに動作確認できる共有 preview 環境（Worker `task-app-preview` + D1 `task-app-preview`）を持っています。`.github/workflows/preview.yml` が `pull_request` で自動デプロイし、PR にプレビュー URL をコメントします。
+動作確認用の共有 preview 環境（Worker `task-app-preview` + D1 `task-app-preview`）を持っています。**自動デプロイはしません**。`.github/workflows/preview.yml` を手動 (`workflow_dispatch`) で起動して使います。
 
-緊急時の手動操作:
+GitHub UI から:
+
+1. Actions → "Deploy preview" → **Run workflow**
+2. Branch: 動作確認したいブランチを選択
+3. `pr_number`: 対応する PR があれば番号を入れる（その PR にプレビュー URL の sticky コメントが付く）
+
+CLI から (`gh` を使う場合):
+
+```bash
+gh workflow run preview.yml --ref <branch> -f pr_number=<n>
+```
+
+ローカルからの直接デプロイ（緊急時）:
 
 ```bash
 cd task-app/app
@@ -70,4 +82,4 @@ pnpm build
 wrangler deploy --env preview
 ```
 
-Worker 名・D1 名・シークレットは `terraform/main.tf` の `*_preview` 系リソースで管理しています。本番とは独立した OAuth App / SESSION_SECRET を払い出すこと。データは preview 専用 D1 に閉じるので本番に影響しません。
+preview Worker は単一です。複数ブランチを並行に確認するときは「最後にデプロイしたブランチが見える」運用になる点に注意してください。Worker 名・D1 名・シークレットは `terraform/main.tf` の `*_preview` 系リソースで管理しています。本番とは独立した OAuth App / SESSION_SECRET を払い出すこと。データは preview 専用 D1 に閉じるので本番に影響しません。

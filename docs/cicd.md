@@ -7,7 +7,7 @@ GitHub Actions による品質ゲート・本番デプロイ・Terraform 自動�
 | Workflow | トリガー | 主な責務 |
 |---|---|---|
 | `.github/workflows/ci.yml` | `pull_request` (base: `main`) | lint / typecheck / unit (client + workers) / 関連 E2E / build |
-| `.github/workflows/preview.yml` | `pull_request` (base: `main`, `app/**`) | preview D1 マイグレーション → `wrangler deploy --env preview` → PR に URL コメント |
+| `.github/workflows/preview.yml` | `workflow_dispatch` (手動) | preview D1 マイグレーション → `wrangler deploy --env preview` → 指定 PR に URL コメント |
 | `.github/workflows/deploy.yml` | `push` to `main` (`app/**`, ワークフロー自身) | E2E 全件 → 本番 D1 マイグレーション → `wrangler deploy --env production` |
 | `.github/workflows/terraform.yml` | PR (`terraform/**`) | PR で `plan` を PR コメント |
 | `.github/workflows/terraform-apply.yml` | `push` to `main` (`terraform/**`) + `workflow_dispatch` | `terraform apply -auto-approve` |
