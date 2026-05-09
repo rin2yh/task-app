@@ -1,6 +1,6 @@
 ---
 name: gemini-review-loop
-description: "PR で Gemini Code Assist のレビューに対応し、指摘がなくなるまで修正と再レビューを繰り返す skill。**一度でも Gemini の指摘に返信 / 修正する意図があれば即この skill に入る**。Use when the user asks to 'gemini レビューループ', 'gemini のレビューがなくなるまで直して', '/gemini review を投げて直し続けて', 'gemini のレビューに返信', 'gemini の指摘を直して / 対応して', 'gemini のコメントに返信', 'gemini からの指摘を反映', 'gemini のレビュー反映して', or otherwise indicates any response (even just one) to a Gemini Code Assist review on a PR."
+description: "PR で Gemini Code Assist のレビューに対応し、指摘がなくなるまで修正と再レビューを繰り返す skill。**一度でも Gemini の指摘に返信 / 修正する意図があれば即この skill に入る**。Use when the user asks to 'gemini レビューループ', 'gemini のレビューがなくなるまで直して', '/gemini review を投げて直し続けて', 'gemini のレビューに返信', 'gemini の指摘を直して', 'gemini の指摘に対応して', 'gemini のコメントに返信', 'gemini からの指摘を反映', 'gemini のレビューを反映して', or otherwise indicates any response (even just one) to a Gemini Code Assist review on a PR."
 ---
 
 # gemini-review-loop
