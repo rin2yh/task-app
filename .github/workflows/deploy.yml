@@ -57,8 +57,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     needs: [e2e]
-    # workflow_dispatch で 'production' / 'develop' を選んだ場合はその一方のみ。
-    # push or 'all' の場合は両方走らせる。
     if: >-
       github.event_name != 'workflow_dispatch'
       || inputs.environment == 'all'

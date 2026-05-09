@@ -48,8 +48,6 @@ jobs:
             workspace: develop
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    # workflow_dispatch で 'production' / 'develop' を選んだ場合はその一方のみ。
-    # push or 'all' の場合は両方走らせる。
     if: >-
       github.event_name != 'workflow_dispatch'
       || inputs.environment == 'all'
@@ -69,6 +67,7 @@ jobs:
           bucket: ${{ secrets.CLOUDFLARE_R2_TFSTATE_BUCKET }}
           account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: terraform workspace select
+        if: matrix.workspace != 'default'
         run: terraform workspace select -or-create ${{ matrix.workspace }}
       - name: terraform apply
         run: terraform apply -auto-approve

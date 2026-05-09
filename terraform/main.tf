@@ -2,12 +2,12 @@ provider "cloudflare" {
   api_token = var.cloudflare_api_token
 }
 
-# default workspace = production / develop workspace = develop。
-# Cloudflare 側のリソースは別物として並走させ、Terraform 設定（変数構造）は同一を保つ。
+# default workspace = production（接尾辞なし）/ それ以外 = ワークスペース名を接尾辞に使う。
+# d1_database_name のみ既存 production リソース名 "task-app-prod" との互換のため非対称。
 locals {
-  is_develop       = terraform.workspace == "develop"
-  worker_name      = local.is_develop ? "${var.worker_name}-develop" : var.worker_name
-  d1_database_name = local.is_develop ? "task-app-develop" : var.d1_database_name
+  suffix           = terraform.workspace == "default" ? "" : "-${terraform.workspace}"
+  worker_name      = "${var.worker_name}${local.suffix}"
+  d1_database_name = local.suffix == "" ? var.d1_database_name : "${var.worker_name}${local.suffix}"
 }
 
 resource "cloudflare_d1_database" "task_app" {

@@ -78,6 +78,7 @@ jobs:
           bucket: ${{ secrets.CLOUDFLARE_R2_TFSTATE_BUCKET }}
           account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - name: terraform workspace select
+        if: matrix.workspace != 'default'
         run: terraform workspace select -or-create ${{ matrix.workspace }}
       - name: terraform validate
         run: terraform validate
