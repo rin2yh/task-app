@@ -50,7 +50,7 @@ pnpm db:migrate:local     # ローカル D1 に適用
 
 ## Inertia のページ追加
 
-1. `app/pages/<name>.tsx` を作成 (ファイル名は kebab-case)
+1. `app/client/pages/<name>.tsx` を作成 (ファイル名は kebab-case)
 2. ハンドラから `c.render('<name>', props)` で返す
 3. Vite が `app/pages.gen.ts` を自動更新します (gitignore 済)
 

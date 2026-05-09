@@ -14,7 +14,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     inertiaPages({
-      pagesDir: 'pages',
+      pagesDir: 'client/pages',
       outFile: 'pages.gen.ts',
     }),
     cloudflare({
@@ -56,7 +56,6 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': dir,
       '@server': path.resolve(dir, 'server'),
       '@client': path.resolve(dir, 'client'),
       '@shared': path.resolve(dir, 'shared'),

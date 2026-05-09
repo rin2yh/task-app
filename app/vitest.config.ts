@@ -10,7 +10,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    include: ['client/**/*.test.{ts,tsx}', 'pages/**/*.test.{ts,tsx}'],
+    include: ['client/**/*.test.{ts,tsx}'],
     setupFiles: ['./client/test-setup.ts'],
     coverage: {
       reporter: ['text', 'json', 'html'],
@@ -25,7 +25,6 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': dir,
       '@server': path.resolve(dir, 'server'),
       '@client': path.resolve(dir, 'client'),
       '@shared': path.resolve(dir, 'shared'),

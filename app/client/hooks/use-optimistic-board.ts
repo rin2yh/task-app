@@ -1,5 +1,5 @@
+import type { Column, Task, TaskWithLabels } from '@shared/types';
 import { useState } from 'react';
-import type { Column, Task, TaskWithLabels } from '../../shared/types';
 
 export type BoardState = {
   columns: Column[];
