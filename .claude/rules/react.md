@@ -1,5 +1,5 @@
 ---
-applyTo: "**/*.{ts,tsx}"
+globs: "**/*.{ts,tsx}"
 ---
 
 # React rules
