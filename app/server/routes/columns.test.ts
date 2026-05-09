@@ -55,8 +55,8 @@ describe('columns CRUD + reorder', () => {
     ).columns;
     expect(list1.map((c) => c.name)).toEqual(['Todo', 'In Progress', 'Done']);
     // Done を Todo の前に置く（beforeColumnId = Todo）
-    const todo = list1[0]!;
-    const done = list1[2]!;
+    const [todo, , done] = list1;
+    if (!todo || !done) throw new Error('expected 3 columns');
     const reorder = await SELF.fetch(`http://localhost/columns/${done.id}/reorder`, {
       method: 'POST',
       headers: {
@@ -84,18 +84,20 @@ describe('columns CRUD + reorder', () => {
     // 強制的に position を非常に近い値にする
     const cols = await db.select().from(columns).where(eq(columns.projectId, p.id));
     expect(cols.length).toBe(3);
-    await db.update(columns).set({ position: 1 }).where(eq(columns.id, cols[0]!.id));
-    await db.update(columns).set({ position: 1.0000000001 }).where(eq(columns.id, cols[1]!.id));
-    await db.update(columns).set({ position: 1.0000000002 }).where(eq(columns.id, cols[2]!.id));
+    const [c0, c1, c2] = cols;
+    if (!c0 || !c1 || !c2) throw new Error('expected 3 columns');
+    await db.update(columns).set({ position: 1 }).where(eq(columns.id, c0.id));
+    await db.update(columns).set({ position: 1.0000000001 }).where(eq(columns.id, c1.id));
+    await db.update(columns).set({ position: 1.0000000002 }).where(eq(columns.id, c2.id));
 
-    const re = await SELF.fetch(`http://localhost/columns/${cols[2]!.id}/reorder`, {
+    const re = await SELF.fetch(`http://localhost/columns/${c2.id}/reorder`, {
       method: 'POST',
       headers: {
         cookie: u.cookies,
         'X-CSRF-Token': u.csrfToken,
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ afterColumnId: cols[0]!.id }),
+      body: JSON.stringify({ afterColumnId: c0.id }),
     });
     expect(re.status).toBe(200);
     const after = await db
