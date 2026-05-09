@@ -50,7 +50,9 @@ export async function createTestUser(login: string): Promise<TestUser> {
     .insert(users)
     .values({ githubId, login, name: login, avatarUrl: null, createdAt: Date.now() })
     .returning();
-  const userId = inserted[0]!.id;
+  const created = inserted[0];
+  if (!created) throw new Error('failed to create test user');
+  const userId = created.id;
   const session = await createSession(db, userId);
   const cookies = `session=${session.token}; csrf=${session.csrfToken}`;
   return {

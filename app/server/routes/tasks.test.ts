@@ -22,7 +22,9 @@ async function setup() {
       })
     ).json()) as { columns: Array<{ id: string }> }
   ).columns;
-  return { u, headers, projId, cols };
+  const firstCol = cols[0];
+  if (!firstCol) throw new Error('expected at least one column');
+  return { u, headers, projId, cols, firstCol };
 }
 
 describe('tasks CRUD', () => {
@@ -31,8 +33,8 @@ describe('tasks CRUD', () => {
   });
 
   it('creates, updates, and deletes a task', async () => {
-    const { headers, cols } = await setup();
-    const create = await SELF.fetch(`http://localhost/columns/${cols[0]!.id}/tasks`, {
+    const { headers, firstCol } = await setup();
+    const create = await SELF.fetch(`http://localhost/columns/${firstCol.id}/tasks`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ title: 'first' }),
@@ -59,8 +61,8 @@ describe('tasks CRUD', () => {
   });
 
   it('rejects invalid priority', async () => {
-    const { headers, cols } = await setup();
-    const create = await SELF.fetch(`http://localhost/columns/${cols[0]!.id}/tasks`, {
+    const { headers, firstCol } = await setup();
+    const create = await SELF.fetch(`http://localhost/columns/${firstCol.id}/tasks`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ title: 't', priority: 'super-high' }),

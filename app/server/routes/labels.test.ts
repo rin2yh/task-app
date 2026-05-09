@@ -22,7 +22,9 @@ async function setup() {
       })
     ).json()) as { columns: Array<{ id: string }> }
   ).columns;
-  const t = await SELF.fetch(`http://localhost/columns/${cols[0]!.id}/tasks`, {
+  const firstCol = cols[0];
+  if (!firstCol) throw new Error('expected at least one column');
+  const t = await SELF.fetch(`http://localhost/columns/${firstCol.id}/tasks`, {
     method: 'POST',
     headers,
     body: JSON.stringify({ title: 'task' }),

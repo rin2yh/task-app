@@ -180,15 +180,15 @@ export async function moveTask(
   const afterIdx = input.afterTaskId ? others.findIndex((t) => t.id === input.afterTaskId) : -1;
   const prevPos =
     beforeIdx >= 0
-      ? others[beforeIdx]!.position
+      ? (others[beforeIdx]?.position ?? null)
       : afterIdx > 0
-        ? others[afterIdx - 1]!.position
+        ? (others[afterIdx - 1]?.position ?? null)
         : null;
   const nextPos =
     afterIdx >= 0
-      ? others[afterIdx]!.position
+      ? (others[afterIdx]?.position ?? null)
       : beforeIdx >= 0 && beforeIdx + 1 < others.length
-        ? others[beforeIdx + 1]!.position
+        ? (others[beforeIdx + 1]?.position ?? null)
         : null;
   const maxPos = others.at(-1)?.position ?? 0;
   const newPos = computeInsertPosition(prevPos, nextPos, maxPos);
@@ -226,7 +226,8 @@ export async function moveTask(
       .set({ columnId: input.toColumnId, position: newPos, updatedAt: now })
       .where(eq(tasks.id, taskId));
   }
-  const updated = (await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1))[0]!;
+  const updated = (await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1))[0];
+  if (!updated) return null;
   const tasksInColumn = await db
     .select()
     .from(tasks)
