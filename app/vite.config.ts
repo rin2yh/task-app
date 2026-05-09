@@ -11,7 +11,11 @@ const dir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [
-    react(),
+    react({
+      babel: {
+        plugins: [['babel-plugin-react-compiler', { target: '19' }]],
+      },
+    }),
     tailwindcss(),
     inertiaPages({
       pagesDir: 'client/pages',
