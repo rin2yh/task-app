@@ -105,18 +105,20 @@ resource "cloudflare_workers_script" "task_app_preview" {
   }
 }
 
+# OAuth App は本番と共有する。GitHub OAuth App 側に preview の callback URL
+# (${PREVIEW_APP_URL}/auth/callback) も登録しておくこと。
 resource "cloudflare_workers_secret" "preview_github_client_id" {
   account_id  = var.cloudflare_account_id
   script_name = cloudflare_workers_script.task_app_preview.name
   name        = "GITHUB_CLIENT_ID"
-  secret_text = var.preview_github_client_id
+  secret_text = var.github_client_id
 }
 
 resource "cloudflare_workers_secret" "preview_github_client_secret" {
   account_id  = var.cloudflare_account_id
   script_name = cloudflare_workers_script.task_app_preview.name
   name        = "GITHUB_CLIENT_SECRET"
-  secret_text = var.preview_github_client_secret
+  secret_text = var.github_client_secret
 }
 
 resource "cloudflare_workers_secret" "preview_session_secret" {

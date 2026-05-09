@@ -49,16 +49,6 @@ variable "preview_d1_database_name" {
   default = "task-app-preview"
 }
 
-variable "preview_github_client_id" {
-  type      = string
-  sensitive = true
-}
-
-variable "preview_github_client_secret" {
-  type      = string
-  sensitive = true
-}
-
 variable "preview_session_secret" {
   type      = string
   sensitive = true

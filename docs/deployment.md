@@ -82,4 +82,4 @@ pnpm build
 wrangler deploy --env preview
 ```
 
-preview Worker は単一です。複数ブランチを並行に確認するときは「最後にデプロイしたブランチが見える」運用になる点に注意してください。Worker 名・D1 名・シークレットは `terraform/main.tf` の `*_preview` 系リソースで管理しています。本番とは独立した OAuth App / SESSION_SECRET を払い出すこと。データは preview 専用 D1 に閉じるので本番に影響しません。
+preview Worker は単一です。複数ブランチを並行に確認するときは「最後にデプロイしたブランチが見える」運用になる点に注意してください。Worker 名・D1 名・シークレットは `terraform/main.tf` の `*_preview` 系リソースで管理しています。OAuth App は本番と共有 (callback URL に preview を追加登録)、SESSION_SECRET と APP_URL は preview 専用に払い出します。データは preview 専用 D1 に閉じるので本番に影響しません。

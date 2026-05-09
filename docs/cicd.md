@@ -34,7 +34,9 @@ OAuth 関連は未設定です。以下の手順で本番用 OAuth App を用意
 
 ### Preview 環境の secrets / variables
 
-Preview 用に **別の OAuth App** を発行し、callback URL を `${PREVIEW_APP_URL}/auth/callback`（例: `https://task-app-preview.<account>.workers.dev/auth/callback`）に設定します。値は Settings → **Environments → preview → Environment secrets / variables** に登録します。
+OAuth App は本番と共有します。本番用 OAuth App の **Authorization callback URL** に `${PREVIEW_APP_URL}/auth/callback`（例: `https://task-app-preview.<account>.workers.dev/auth/callback`）を追加で登録してください（GitHub OAuth App は callback URL を複数登録可）。
+
+リポジトリ Settings → **Environments → preview → Environment secrets / variables** に以下を登録します。
 
 | 種類 | 名前 | 値 |
 |---|---|---|
@@ -42,7 +44,7 @@ Preview 用に **別の OAuth App** を発行し、callback URL を `${PREVIEW_A
 | Secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare アカウント ID |
 | Variable | `PREVIEW_APP_URL` | プレビュー Worker の公開 URL（PR コメント表示用） |
 
-OAuth Client / SESSION_SECRET / APP_URL は Worker 側のシークレットなので、`terraform.tfvars` の `preview_*` を埋めて `terraform-apply.yml` で適用してください。
+Worker 側のシークレット（`SESSION_SECRET` / `APP_URL` の preview 値）は `terraform.tfvars` の `preview_session_secret` / `preview_app_url` を埋めて `terraform-apply.yml` で適用します。`GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` は本番値を再利用するので追加登録不要です。
 
 ## 3. ローカルで CI 同等のチェックを走らせる
 
