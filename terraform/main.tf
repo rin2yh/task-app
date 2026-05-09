@@ -19,12 +19,12 @@ resource "cloudflare_d1_database" "task_app" {
 resource "cloudflare_workers_script" "task_app" {
   account_id = var.cloudflare_account_id
   name       = local.worker_name
-  content = <<-EOT
+  content    = <<-EOT
     export default {
       fetch() { return new Response('bootstrap', { status: 200 }); }
     }
   EOT
-  module  = true
+  module     = true
 
   d1_database_binding {
     name        = "DB"
