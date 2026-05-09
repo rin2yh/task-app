@@ -30,8 +30,10 @@ env:
   # job 側の `environment:` 指定で値が解決される。
   TF_VAR_session_secret: ${{ secrets.SESSION_SECRET }}
   TF_VAR_app_url: ${{ secrets.APP_URL }}
-  # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY は terraform-init action 内で
-  # CLOUDFLARE_API_TOKEN から派生する（R2 S3 互換認証は token id と SHA-256(value) で成立）。
+  # Terraform S3 backend が読む env 名は AWS_* 固定。secret 名は R2 の発行画面に
+  # 揃えて Cloudflare 系で統一する。
+  AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
 
 jobs:
   fmt:
@@ -76,7 +78,6 @@ jobs:
         with:
           bucket: ${{ secrets.CLOUDFLARE_R2_TFSTATE_BUCKET }}
           account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       - name: terraform workspace select
         run: terraform workspace select -or-create ${{ matrix.workspace }}
       - name: terraform validate
