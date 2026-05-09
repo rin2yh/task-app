@@ -16,7 +16,6 @@ export default defineConfig(async () => {
             GITHUB_CLIENT_ID: 'test-client-id',
             GITHUB_CLIENT_SECRET: 'test-client-secret',
             SESSION_SECRET: 'test-session-secret-32-chars-padding',
-            ALLOWED_LOGINS: '',
             TEST_MIGRATIONS: migrations,
           },
         },

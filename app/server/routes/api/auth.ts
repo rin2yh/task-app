@@ -80,17 +80,6 @@ authRoutes.get('/callback', async (c) => {
   }
   const ghUser = await client.fetchUser(accessToken);
 
-  const allowed = (c.env.ALLOWED_LOGINS ?? '').trim();
-  if (
-    allowed &&
-    !allowed
-      .split(',')
-      .map((s) => s.trim())
-      .includes(ghUser.login)
-  ) {
-    return c.redirect('/auth/login?error=forbidden', 302);
-  }
-
   const db = createDb(c.env.DB);
   const userId = await upsertUserByGithubId(db, ghUser);
   const session = await createSession(db, userId);

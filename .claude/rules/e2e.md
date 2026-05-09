@@ -87,7 +87,7 @@ await expect(page.getByText('welcome')).toBeVisible();
 ## 7. サードパーティに依存しない
 
 - 外部 API（GitHub OAuth、決済等）への実呼び出しを E2E に含めない。レート制限・ネットワーク不安定・コストでフレークする。
-- 認可フローは `E2E_AUTH=1` のフェイク OAuth クライアント（`server/auth/oauth/fake-github-client.ts`）に切り替える。
+- 認可フローは `NODE_ENV === 'test'` 時に `factory.ts` が返すフェイク OAuth クライアント（`server/auth/oauth/fake-github-client.ts`）に切り替える。`NODE_ENV` は `config/playwright.config.ts` の `webServer.env` で注入済み。
 - それ以外の外部依存は `page.route()` で**ネットワークをモック**する。
 
 ```ts
