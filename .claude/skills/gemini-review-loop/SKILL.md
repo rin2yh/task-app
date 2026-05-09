@@ -20,7 +20,7 @@ description: PR で Gemini Code Assist のレビューに対応し、`/gemini re
 PR 番号が引数で来ていなければ、現在のブランチに紐づく PR を取る。
 
 ```
-mcp__github__list_pull_requests({ owner: "rin2yh", repo: "task-app", state: "open", head: "rin2yh:<branch>" })
+mcp__github__list_pull_requests({ owner: "<owner>", repo: "<repo>", state: "open", head: "<owner>:<branch>" })
 ```
 
 複数候補が出たら `AskUserQuestion` で確認する。**勝手に決めない。**
@@ -39,7 +39,7 @@ mcp__github__pull_request_read({ method: "get_pull_request_review_comments", own
 ### 3. `/gemini review` を PR コメントで投げる
 
 ```
-mcp__github__add_issue_comment({ owner: "rin2yh", repo: "task-app", issueNumber: <pr>, body: "/gemini review" })
+mcp__github__add_issue_comment({ owner: "<owner>", repo: "<repo>", issue_number: <pr>, body: "/gemini review" })
 ```
 
 - body は `/gemini review` の **1 行のみ**。前置き文 ("お願いします" 等) を付けない (Gemini bot が command として認識しないことがある)。
