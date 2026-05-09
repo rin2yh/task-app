@@ -3,6 +3,11 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/ci.yml'
+      - '.github/actions/setup/**'
+      - '.github/actions/setup-e2e/**'
 
 concurrency:
   group: ci-${{ github.ref }}
