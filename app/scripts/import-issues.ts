@@ -2,7 +2,7 @@
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { ulid } from '../server/db/ulid';
+import { ulid } from '../server/db/ulid.ts';
 
 interface GhLabel {
   name?: string;
