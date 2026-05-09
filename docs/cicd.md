@@ -9,7 +9,7 @@ GitHub Actions による品質ゲート・本番デプロイ・Terraform 自動�
 | `.github/workflows/ci.yml` | `pull_request` (base: `main`) | lint / typecheck / unit (client + workers) / 関連 E2E / build |
 | `.github/workflows/deploy.yml` | `push` to `main` (`app/**`, ワークフロー自身) | E2E 全件 → 本番 D1 マイグレーション → `wrangler deploy --env production` |
 | `.github/workflows/terraform.yml` | PR (`terraform/**`) | PR で `plan` を PR コメント |
-| `.github/workflows/terraform-apply.yml` | `push` to `main` (`terraform/**`) + `workflow_dispatch` | `terraform apply -auto-approve` |
+| `.github/workflows/terraform-apply.yml` | `push` to `main` (`terraform/**`) | `terraform apply -auto-approve` |
 
 ジョブ順序: lint → typecheck → unit (client + workers) → e2e → build → migrate → deploy。
 
@@ -29,7 +29,7 @@ OAuth 関連は未設定です。以下の手順で本番用 OAuth App を用意
    | `OAUTH_GITHUB_CLIENT_ID` | OAuth App の Client ID |
    | `OAUTH_GITHUB_CLIENT_SECRET` | OAuth App の Client Secret |
 
-3. main の `terraform/**` 変更で `terraform-apply.yml` を走らせる（または手動 `workflow_dispatch`）と、上記 secret が `cloudflare_workers_secret.github_client_id` / `github_client_secret` 経由で Worker の `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` に反映されます。
+3. main の `terraform/**` 変更で `terraform-apply.yml` を走らせると、上記 secret が `cloudflare_workers_secret.github_client_id` / `github_client_secret` 経由で Worker の `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` に反映されます。
 
 ## 3. ローカルで CI 同等のチェックを走らせる
 

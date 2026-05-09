@@ -6,7 +6,6 @@ on:
     paths:
       - 'terraform/**'
       - '.github/workflows/terraform-apply.yml'
-  workflow_dispatch:
 
 concurrency:
   group: terraform-apply
