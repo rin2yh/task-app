@@ -100,5 +100,5 @@ mcp__github__pull_request_read({ method: "get_pull_request_review_comments", own
 ## 参考
 
 - [Gemini Code Assist for GitHub - commands](https://developers.google.com/gemini-code-assist/docs/review-github-code#use-gemini-code-assist) — `/gemini review`, `/gemini summary` の仕様
-- [GitHub MCP - pull_request_read](https://github.com/github/github-mcp-server) — review / comment 取得 method 一覧
+- Claude Code に組み込まれている GitHub MCP server のツール定義は、ランタイムで `ToolSearch` (`select:mcp__github__*`) で照会する。**上流 [`github/github-mcp-server`](https://github.com/github/github-mcp-server) とはツール名 / 引数スキーマが一致しない**ため、上流ドキュメントを根拠にツール名を書き換えない (例: 本 skill で使う `pull_request_read({ method })` / `add_issue_comment` / `add_reply_to_pull_request_comment` は本セッションで実在を確認済み)。
 - 本リポジトリ `.claude/skills/gh-actions-logs/SKILL.md` — MCP / gh の使い分け方針
