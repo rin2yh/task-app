@@ -20,8 +20,13 @@ describe('auth flow', () => {
     expect(res.headers.get('location')).toBe('/auth/login');
   });
 
-  it('GET /auth/github starts OAuth and sets state cookie', async ({ fetch }) => {
-    const res = await fetch('/auth/github', { redirect: 'manual' });
+  it('POST /auth/github starts OAuth and sets state cookie', async ({ fetch }) => {
+    const res = await fetch('/auth/github', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: 'cf-turnstile-response=dummy',
+      redirect: 'manual',
+    });
     expect(res.status).toBeGreaterThanOrEqual(300);
     expect(res.status).toBeLessThan(400);
     const setCookie = res.headers.get('set-cookie') ?? '';
