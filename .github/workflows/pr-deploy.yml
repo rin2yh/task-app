@@ -9,6 +9,11 @@ name: PR Deploy
 on:
   pull_request:
     types: [opened, reopened]
+    paths:
+      - 'app/**'
+      - '.github/workflows/pr-deploy.yml'
+      - '.github/workflows/_deploy.yml'
+      - '.github/actions/setup/**'
   issue_comment:
     types: [edited]
 
