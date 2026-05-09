@@ -1,9 +1,11 @@
 import { expect, test } from '../fixtures/session';
+import { OfflineShellPage } from '../pages/offline-shell.page';
 
 test('manifest が配信される', async ({ page }) => {
   const res = await page.goto('/manifest.webmanifest');
-  expect(res?.status()).toBe(200);
-  const json = (await res!.json()) as { name?: string };
+  if (!res) throw new Error('expected response');
+  expect(res.status()).toBe(200);
+  const json = (await res.json()) as { name?: string };
   expect(json.name).toBeTruthy();
 });
 
@@ -14,8 +16,7 @@ test('オフライン時にシェルが表示される（本番ビルド時の�
 }) => {
   test.skip(process.env.E2E_ENV !== 'prod', 'PWA 検証は本番ビルド向け');
   await authenticate('pwa');
-  await page.goto('/');
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByText(/オフライン/)).toBeVisible();
+  await new OfflineShellPage(page).expectLoaded();
 });

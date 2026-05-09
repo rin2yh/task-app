@@ -7,6 +7,7 @@ on:
       - 'app/**'
       - '.github/workflows/deploy.yml'
       - '.github/actions/setup/**'
+      - '.github/actions/setup-e2e/**'
 
 concurrency:
   group: deploy-production
@@ -20,34 +21,27 @@ defaults:
     working-directory: app
 
 jobs:
-  e2e-full:
+  e2e:
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - uses: ./.github/actions/setup
-      - name: Cache Playwright browsers
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ hashFiles('app/pnpm-lock.yaml') }}
-      - run: pnpm exec playwright install --with-deps chromium
-      - name: Stage .dev.vars for E2E
-        run: cp .dev.vars.e2e .dev.vars
-      - name: Apply D1 migrations (local)
-        run: pnpm db:migrate:local
-      - name: Playwright (full)
-        run: pnpm exec playwright test
+      - uses: ./.github/actions/setup-e2e
+      - name: Playwright
+        run: pnpm test:e2e
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: playwright-report-full
+          name: playwright-report
           path: app/playwright-report/
           retention-days: 14
 
   migrate-db:
     runs-on: ubuntu-24.04
-    needs: [e2e-full]
+    timeout-minutes: 10
+    needs: [e2e]
     environment: production
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -59,6 +53,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     needs: [migrate-db]
     environment: production
     env:

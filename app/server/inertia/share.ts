@@ -1,5 +1,5 @@
+import type { SharedProps } from '@shared/inertia';
 import type { Context } from 'hono';
-import type { SharedProps } from '../../shared/types';
 import type { AppEnv } from '../env';
 
 export function buildSharedProps(c: Context<AppEnv>): SharedProps {

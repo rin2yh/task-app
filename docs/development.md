@@ -19,18 +19,18 @@ pnpm dev                  # Vite + Wrangler dev (http://localhost:5173)
 | E2E (Playwright) | `pnpm test:e2e` | フルスタックシナリオ |
 | カバレッジ | `pnpm test --coverage` | server 90%+ / client 70%+ を CI で要求 |
 
-`pnpm test:e2e` は `playwright.config.ts` の `webServer` が `E2E_AUTH=1 pnpm dev` を自動起動します。手動起動は不要です。
+`pnpm test:e2e` は `config/playwright.config.ts` の `webServer` が `NODE_ENV=test pnpm dev` を自動起動します。手動起動は不要です。
 
 ### E2E バックドア
 
-`E2E_AUTH=1` のときだけ `POST /auth/test-login {"login": "..."}` が有効になり、テスト用のセッションを発行します。本番ビルドでは Vite define で `import.meta.env.E2E_AUTH` が空文字に固定されるため dead-code elimination されます。
+`NODE_ENV === 'test'` のときだけ `createOAuthClient` が `FakeGitHubOAuthClient` を返し、`/auth/github?login=<name>` で任意ユーザーとしてセッションを発行できます。Vite が `process.env.NODE_ENV` をビルド時に静的置換するため、本番ビルドでは分岐ごと dead-code elimination され、フェイク実装はバンドルに含まれません。
 
 ## Lint / Format / 型
 
 ```bash
 pnpm lint                 # Biome check
 pnpm format               # Biome format --write
-pnpm typecheck            # tsc --noEmit
+pnpm typecheck            # tsgo --noEmit
 ```
 
 タスク完了前に `pnpm lint && pnpm typecheck && pnpm test && pnpm test:workers` を回してください (リポジトリ規約)。
@@ -40,17 +40,17 @@ pnpm typecheck            # tsc --noEmit
 スキーマ (`app/server/db/schema.ts`) を編集したら:
 
 ```bash
-pnpm db:generate          # drizzle-kit が migrations/000X_xxx.sql を生成
+pnpm db:generate          # drizzle-kit が server/db/migrations/000X_xxx.sql を生成
 pnpm db:migrate:local     # ローカル D1 に適用
 ```
 
 本番への適用は `pnpm db:migrate:prod` (デプロイ手順参照)。
 
-`migrations/` は git 管理対象です。生成 SQL を必ずコミットしてください。
+`server/db/migrations/` は git 管理対象です。生成 SQL を必ずコミットしてください。
 
 ## Inertia のページ追加
 
-1. `app/pages/<name>.tsx` を作成 (ファイル名は kebab-case)
+1. `app/client/pages/<name>.tsx` を作成 (ファイル名は kebab-case)
 2. ハンドラから `c.render('<name>', props)` で返す
 3. Vite が `app/pages.gen.ts` を自動更新します (gitignore 済)
 

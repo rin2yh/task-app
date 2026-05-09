@@ -1,35 +1,37 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@client/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label as UiLabel } from '@/components/ui/label';
+} from '@client/components/ui/dialog';
+import { Input } from '@client/components/ui/input';
+import { Label as UiLabel } from '@client/components/ui/label';
 import {
+  closestCenter,
   DndContext,
   type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
-  closestCenter,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import type { Column as ColumnT } from '@shared/column';
+import type { Label } from '@shared/label';
+import type { TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
-import type { Column as ColumnT, Label, TaskWithLabels } from '../../../shared/types';
 import { buildInitialState, useOptimisticBoard } from '../../hooks/use-optimistic-board';
 import { Column } from './column';
 import { TaskDialog } from './task-dialog';
 
-type Props = {
+interface Props {
   columns: ColumnT[];
   tasks: TaskWithLabels[];
   labels: Label[];
   csrfToken: string;
-};
+}
 
 export function Board({ columns, tasks, labels, csrfToken }: Props) {
   const board = useOptimisticBoard(buildInitialState(columns, tasks));

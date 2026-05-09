@@ -1,13 +1,13 @@
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@client/components/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import type { Priority } from '../../../shared/types';
+} from '@client/components/ui/select';
+import { cn } from '@client/lib/utils';
+import type { Priority } from '@shared/priority';
 
 const PRIORITY_OPTIONS: { value: Priority; label: string; badgeClass: string }[] = [
   { value: 'low', label: 'Low', badgeClass: 'bg-slate-400 text-white' },

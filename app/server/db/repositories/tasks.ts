@@ -1,8 +1,8 @@
+import type { Priority } from '@shared/priority';
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import type { Priority } from '../../../shared/types';
 import { computeInsertPosition, rebalance, tailPosition } from '../../lib/position';
 import type { Database } from '../client';
-import { type DbLabel, type DbTask, columns, labels, projects, taskLabels, tasks } from '../schema';
+import { columns, type DbLabel, type DbTask, labels, projects, taskLabels, tasks } from '../schema';
 import { ulid } from '../ulid';
 
 async function ownsColumn(
@@ -71,12 +71,12 @@ export async function listTasksForProject(
   return allTasks.map((t) => ({ ...t, labels: byTask.get(t.id) ?? [] }));
 }
 
-export type CreateTaskInput = {
+export interface CreateTaskInput {
   title: string;
   description?: string | null;
   priority?: Priority;
   dueDate?: number | null;
-};
+}
 
 export async function createTask(
   db: Database,
@@ -151,11 +151,11 @@ export async function deleteTask(db: Database, taskId: string, ownerId: number):
   return true;
 }
 
-export type MoveTaskInput = {
+export interface MoveTaskInput {
   toColumnId: string;
   beforeTaskId?: string | null;
   afterTaskId?: string | null;
-};
+}
 
 export async function moveTask(
   db: Database,
@@ -180,15 +180,15 @@ export async function moveTask(
   const afterIdx = input.afterTaskId ? others.findIndex((t) => t.id === input.afterTaskId) : -1;
   const prevPos =
     beforeIdx >= 0
-      ? others[beforeIdx]!.position
+      ? (others[beforeIdx]?.position ?? null)
       : afterIdx > 0
-        ? others[afterIdx - 1]!.position
+        ? (others[afterIdx - 1]?.position ?? null)
         : null;
   const nextPos =
     afterIdx >= 0
-      ? others[afterIdx]!.position
+      ? (others[afterIdx]?.position ?? null)
       : beforeIdx >= 0 && beforeIdx + 1 < others.length
-        ? others[beforeIdx + 1]!.position
+        ? (others[beforeIdx + 1]?.position ?? null)
         : null;
   const maxPos = others.at(-1)?.position ?? 0;
   const newPos = computeInsertPosition(prevPos, nextPos, maxPos);
@@ -226,7 +226,8 @@ export async function moveTask(
       .set({ columnId: input.toColumnId, position: newPos, updatedAt: now })
       .where(eq(tasks.id, taskId));
   }
-  const updated = (await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1))[0]!;
+  const updated = (await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1))[0];
+  if (!updated) return null;
   const tasksInColumn = await db
     .select()
     .from(tasks)

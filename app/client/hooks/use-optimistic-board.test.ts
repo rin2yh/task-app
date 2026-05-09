@@ -1,6 +1,7 @@
+import type { Column } from '@shared/column';
+import type { TaskWithLabels } from '@shared/task';
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import type { Column, TaskWithLabels } from '../../shared/types';
 import { buildInitialState, useOptimisticBoard } from './use-optimistic-board';
 
 const cols: Column[] = [

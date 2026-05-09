@@ -1,28 +1,30 @@
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@client/components/ui/button';
+import { Checkbox } from '@client/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label as UiLabel } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from '@client/components/ui/dialog';
+import { Input } from '@client/components/ui/input';
+import { Label as UiLabel } from '@client/components/ui/label';
+import { Textarea } from '@client/components/ui/textarea';
+import type { Label } from '@shared/label';
+import type { Priority } from '@shared/priority';
+import type { TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
-import type { Label, Priority, TaskWithLabels } from '../../../shared/types';
 import { LabelChip } from '../shared/label-chip';
 import { PrioritySelect } from '../shared/priority-select';
 
-type Props = {
+interface Props {
   task: TaskWithLabels;
   allLabels: Label[];
   csrfToken: string;
   onClose: () => void;
   onUpdated: (task: TaskWithLabels) => void;
   onDeleted: (task: TaskWithLabels) => void;
-};
+}
 
 export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onDeleted }: Props) {
   const [title, setTitle] = useState(task.title);

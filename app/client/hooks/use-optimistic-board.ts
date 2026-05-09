@@ -1,21 +1,26 @@
+import type { Column } from '@shared/column';
+import type { Task, TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
-import type { Column, Task, TaskWithLabels } from '../../shared/types';
 
-export type BoardState = {
+export interface BoardState {
   columns: Column[];
   tasksByColumn: Record<string, TaskWithLabels[]>;
-};
+}
 
 export function buildInitialState(columns: Column[], tasks: TaskWithLabels[]): BoardState {
   const sortedCols = [...columns].sort((a, b) => a.position - b.position);
   const tasksByColumn: Record<string, TaskWithLabels[]> = {};
   for (const col of sortedCols) tasksByColumn[col.id] = [];
   for (const t of tasks) {
-    if (!tasksByColumn[t.columnId]) tasksByColumn[t.columnId] = [];
-    tasksByColumn[t.columnId]!.push(t);
+    let bucket = tasksByColumn[t.columnId];
+    if (!bucket) {
+      bucket = [];
+      tasksByColumn[t.columnId] = bucket;
+    }
+    bucket.push(t);
   }
   for (const id of Object.keys(tasksByColumn)) {
-    tasksByColumn[id]!.sort((a, b) => a.position - b.position);
+    tasksByColumn[id]?.sort((a, b) => a.position - b.position);
   }
   return { columns: sortedCols, tasksByColumn };
 }
@@ -31,9 +36,11 @@ export function useOptimisticBoard(initial: BoardState) {
       };
       let moved: TaskWithLabels | undefined;
       for (const colId of Object.keys(next.tasksByColumn)) {
-        const idx = next.tasksByColumn[colId]!.findIndex((t) => t.id === taskId);
+        const current = next.tasksByColumn[colId];
+        if (!current) continue;
+        const idx = current.findIndex((t) => t.id === taskId);
         if (idx >= 0) {
-          const arr = [...next.tasksByColumn[colId]!];
+          const arr = [...current];
           moved = arr.splice(idx, 1)[0];
           next.tasksByColumn[colId] = arr;
           break;

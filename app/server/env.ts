@@ -1,4 +1,4 @@
-export type Env = {
+export interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
   APP_URL: string;
@@ -6,13 +6,15 @@ export type Env = {
   GITHUB_CLIENT_SECRET: string;
   SESSION_SECRET: string;
   ALLOWED_LOGINS?: string;
-  E2E_AUTH?: string;
-};
+}
 
-export type AppVariables = {
+export interface AppVariables {
   user: import('./db/schema').DbUser | null;
   sessionToken: string | null;
   csrfToken: string | null;
-};
+}
 
-export type AppEnv = { Bindings: Env; Variables: AppVariables };
+export interface AppEnv {
+  Bindings: Env;
+  Variables: AppVariables;
+}
