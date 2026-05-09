@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import type { Column, Task, TaskWithLabels } from '../../shared/types';
 
 export type BoardState = {
@@ -23,7 +23,7 @@ export function buildInitialState(columns: Column[], tasks: TaskWithLabels[]): B
 export function useOptimisticBoard(initial: BoardState) {
   const [state, setState] = useState(initial);
 
-  const moveTaskLocal = useCallback((taskId: string, toColumnId: string, toIndex: number) => {
+  const moveTaskLocal = (taskId: string, toColumnId: string, toIndex: number) => {
     setState((prev) => {
       const next: BoardState = {
         columns: prev.columns,
@@ -46,9 +46,9 @@ export function useOptimisticBoard(initial: BoardState) {
       next.tasksByColumn[toColumnId] = dest;
       return next;
     });
-  }, []);
+  };
 
-  const replaceTasksForColumn = useCallback((columnId: string, tasks: Task[]) => {
+  const replaceTasksForColumn = (columnId: string, tasks: Task[]) => {
     setState((prev) => {
       const existing = prev.tasksByColumn[columnId] ?? [];
       const labelsById = new Map(existing.map((t) => [t.id, t.labels]));
@@ -61,9 +61,9 @@ export function useOptimisticBoard(initial: BoardState) {
         tasksByColumn: { ...prev.tasksByColumn, [columnId]: merged },
       };
     });
-  }, []);
+  };
 
-  const reset = useCallback((s: BoardState) => setState(s), []);
+  const reset = (s: BoardState) => setState(s);
 
   return { state, moveTaskLocal, replaceTasksForColumn, reset };
 }

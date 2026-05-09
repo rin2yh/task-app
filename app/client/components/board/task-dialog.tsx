@@ -1,3 +1,15 @@
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label as UiLabel } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useState } from 'react';
 import type { Label, Priority, TaskWithLabels } from '../../../shared/types';
 import { LabelChip } from '../shared/label-chip';
@@ -84,80 +96,88 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
   };
 
   return (
-    <dialog open aria-labelledby="task-dialog-title">
-      <form
-        onSubmit={save}
-        style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: 320 }}
-      >
-        <h3 id="task-dialog-title" style={{ margin: 0 }}>
-          タスク編集
-        </h3>
-        <label>
-          タイトル
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={200}
-          />
-        </label>
-        <label>
-          説明
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
-        </label>
-        <label htmlFor="task-priority">優先度</label>
-        <PrioritySelect id="task-priority" value={priority} onChange={setPriority} />
-        <label>
-          期限
-          <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-        </label>
-        <fieldset
-          style={{ border: '1px solid var(--c-border)', borderRadius: '0.4rem', padding: '0.4rem' }}
-        >
-          <legend>ラベル</legend>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-            {allLabels.map((l) => {
-              const checked = selectedLabels.has(l.id);
-              return (
-                <label
-                  key={l.id}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) => {
-                      const next = new Set(selectedLabels);
-                      if (e.target.checked) next.add(l.id);
-                      else next.delete(l.id);
-                      setSelectedLabels(next);
-                    }}
-                  />
-                  <LabelChip label={l} />
-                </label>
-              );
-            })}
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md" aria-labelledby="task-dialog-title">
+        <DialogHeader>
+          <DialogTitle id="task-dialog-title">タスク編集</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={save} className="flex flex-col gap-3">
+          <div className="space-y-1.5">
+            <UiLabel htmlFor="task-title">タイトル</UiLabel>
+            <Input
+              id="task-title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={200}
+            />
           </div>
-        </fieldset>
-        {error ? (
-          <p role="alert" style={{ color: '#b91c1c' }}>
-            {error}
-          </p>
-        ) : null}
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.4rem' }}>
-          <button type="button" className="btn btn-danger" onClick={remove} disabled={busy}>
-            削除
-          </button>
-          <div style={{ display: 'flex', gap: '0.4rem' }}>
-            <button type="button" className="btn" onClick={onClose} disabled={busy}>
-              キャンセル
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={busy}>
-              保存
-            </button>
+          <div className="space-y-1.5">
+            <UiLabel htmlFor="task-description">説明</UiLabel>
+            <Textarea
+              id="task-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+            />
           </div>
-        </div>
-      </form>
-    </dialog>
+          <div className="space-y-1.5">
+            <UiLabel htmlFor="task-priority">優先度</UiLabel>
+            <PrioritySelect id="task-priority" value={priority} onChange={setPriority} />
+          </div>
+          <div className="space-y-1.5">
+            <UiLabel htmlFor="task-due">期限</UiLabel>
+            <Input
+              id="task-due"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </div>
+          <fieldset className="rounded-md border p-3">
+            <legend className="px-1 text-sm font-medium">ラベル</legend>
+            <div className="flex flex-wrap gap-2">
+              {allLabels.map((l) => {
+                const checked = selectedLabels.has(l.id);
+                const id = `task-label-${l.id}`;
+                return (
+                  <label key={l.id} htmlFor={id} className="inline-flex items-center gap-1.5">
+                    <Checkbox
+                      id={id}
+                      checked={checked}
+                      onCheckedChange={(value) => {
+                        const next = new Set(selectedLabels);
+                        if (value === true) next.add(l.id);
+                        else next.delete(l.id);
+                        setSelectedLabels(next);
+                      }}
+                    />
+                    <LabelChip label={l} />
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+          {error ? (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
+          <DialogFooter className="mt-2 flex-row justify-between sm:justify-between">
+            <Button type="button" variant="destructive" onClick={remove} disabled={busy}>
+              削除
+            </Button>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+                キャンセル
+              </Button>
+              <Button type="submit" disabled={busy}>
+                保存
+              </Button>
+            </div>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

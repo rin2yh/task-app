@@ -1,3 +1,13 @@
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label as UiLabel } from '@/components/ui/label';
 import {
   DndContext,
   type DragEndEvent,
@@ -8,7 +18,7 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { Column as ColumnT, Label, TaskWithLabels } from '../../../shared/types';
 import { buildInitialState, useOptimisticBoard } from '../../hooks/use-optimistic-board';
 import { Column } from './column';
@@ -22,8 +32,7 @@ type Props = {
 };
 
 export function Board({ columns, tasks, labels, csrfToken }: Props) {
-  const initial = useMemo(() => buildInitialState(columns, tasks), [columns, tasks]);
-  const board = useOptimisticBoard(initial);
+  const board = useOptimisticBoard(buildInitialState(columns, tasks));
   const [openTask, setOpenTask] = useState<TaskWithLabels | null>(null);
   const [creatingInColumn, setCreatingInColumn] = useState<string | null>(null);
   const sensors = useSensors(
@@ -101,7 +110,7 @@ export function Board({ columns, tasks, labels, csrfToken }: Props) {
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <div className="board">
+        <div className="flex items-start gap-4 overflow-x-auto p-4">
           {board.state.columns.map((c) => (
             <Column
               key={c.id}
@@ -146,6 +155,7 @@ export function Board({ columns, tasks, labels, csrfToken }: Props) {
 
       {creatingInColumn ? (
         <NewTaskDialog
+          columnId={creatingInColumn}
           onCancel={() => setCreatingInColumn(null)}
           onSubmit={(payload) => handleCreate(creatingInColumn, payload)}
         />
@@ -155,45 +165,56 @@ export function Board({ columns, tasks, labels, csrfToken }: Props) {
 }
 
 function NewTaskDialog({
+  columnId,
   onCancel,
   onSubmit,
 }: {
+  columnId: string;
   onCancel: () => void;
   onSubmit: (payload: { title: string }) => Promise<void>;
 }) {
   const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
   return (
-    <dialog open>
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (!title.trim()) return;
-          setBusy(true);
-          try {
-            await onSubmit({ title: title.trim() });
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <h3>新規タスク</h3>
-        <input
-          type="text"
-          placeholder="タイトル"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          maxLength={200}
-        />
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.6rem' }}>
-          <button type="submit" className="btn btn-primary" disabled={busy}>
-            作成
-          </button>
-          <button type="button" className="btn" onClick={onCancel}>
-            キャンセル
-          </button>
-        </div>
-      </form>
-    </dialog>
+    <Dialog open onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>新規タスク</DialogTitle>
+        </DialogHeader>
+        <form
+          className="flex flex-col gap-3"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!title.trim()) return;
+            setBusy(true);
+            try {
+              await onSubmit({ title: title.trim() });
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <div className="space-y-1.5">
+            <UiLabel htmlFor={`new-task-title-${columnId}`}>タイトル</UiLabel>
+            <Input
+              id={`new-task-title-${columnId}`}
+              type="text"
+              placeholder="タイトル"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={200}
+            />
+          </div>
+          <DialogFooter className="flex-row justify-end gap-2 sm:justify-end">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              キャンセル
+            </Button>
+            <Button type="submit" disabled={busy}>
+              作成
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

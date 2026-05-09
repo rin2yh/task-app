@@ -26,7 +26,16 @@ resource "cloudflare_workers_script" "task_app" {
   }
 
   lifecycle {
-    ignore_changes = [content, module]
+    # content / compatibility_* / plain_text_binding は wrangler deploy が実体を持つ。
+    # ここで上書きすると node:events など nodejs_compat 依存のコードが Cloudflare API
+    # validation で error 10021 になり apply が落ちる。
+    ignore_changes = [
+      content,
+      module,
+      compatibility_date,
+      compatibility_flags,
+      plain_text_binding,
+    ]
   }
 }
 

@@ -1,19 +1,14 @@
+import { Badge } from '@/components/ui/badge';
 import type { Label } from '../../../shared/types';
 
 export function LabelChip({ label }: { label: Label }) {
   return (
-    <span
-      style={{
-        display: 'inline-block',
-        padding: '2px 8px',
-        borderRadius: 999,
-        fontSize: '0.75rem',
-        background: label.color,
-        color: pickFg(label.color),
-      }}
+    <Badge
+      className="rounded-full border-transparent px-2 py-0.5 text-[0.7rem] font-medium"
+      style={{ background: label.color, color: pickFg(label.color) }}
     >
       {label.name}
-    </span>
+    </Badge>
   );
 }
 
