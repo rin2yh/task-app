@@ -25,11 +25,3 @@ Scripts: @app/package.json. Run all `pnpm` commands inside `app/`. Single test: 
 - **PWA**: `vite-plugin-pwa` injectManifest, SW at `client/pwa/sw.ts`. `register.ts` is `import.meta.env.DEV`-guarded — verify SW via `pnpm build && pnpm preview`.
 - **Test helpers**: `server/_test-helpers.ts` (`applyMigrations`, `createTestUser`) instead of poking D1 directly.
 
-## Gotchas
-
-- `wrangler.toml` ships placeholder `database_id = "00000000-..."` for local D1 (per-developer; don't commit your real id).
-- `pages.gen.ts` is gitignored — type errors about missing pages mean it hasn't been generated.
-- `E2E_AUTH=1` enables `POST /auth/test-login` + fake OAuth, stripped in prod via Vite define. Don't gate non-test logic on it.
-- Migrations are forward-only — destructive changes need compatible migration → code switch → cleanup migration (document in PR).
-- Worker secrets are owned by Terraform (`cloudflare_workers_secret`); don't `wrangler secret put` directly. Production deploy is automatic on push to `main` (`.github/workflows/deploy.yml`).
-- Only deploy artifact is `dist/client` (Worker `ASSETS` binding); `pnpm test:workers` creates it on its own.
