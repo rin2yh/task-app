@@ -18,7 +18,7 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { Column as ColumnT, Label, TaskWithLabels } from '../../../shared/types';
 import { buildInitialState, useOptimisticBoard } from '../../hooks/use-optimistic-board';
 import { Column } from './column';
@@ -33,8 +33,7 @@ type Props = {
 };
 
 export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
-  const initial = useMemo(() => buildInitialState(columns, tasks), [columns, tasks]);
-  const board = useOptimisticBoard(initial);
+  const board = useOptimisticBoard(buildInitialState(columns, tasks));
   const [openTask, setOpenTask] = useState<TaskWithLabels | null>(null);
   const [creatingInColumn, setCreatingInColumn] = useState<string | null>(null);
   const sensors = useSensors(
