@@ -1,4 +1,4 @@
-name: CI
+name: Web CI/CD
 
 on:
   pull_request:
