@@ -9,7 +9,7 @@
 
 ## Commands
 
-@app/package.json. Tool configs in `app/config/` (vite/vitest/playwright/drizzle); `biome.json` / `tsconfig.json` / `wrangler.toml` / `components.json` stay at `app/` per tooling convention. Single test: `pnpm exec vitest run --config config/vitest.config.ts <path> -t "name"` (server: `config/vitest.workers.config.ts`). **Project gate**: `pnpm lint && pnpm typecheck && pnpm test && pnpm test:server`.
+@app/package.json. Project gate: `pnpm lint && pnpm typecheck && pnpm test && pnpm test:server`.
 
 ## Architecture
 
