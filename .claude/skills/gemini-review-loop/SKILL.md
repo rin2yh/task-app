@@ -33,7 +33,7 @@ mcp__github__pull_request_read({ method: "get_pull_request_review_comments", own
 ```
 
 - author が `gemini-code-assist[bot]` のレビューを抽出。
-- 最新のレビューにぶら下がる review comments のうち `resolved: false` のものを列挙し、未対応があれば**先に修正してコミット & push** する。
+- 最新のレビューにぶら下がる review comments のうち `resolved: false` のものを列挙し、未対応があれば**先に修正してコミット & push し、step 7 の手順 (`add_reply_to_pull_request_comment` で commit SHA 付きで返信) に従って各 comment に返信**する。
 - 既に全部対応済みなら次に進む。
 
 ### 3. `/gemini review` を PR コメントで投げる
@@ -51,11 +51,11 @@ mcp__github__add_issue_comment({ owner, repo, issue_number: pullNumber, body: "/
 
 - `<github-webhook-activity>` イベントとして webhook が届いたら次のステップへ。
 - **`Bash sleep` で polling しない。** webhook で起こされるのを待つ (CLAUDE Code の規約)。
-- Gemini の review は通常 30s〜2min で来る。10 分以上来なければユーザに状況を報告して止める。
+- Gemini の review は通常 30s〜2min で来る。10 分以上来なければ、`mcp__github__unsubscribe_pr_activity` で subscribe を解除してからユーザに状況を報告して止める。
 
 ### 5. 届いたイベントを triage する
 
-webhook で起きたら、まず author / event type を確認:
+webhook で起きたら、まずイベントの `created_at` が **step 3 で控えた基準時刻以降**であることを確認 (基準時刻より古いものは前ラウンドの遅延配信なので無視)。次に author / event type を確認:
 
 - `pull_request_review` で `user.login === "gemini-code-assist[bot]"` → 本命。step 6 へ。
 - `issue_comment` で gemini bot からの自動応答 (`Hi @user, I'm starting a review...` 等) → 無視して待機継続 (step 4 に戻り subscribe を維持)。
