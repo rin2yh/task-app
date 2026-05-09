@@ -2,7 +2,7 @@ import { Button } from '@client/components/ui/button';
 import { Card } from '@client/components/ui/card';
 import { Input } from '@client/components/ui/input';
 import { useAuthentication } from '@client/hooks/use-authentication';
-import { router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import type { SharedProps } from '@shared/inertia';
 import type { Project } from '@shared/project';
 import { useState } from 'react';
@@ -80,14 +80,17 @@ export default function Dashboard({ projects }: Props) {
       <ul className="mt-4 space-y-2.5">
         {projects.map((p) => (
           <li key={p.id}>
-            <Card className="p-4">
-              <a href={`/projects/${p.id}`} className="font-medium text-primary hover:underline">
-                {p.name}
-              </a>
-              {p.description ? (
-                <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
-              ) : null}
-            </Card>
+            <Link
+              href={`/projects/${p.id}`}
+              className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Card className="p-4 transition-colors hover:bg-accent/50">
+                <span className="font-medium text-primary">{p.name}</span>
+                {p.description ? (
+                  <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
+                ) : null}
+              </Card>
+            </Link>
           </li>
         ))}
         {projects.length === 0 ? (
