@@ -27,28 +27,9 @@ defaults:
     working-directory: app
 
 jobs:
-  migrate-db:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    environment: ${{ inputs.environment }}
-    concurrency:
-      group: migrate-db-${{ inputs.environment }}
-      cancel-in-progress: false
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-        with:
-          ref: ${{ inputs.ref }}
-      - uses: ./.github/actions/setup
-      # production の D1 名だけ既存リソース互換のため非対称 ("task-app-prod")。
-      - run: pnpm exec wrangler d1 migrations apply task-app-${{ inputs.environment == 'production' && 'prod' || inputs.environment }} --remote --env ${{ inputs.environment }}
-
   deploy:
-    needs: migrate-db
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     environment:
       name: ${{ inputs.environment }}
       # secret 値と一致する step output は GitHub に redact されて環境 URL に流れない。
@@ -70,6 +51,10 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
       - uses: ./.github/actions/setup
+      # production の D1 名だけ既存リソース互換のため非対称 ("task-app-prod")。
+      # migrate を deploy と同ジョブで先に走らせることで、失敗時に build/deploy を自動的にブロックする。
+      - name: Apply D1 migrations
+        run: pnpm exec wrangler d1 migrations apply task-app-${{ inputs.environment == 'production' && 'prod' || inputs.environment }} --remote --env ${{ inputs.environment }}
       - run: pnpm build
       # secret bulk を deploy 前にやる。新コードが live になる前に最新 secret が揃っている状態を保つ。
       - name: Sync Worker secrets

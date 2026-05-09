@@ -9,6 +9,7 @@ runs:
       with:
         path: ~/.cache/ms-playwright
         key: playwright-${{ hashFiles('app/pnpm-lock.yaml') }}
+        restore-keys: playwright-
     - name: Install Playwright (chromium)
       shell: bash
       working-directory: app
