@@ -3,9 +3,12 @@ name: PR Deploy
 # PR 上の固定コメントにあるチェックボックスを「ワンクリックデプロイ」のボタンとして使う。
 # pull_request: ボタン (固定コメント) を upsert する。
 # issue_comment.edited: チェックが入ったら develop へデプロイする。
+#
+# synchronize は意図的に含めない: 新規コミット push のたびに upsert すると、
+# 直前のデプロイ結果 (URL・実行者) を初期テンプレートで上書きしてしまうため。
 on:
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [opened, reopened]
   issue_comment:
     types: [edited]
 
