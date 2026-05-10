@@ -83,21 +83,6 @@ jobs:
             --limit 1000 \
             > tmp/project-items.json
 
-      # importer は users.login で owner_id を引くので、まだ OAuth ログインしていない環境
-      # では "User not found" になる。viewer の databaseId/login で先に INSERT OR IGNORE
-      # しておく。OAuth 側は github_id でルックアップするので後で実ログインしても重複しない。
-      - name: Bootstrap user row in D1
-        if: steps.check.outputs.skip != 'true'
-        run: |
-          set -euo pipefail
-          user_json=$(gh api graphql -f query='query { viewer { databaseId login } }')
-          gh_id=$(jq -er '.data.viewer.databaseId' <<< "$user_json")
-          gh_login=$(jq -er '.data.viewer.login' <<< "$user_json")
-          now=$(($(date +%s) * 1000))
-          pnpm exec wrangler d1 execute "$D1_NAME" \
-            --remote --env "$CLOUDFLARE_ENV" \
-            --command "INSERT OR IGNORE INTO users (github_id, login, created_at) VALUES ($gh_id, '$gh_login', $now);"
-
       - name: Run importer
         if: steps.check.outputs.skip != 'true'
         run: |

@@ -182,7 +182,9 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
   let tasks = 0;
   let nextColumnPos = 1;
 
-  lines.push('BEGIN TRANSACTION;');
+  // No explicit BEGIN/COMMIT: D1 remote (Durable Object SQL) rejects user-managed
+  // transactions, and `wrangler d1 execute --file` already rolls the whole batch
+  // back on failure ("your DB will return to its original state and you can safely retry").
   lines.push(
     `INSERT INTO projects (id, owner_id, name, description, created_at, updated_at) VALUES (${sqlString(projectId)}, ${ownerId}, ${sqlString(DEFAULTS.projectName)}, NULL, ${now}, ${now});`,
   );
@@ -239,7 +241,6 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
     else if (item.content?.type === 'DraftIssue') drafts++;
   }
 
-  lines.push('COMMIT;');
   return {
     sql: `${lines.join('\n')}\n`,
     columns: columnIdByStatus.size,
@@ -299,7 +300,7 @@ async function main(): Promise<void> {
   const userRows = queryDb(`SELECT id FROM users WHERE login=${sqlString(args.userLogin)};`, args);
   if (userRows.length === 0) {
     failWithAnnotation(
-      `User '${args.userLogin}' not found in target D1 (binding=${args.binding}, env=${args.env || 'local'}). Bootstrap the user row (e.g. via the workflow's "Bootstrap user" step) or log in to the app once before importing.`,
+      `User '${args.userLogin}' not found in target D1 (binding=${args.binding}, env=${args.env || 'local'}). Log in to the app once before importing.`,
     );
   }
   const ownerRow = userRows[0] as { id?: number };
