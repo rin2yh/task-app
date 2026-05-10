@@ -47,7 +47,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       size,
       asChild = false,
       disabled,
-      loading = false,
+      loading,
       loadingText,
       onClick,
       children,
@@ -56,11 +56,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const Comp = asChild ? Slot : 'button';
-    const isDisabled = Boolean(disabled) || loading;
+    const isDisabled = Boolean(disabled) || Boolean(loading);
+    const spinnerSize = size === 'sm' ? 'size-3.5' : 'size-4';
     const content =
       loading && !asChild ? (
         <>
-          <Loader2 className="animate-spin" aria-hidden />
+          <Loader2 className={cn(spinnerSize, 'animate-spin')} aria-hidden />
           {loadingText ?? children}
         </>
       ) : (

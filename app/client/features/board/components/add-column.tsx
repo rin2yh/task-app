@@ -17,14 +17,14 @@ export function AddColumn({ onSubmit }: Props) {
     setName('');
   };
 
-  const canSubmit = !busy && name.trim().length > 0;
+  const trimmed = name.trim();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (busy || !trimmed) return;
     setBusy(true);
     try {
-      await onSubmit(name.trim());
+      await onSubmit(trimmed);
       reset();
     } finally {
       setBusy(false);
@@ -65,7 +65,7 @@ export function AddColumn({ onSubmit }: Props) {
         disabled={busy}
       />
       <div className="flex items-center gap-2">
-        <Button type="submit" size="sm" disabled={!canSubmit} loading={busy} loadingText="追加中…">
+        <Button type="submit" size="sm" disabled={!trimmed} loading={busy} loadingText="追加中…">
           追加
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={reset} disabled={busy}>
