@@ -106,7 +106,10 @@ export default function Dashboard({ projects }: Props) {
                   {p.name}
                 </span>
                 {p.description ? (
-                  <p className="mt-1 truncate text-sm text-muted-foreground" title={p.description}>
+                  <p
+                    className="mt-1 line-clamp-2 text-sm text-muted-foreground"
+                    title={p.description}
+                  >
                     {p.description}
                   </p>
                 ) : null}
