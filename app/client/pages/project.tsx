@@ -58,7 +58,6 @@ export default function Project({ project, columns, tasks, labels }: Props) {
   };
 
   const cancelRename = () => {
-    setNameDraft(project.name);
     setEditingName(false);
   };
 
