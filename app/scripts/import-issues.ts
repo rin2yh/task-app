@@ -35,6 +35,9 @@ interface ParsedArgs {
   dueField: string;
   dryRun: boolean;
   force: boolean;
+  remote: boolean;
+  env: string;
+  binding: string;
 }
 
 type Priority = 'low' | 'medium' | 'high';
@@ -64,7 +67,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     const a = argv[i];
     if (!a?.startsWith('--')) continue;
     const key = a.slice(2);
-    if (key === 'dry-run' || key === 'force') {
+    if (key === 'dry-run' || key === 'force' || key === 'remote') {
       out[key] = true;
       continue;
     }
@@ -87,6 +90,9 @@ function parseArgs(argv: string[]): ParsedArgs {
     dueField: str('due-field', DEFAULTS.dueField),
     dryRun: out['dry-run'] === true,
     force: out.force === true,
+    remote: out.remote === true,
+    env: str('env', ''),
+    binding: str('binding', DEFAULTS.d1Binding),
   };
 }
 
@@ -244,12 +250,22 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
   };
 }
 
-function queryDb(sql: string): unknown[] {
-  const out = execFileSync(
-    'wrangler',
-    ['d1', 'execute', DEFAULTS.d1Binding, '--local', '--json', '--command', sql],
-    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
-  );
+function wranglerD1Args(args: ParsedArgs): string[] {
+  const head = ['d1', 'execute', args.binding];
+  if (args.remote) {
+    head.push('--remote');
+    if (args.env) head.push('--env', args.env);
+  } else {
+    head.push('--local');
+  }
+  return head;
+}
+
+function queryDb(sql: string, args: ParsedArgs): unknown[] {
+  const out = execFileSync('wrangler', [...wranglerD1Args(args), '--json', '--command', sql], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
   const parsed = JSON.parse(out.trim()) as unknown;
   if (Array.isArray(parsed)) {
     const first = parsed[0] as { results?: unknown[] } | undefined;
@@ -262,12 +278,12 @@ async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   if (!args.userLogin) {
     console.error(
-      'Usage: import-issues --user-login <github_login> [--input PATH] [--output PATH] [--status-field NAME] [--priority-field NAME] [--due-field NAME] [--dry-run] [--force]',
+      'Usage: import-issues --user-login <github_login> [--input PATH] [--output PATH] [--status-field NAME] [--priority-field NAME] [--due-field NAME] [--remote] [--env NAME] [--binding NAME] [--dry-run] [--force]',
     );
     process.exit(1);
   }
 
-  const userRows = queryDb(`SELECT id FROM users WHERE login=${sqlString(args.userLogin)};`);
+  const userRows = queryDb(`SELECT id FROM users WHERE login=${sqlString(args.userLogin)};`, args);
   if (userRows.length === 0) {
     console.error(
       `User not found: ${args.userLogin}. Log in to the local app once before importing.`,
@@ -284,6 +300,7 @@ async function main(): Promise<void> {
 
   const existing = queryDb(
     `SELECT id FROM projects WHERE name=${sqlString(DEFAULTS.projectName)};`,
+    args,
   );
   if (existing.length > 0 && !args.force) {
     console.error(
@@ -308,11 +325,9 @@ async function main(): Promise<void> {
   await writeFile(outputPath, result.sql, 'utf8');
 
   if (!args.dryRun) {
-    execFileSync(
-      'wrangler',
-      ['d1', 'execute', DEFAULTS.d1Binding, '--local', `--file=${outputPath}`],
-      { stdio: 'inherit' },
-    );
+    execFileSync('wrangler', [...wranglerD1Args(args), `--file=${outputPath}`], {
+      stdio: 'inherit',
+    });
   }
 
   console.log(

@@ -3,7 +3,7 @@ import { Input } from '@client/components/ui/input';
 import { Board } from '@client/features/board/components/board';
 import { TaskList } from '@client/features/project/components/task-list';
 import { type ProjectView, ViewSwitcher } from '@client/features/project/components/view-switcher';
-import { router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import type { Column } from '@shared/column';
 import type { SharedProps } from '@shared/inertia';
 import type { Label } from '@shared/label';
@@ -51,9 +51,9 @@ export default function Project({ project, columns, tasks, labels }: Props) {
     <div className="min-h-screen">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-6 py-4">
         <div className="flex items-center gap-4">
-          <a href="/dashboard" className="text-sm text-primary hover:underline">
+          <Link href="/" className="text-sm text-primary hover:underline">
             ← 戻る
-          </a>
+          </Link>
           <h1 className="text-lg font-semibold tracking-tight">{project.name}</h1>
         </div>
         <form onSubmit={addColumn} className="flex gap-2">
