@@ -27,7 +27,10 @@ export default function Project({ project, columns, tasks, labels }: Props) {
           <Link href="/" className="shrink-0 text-sm text-primary hover:underline">
             ← 戻る
           </Link>
-          <h1 className="truncate text-lg font-semibold tracking-tight" title={project.name}>
+          <h1
+            className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight"
+            title={project.name}
+          >
             {project.name}
           </h1>
         </div>
