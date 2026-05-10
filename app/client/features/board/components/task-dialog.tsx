@@ -14,6 +14,7 @@ import { LabelChip } from '@client/features/labels/components/label-chip';
 import { PrioritySelect } from '@client/features/priority/components/priority-select';
 import type { Label } from '@shared/label';
 import type { Priority } from '@shared/priority';
+import { tryAsync } from '@shared/result';
 import type { TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
 
@@ -53,35 +54,39 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
     }
     setError(null);
     setBusyOp('save');
-    try {
-      const payload = {
-        title: title.trim(),
-        description: description.length === 0 ? null : description,
-        priority,
-        dueDate: dueDate ? Date.parse(`${dueDate}T00:00:00Z`) : null,
-      };
-      const patchRes = await fetch(`/tasks/${task.id}`, {
-        method: 'PATCH',
-        headers: jsonHeaders,
-        body: JSON.stringify(payload),
-      });
-      if (!patchRes.ok) throw new Error(`update failed: ${patchRes.status}`);
-      const patchData = (await patchRes.json()) as { task: TaskWithLabels };
+    const result = await tryAsync(
+      async () => {
+        const payload = {
+          title: title.trim(),
+          description: description.length === 0 ? null : description,
+          priority,
+          dueDate: dueDate ? Date.parse(`${dueDate}T00:00:00Z`) : null,
+        };
+        const patchRes = await fetch(`/tasks/${task.id}`, {
+          method: 'PATCH',
+          headers: jsonHeaders,
+          body: JSON.stringify(payload),
+        });
+        if (!patchRes.ok) throw new Error(`update failed: ${patchRes.status}`);
+        const patchData = (await patchRes.json()) as { task: TaskWithLabels };
 
-      const labelsRes = await fetch(`/tasks/${task.id}/labels`, {
-        method: 'PUT',
-        headers: jsonHeaders,
-        body: JSON.stringify({ labelIds: Array.from(selectedLabels) }),
-      });
-      if (!labelsRes.ok) throw new Error(`labels update failed: ${labelsRes.status}`);
-      const labelsData = (await labelsRes.json()) as { labels: Label[] };
+        const labelsRes = await fetch(`/tasks/${task.id}/labels`, {
+          method: 'PUT',
+          headers: jsonHeaders,
+          body: JSON.stringify({ labelIds: Array.from(selectedLabels) }),
+        });
+        if (!labelsRes.ok) throw new Error(`labels update failed: ${labelsRes.status}`);
+        const labelsData = (await labelsRes.json()) as { labels: Label[] };
 
-      onUpdated({ ...patchData.task, labels: labelsData.labels });
+        return { ...patchData.task, labels: labelsData.labels };
+      },
+      () => setBusyOp(null),
+    );
+    if (result.ok) {
+      onUpdated(result.value);
       onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '保存に失敗しました');
-    } finally {
-      setBusyOp(null);
+    } else {
+      setError(result.error instanceof Error ? result.error.message : '保存に失敗しました');
     }
   };
 
@@ -89,15 +94,15 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
     if (busy) return;
     if (!confirm('タスクを削除しますか？')) return;
     setBusyOp('remove');
-    try {
-      await fetch(`/tasks/${task.id}`, {
-        method: 'DELETE',
-        headers: { 'X-CSRF-Token': csrfToken },
-      });
-      onDeleted(task);
-    } finally {
-      setBusyOp(null);
-    }
+    const result = await tryAsync(
+      () =>
+        fetch(`/tasks/${task.id}`, {
+          method: 'DELETE',
+          headers: { 'X-CSRF-Token': csrfToken },
+        }),
+      () => setBusyOp(null),
+    );
+    if (result.ok) onDeleted(task);
   };
 
   return (
