@@ -87,7 +87,7 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
       if (!res.ok) throw new Error(`move failed: ${res.status}`);
       const data = (await res.json()) as { tasksInColumn?: TaskWithLabels[] };
       if (data.tasksInColumn) {
-        board.replaceTasksForColumn(toColumnId, data.tasksInColumn);
+        board.replaceTasksForColumnLocal(toColumnId, data.tasksInColumn);
       }
     } catch {
       board.reset(snapshot);
@@ -104,7 +104,7 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     if (!res.ok) throw new Error(`create failed: ${res.status}`);
     const data = (await res.json()) as { task: TaskWithLabels };
     const newTask: TaskWithLabels = { ...data.task, labels: [] };
-    board.replaceTasksForColumn(columnId, [
+    board.replaceTasksForColumnLocal(columnId, [
       ...(board.state.tasksByColumn[columnId] ?? []),
       newTask,
     ]);
@@ -157,13 +157,13 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
           csrfToken={csrfToken}
           onClose={() => setOpenTask(null)}
           onUpdated={(t) => {
-            board.replaceTasksForColumn(
+            board.replaceTasksForColumnLocal(
               t.columnId,
               (board.state.tasksByColumn[t.columnId] ?? []).map((x) => (x.id === t.id ? t : x)),
             );
           }}
           onDeleted={(t) => {
-            board.replaceTasksForColumn(
+            board.replaceTasksForColumnLocal(
               t.columnId,
               (board.state.tasksByColumn[t.columnId] ?? []).filter((x) => x.id !== t.id),
             );

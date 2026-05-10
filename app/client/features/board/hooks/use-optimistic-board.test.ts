@@ -38,13 +38,13 @@ describe('useOptimisticBoard', () => {
     expect(result.current.state.tasksByColumn.c2?.map((x) => x.id)).toEqual(['a']);
   });
 
-  it('replaceTasksForColumn keeps labels', () => {
+  it('replaceTasksForColumnLocal keeps labels', () => {
     const init = buildInitialState(cols, [
       { ...t('a', 'c1', 1), labels: [{ id: 'L', projectId: 'p', name: 'bug', color: '#fff000' }] },
     ]);
     const { result } = renderHook(() => useOptimisticBoard(init));
     act(() => {
-      result.current.replaceTasksForColumn('c1', [{ ...t('a', 'c1', 1.5) }]);
+      result.current.replaceTasksForColumnLocal('c1', [{ ...t('a', 'c1', 1.5) }]);
     });
     expect(result.current.state.tasksByColumn.c1?.[0]?.labels).toHaveLength(1);
   });

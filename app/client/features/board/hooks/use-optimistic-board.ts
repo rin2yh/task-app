@@ -7,8 +7,10 @@ export interface BoardState {
   tasksByColumn: Record<string, TaskWithLabels[]>;
 }
 
+const byPosition = <T extends { position: number }>(a: T, b: T) => a.position - b.position;
+
 export function buildInitialState(columns: Column[], tasks: TaskWithLabels[]): BoardState {
-  const sortedCols = [...columns].sort((a, b) => a.position - b.position);
+  const sortedCols = [...columns].sort(byPosition);
   const tasksByColumn: Record<string, TaskWithLabels[]> = {};
   for (const col of sortedCols) tasksByColumn[col.id] = [];
   for (const t of tasks) {
@@ -20,7 +22,7 @@ export function buildInitialState(columns: Column[], tasks: TaskWithLabels[]): B
     bucket.push(t);
   }
   for (const id of Object.keys(tasksByColumn)) {
-    tasksByColumn[id]?.sort((a, b) => a.position - b.position);
+    tasksByColumn[id]?.sort(byPosition);
   }
   return { columns: sortedCols, tasksByColumn };
 }
@@ -55,7 +57,7 @@ export function useOptimisticBoard(initial: BoardState) {
     });
   };
 
-  const replaceTasksForColumn = (columnId: string, tasks: Task[]) => {
+  const replaceTasksForColumnLocal = (columnId: string, tasks: Task[]) => {
     setState((prev) => {
       const existing = prev.tasksByColumn[columnId] ?? [];
       const labelsById = new Map(existing.map((t) => [t.id, t.labels]));
@@ -72,7 +74,7 @@ export function useOptimisticBoard(initial: BoardState) {
 
   const addColumnLocal = (column: Column) => {
     setState((prev) => ({
-      columns: [...prev.columns, column].sort((a, b) => a.position - b.position),
+      columns: [...prev.columns, column].sort(byPosition),
       tasksByColumn: { ...prev.tasksByColumn, [column.id]: [] },
     }));
   };
@@ -89,5 +91,12 @@ export function useOptimisticBoard(initial: BoardState) {
 
   const reset = (s: BoardState) => setState(s);
 
-  return { state, moveTaskLocal, replaceTasksForColumn, addColumnLocal, removeColumnLocal, reset };
+  return {
+    state,
+    moveTaskLocal,
+    replaceTasksForColumnLocal,
+    addColumnLocal,
+    removeColumnLocal,
+    reset,
+  };
 }
