@@ -175,7 +175,8 @@ export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Pr
                           <button
                             type="button"
                             onClick={() => setOpenTask(t)}
-                            className="text-left font-medium hover:underline"
+                            className="block max-w-full truncate text-left font-medium hover:underline"
+                            title={t.title}
                           >
                             {t.title}
                           </button>
