@@ -124,7 +124,6 @@ export default function Dashboard({ projects }: Props) {
                 onClick={() => setRenameTarget(p)}
               >
                 <Pencil className="size-3.5" />
-                名前変更
               </Button>
               <Button
                 type="button"
@@ -137,7 +136,6 @@ export default function Dashboard({ projects }: Props) {
                 onClick={() => remove(p.id, p.name)}
               >
                 <Trash2 className="size-3.5" />
-                削除
               </Button>
             </Card>
           </li>
