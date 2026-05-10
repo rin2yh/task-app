@@ -8,7 +8,6 @@ import {
 } from '@client/components/ui/dialog';
 import { Input } from '@client/components/ui/input';
 import { Label as UiLabel } from '@client/components/ui/label';
-import { cn } from '@client/lib/utils';
 import {
   closestCenter,
   DndContext,
@@ -181,18 +180,7 @@ function NewTaskDialog({
   const canSubmit = !busy && title.trim().length > 0;
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent
-        className={cn(
-          'sm:max-w-md',
-          'max-sm:left-0 max-sm:top-auto max-sm:bottom-0',
-          'max-sm:translate-x-0 max-sm:translate-y-0',
-          'max-sm:w-full max-sm:max-w-full',
-          'max-sm:rounded-t-2xl max-sm:rounded-b-none',
-          'max-sm:p-4 max-sm:pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]',
-          'max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:zoom-out-100',
-          'max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:slide-out-to-bottom',
-        )}
-      >
+      <DialogContent className="sm:max-w-md max-sm:left-0 max-sm:top-auto max-sm:bottom-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-w-full max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:p-4 max-sm:pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:zoom-out-100 max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:slide-out-to-bottom">
         <div
           aria-hidden="true"
           className="mx-auto -mt-1 mb-1 h-1 w-10 rounded-full bg-muted-foreground/30 sm:hidden"
