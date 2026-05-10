@@ -18,6 +18,7 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { router } from '@inertiajs/react';
 import type { Column as ColumnT } from '@shared/column';
 import type { Label } from '@shared/label';
 import type { TaskWithLabels } from '@shared/task';
@@ -111,6 +112,16 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     setCreatingInColumn(null);
   };
 
+  const handleCreateColumn = async (name: string) => {
+    const res = await fetch(`/projects/${projectId}/columns`, {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) throw new Error(`create column failed: ${res.status}`);
+    router.reload();
+  };
+
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
@@ -128,11 +139,11 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
                   method: 'DELETE',
                   headers: { 'X-CSRF-Token': csrfToken },
                 });
-                window.location.reload();
+                router.reload();
               }}
             />
           ))}
-          <AddColumn projectId={projectId} csrfToken={csrfToken} />
+          <AddColumn onSubmit={handleCreateColumn} />
         </div>
       </DndContext>
 

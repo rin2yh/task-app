@@ -1,15 +1,13 @@
 import { Button } from '@client/components/ui/button';
 import { Input } from '@client/components/ui/input';
-import { router } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
-  projectId: string;
-  csrfToken: string;
+  onSubmit: (name: string) => Promise<void>;
 }
 
-export function AddColumn({ projectId, csrfToken }: Props) {
+export function AddColumn({ onSubmit }: Props) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -26,17 +24,8 @@ export function AddColumn({ projectId, csrfToken }: Props) {
     if (!canSubmit) return;
     setBusy(true);
     try {
-      const res = await fetch(`/projects/${projectId}/columns`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        body: JSON.stringify({ name: name.trim() }),
-      });
-      if (!res.ok) throw new Error(`Failed to add column: ${res.status}`);
+      await onSubmit(name.trim());
       reset();
-      router.reload();
     } finally {
       setBusy(false);
     }
@@ -44,15 +33,14 @@ export function AddColumn({ projectId, csrfToken }: Props) {
 
   if (!editing) {
     return (
-      <Button
+      <button
         type="button"
-        variant="ghost"
         onClick={() => setEditing(true)}
-        className="flex h-12 w-80 shrink-0 items-center justify-start gap-2 rounded-xl bg-secondary/40 px-3 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+        className="flex w-80 shrink-0 items-center gap-2 rounded-xl bg-secondary/40 p-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
       >
         <Plus className="size-4" />
         列を追加
-      </Button>
+      </button>
     );
   }
 
