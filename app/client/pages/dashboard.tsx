@@ -1,10 +1,18 @@
 import { Button } from '@client/components/ui/button';
 import { Card } from '@client/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@client/components/ui/dialog';
 import { Input } from '@client/components/ui/input';
 import { useAuthentication } from '@client/hooks/use-authentication';
 import { Link, router, usePage } from '@inertiajs/react';
 import type { SharedProps } from '@shared/inertia';
 import type { Project } from '@shared/project';
+import { Pencil } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -16,6 +24,7 @@ export default function Dashboard({ projects }: Props) {
   const { user } = useAuthentication();
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<Project | null>(null);
   const trimmed = name.trim();
 
   const create = async (e: React.FormEvent) => {
@@ -79,24 +88,105 @@ export default function Dashboard({ projects }: Props) {
 
       <ul className="mt-4 space-y-2.5">
         {projects.map((p) => (
-          <li key={p.id}>
+          <li key={p.id} className="flex items-stretch gap-2">
             <Link
               href={`/projects/${p.id}`}
-              className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="block flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Card className="p-4 transition-colors hover:bg-accent/50">
+              <Card className="h-full p-4 transition-colors hover:bg-accent/50">
                 <span className="font-medium text-primary">{p.name}</span>
                 {p.description ? (
                   <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
                 ) : null}
               </Card>
             </Link>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setRenameTarget(p)}
+              aria-label={`${p.name} の名前を変更`}
+              className="self-center"
+            >
+              <Pencil className="size-4" />
+            </Button>
           </li>
         ))}
         {projects.length === 0 ? (
           <li className="text-sm text-muted-foreground">まだプロジェクトがありません。</li>
         ) : null}
       </ul>
+
+      {renameTarget ? (
+        <RenameProjectDialog
+          project={renameTarget}
+          csrfToken={shared.csrfToken}
+          onClose={() => setRenameTarget(null)}
+        />
+      ) : null}
     </div>
+  );
+}
+
+interface RenameDialogProps {
+  project: Project;
+  csrfToken: string;
+  onClose: () => void;
+}
+
+function RenameProjectDialog({ project, csrfToken, onClose }: RenameDialogProps) {
+  const [draft, setDraft] = useState(project.name);
+  const [busy, setBusy] = useState(false);
+  const trimmed = draft.trim();
+  const canSave = trimmed.length > 0 && trimmed !== project.name;
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (busy || !canSave) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
+        body: JSON.stringify({ name: trimmed }),
+      });
+      if (!res.ok) throw new Error(`Failed to rename project: ${res.status}`);
+      router.reload({ only: ['projects'] });
+      onClose();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>プロジェクト名を変更</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={save} className="flex flex-col gap-3">
+          <Input
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            maxLength={100}
+            autoFocus
+            aria-label="プロジェクト名"
+            disabled={busy}
+          />
+          <DialogFooter className="flex-row justify-end gap-2 sm:justify-end">
+            <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+              キャンセル
+            </Button>
+            <Button type="submit" disabled={!canSave} loading={busy} loadingText="保存中…">
+              保存
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
