@@ -1,19 +1,14 @@
+import { BottomSheetContent } from '@client/components/ui/bottom-sheet';
 import { Button } from '@client/components/ui/button';
 import { Card } from '@client/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@client/components/ui/dialog';
+import { Dialog, DialogFooter, DialogHeader, DialogTitle } from '@client/components/ui/dialog';
 import { Input } from '@client/components/ui/input';
 import { useAuthentication } from '@client/hooks/use-authentication';
 import { Link, router, usePage } from '@inertiajs/react';
 import type { SharedProps } from '@shared/inertia';
 import type { Project } from '@shared/project';
 import { Pencil, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface Props {
   projects: Project[];
@@ -167,25 +162,8 @@ interface RenameDialogProps {
 function RenameProjectDialog({ project, csrfToken, onClose }: RenameDialogProps) {
   const [draft, setDraft] = useState(project.name);
   const [busy, setBusy] = useState(false);
-  const [keyboardInset, setKeyboardInset] = useState(0);
   const trimmed = draft.trim();
   const canSave = trimmed.length > 0 && trimmed !== project.name;
-
-  // iOS Safari leaves the layout viewport pinned to the screen edge when the
-  // soft keyboard opens; without this the bottom sheet hides behind it. The
-  // inset latches to its peak so dismissing the keyboard doesn't collapse the
-  // sheet back down mid-interaction.
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const update = () => {
-      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      setKeyboardInset((prev) => Math.max(prev, Math.round(inset)));
-    };
-    update();
-    vv.addEventListener('resize', update);
-    return () => vv.removeEventListener('resize', update);
-  }, []);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,14 +188,7 @@ function RenameProjectDialog({ project, csrfToken, onClose }: RenameDialogProps)
 
   return (
     <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
-      <DialogContent
-        style={{ '--kb-inset': `${keyboardInset}px` } as React.CSSProperties}
-        className="sm:max-w-md max-sm:left-0 max-sm:top-auto max-sm:bottom-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-w-full max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:p-4 max-sm:pb-[calc(env(safe-area-inset-bottom,0px)+1rem+var(--kb-inset,0px))] max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:zoom-out-100 max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:slide-out-to-bottom"
-      >
-        <div
-          aria-hidden="true"
-          className="mx-auto -mt-1 mb-1 h-1 w-10 rounded-full bg-muted-foreground/30 sm:hidden"
-        />
+      <BottomSheetContent>
         <DialogHeader>
           <DialogTitle>プロジェクト名を変更</DialogTitle>
         </DialogHeader>
@@ -240,7 +211,7 @@ function RenameProjectDialog({ project, csrfToken, onClose }: RenameDialogProps)
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
+      </BottomSheetContent>
     </Dialog>
   );
 }
