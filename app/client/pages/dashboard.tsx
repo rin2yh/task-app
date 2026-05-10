@@ -107,7 +107,7 @@ export default function Dashboard({ projects }: Props) {
                 </span>
                 {p.description ? (
                   <p
-                    className="mt-1 line-clamp-2 text-sm text-muted-foreground"
+                    className="mt-1 line-clamp-2 break-words text-sm text-muted-foreground"
                     title={p.description}
                   >
                     {p.description}
