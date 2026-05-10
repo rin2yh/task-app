@@ -18,7 +18,6 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { router } from '@inertiajs/react';
 import type { Column as ColumnT } from '@shared/column';
 import type { Label } from '@shared/label';
 import type { TaskWithLabels } from '@shared/task';
@@ -119,7 +118,18 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
       body: JSON.stringify({ name }),
     });
     if (!res.ok) throw new Error(`create column failed: ${res.status}`);
-    router.reload();
+    const data = (await res.json()) as { column: ColumnT };
+    board.addColumnLocal(data.column);
+  };
+
+  const handleDeleteColumn = async (id: string) => {
+    if (!confirm('列を削除しますか？')) return;
+    const res = await fetch(`/columns/${id}`, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-Token': csrfToken },
+    });
+    if (!res.ok) throw new Error(`delete column failed: ${res.status}`);
+    board.removeColumnLocal(id);
   };
 
   return (
@@ -133,14 +143,7 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
               tasks={board.state.tasksByColumn[c.id] ?? []}
               onCreateTask={(id) => setCreatingInColumn(id)}
               onSelectTask={setOpenTask}
-              onDeleteColumn={async (id) => {
-                if (!confirm('列を削除しますか？')) return;
-                await fetch(`/columns/${id}`, {
-                  method: 'DELETE',
-                  headers: { 'X-CSRF-Token': csrfToken },
-                });
-                router.reload();
-              }}
+              onDeleteColumn={handleDeleteColumn}
             />
           ))}
           <AddColumn onSubmit={handleCreateColumn} />

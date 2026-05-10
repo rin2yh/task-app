@@ -70,7 +70,24 @@ export function useOptimisticBoard(initial: BoardState) {
     });
   };
 
+  const addColumnLocal = (column: Column) => {
+    setState((prev) => ({
+      columns: [...prev.columns, column].sort((a, b) => a.position - b.position),
+      tasksByColumn: { ...prev.tasksByColumn, [column.id]: [] },
+    }));
+  };
+
+  const removeColumnLocal = (columnId: string) => {
+    setState((prev) => {
+      const { [columnId]: _, ...rest } = prev.tasksByColumn;
+      return {
+        columns: prev.columns.filter((c) => c.id !== columnId),
+        tasksByColumn: rest,
+      };
+    });
+  };
+
   const reset = (s: BoardState) => setState(s);
 
-  return { state, moveTaskLocal, replaceTasksForColumn, reset };
+  return { state, moveTaskLocal, replaceTasksForColumn, addColumnLocal, removeColumnLocal, reset };
 }
