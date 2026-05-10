@@ -30,11 +30,13 @@ export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Pr
   return (
     <>
       <div className="mx-auto max-w-4xl space-y-6 p-6">
-        {orphanTasks.length > 0 ? (
-          <section aria-labelledby="col-no-status">
-            <h2 id="col-no-status" className="mb-2 text-sm font-semibold text-muted-foreground">
-              ステータスなし <span className="text-xs">({orphanTasks.length})</span>
-            </h2>
+        <section aria-labelledby="col-no-status">
+          <h2 id="col-no-status" className="mb-2 text-sm font-semibold text-muted-foreground">
+            ステータスなし <span className="text-xs">({orphanTasks.length})</span>
+          </h2>
+          {orphanTasks.length === 0 ? (
+            <p className="text-sm text-muted-foreground">タスクがありません。</p>
+          ) : (
             <ul className="space-y-2">
               {orphanTasks.map((t) => (
                 <li key={t.id}>
@@ -71,8 +73,8 @@ export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Pr
                 </li>
               ))}
             </ul>
-          </section>
-        ) : null}
+          )}
+        </section>
         {columns.length === 0 ? (
           <p className="text-sm text-muted-foreground">列がありません。</p>
         ) : null}
