@@ -21,7 +21,7 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import type { Column as ColumnT } from '@shared/column';
 import type { Label } from '@shared/label';
 import type { TaskWithLabels } from '@shared/task';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { buildInitialState, useOptimisticBoard } from '../hooks/use-optimistic-board';
 import { Column } from './column';
 import { TaskDialog } from './task-dialog';
@@ -177,10 +177,35 @@ function NewTaskDialog({
 }) {
   const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
+  const [keyboardInset, setKeyboardInset] = useState(0);
   const canSubmit = !busy && title.trim().length > 0;
+
+  // iOS Safari leaves the layout viewport pinned to the screen edge when the
+  // soft keyboard opens; without this the bottom sheet hides behind it. The
+  // inset latches to its peak so dismissing the keyboard doesn't collapse the
+  // sheet back down mid-interaction.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardInset((prev) => Math.max(prev, Math.round(inset)));
+    };
+    update();
+    vv.addEventListener('resize', update);
+    return () => vv.removeEventListener('resize', update);
+  }, []);
+
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        style={{ '--kb-inset': `${keyboardInset}px` } as React.CSSProperties}
+        className="sm:max-w-md max-sm:left-0 max-sm:top-auto max-sm:bottom-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-w-full max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:p-4 max-sm:pb-[calc(env(safe-area-inset-bottom,0px)+1rem+var(--kb-inset,0px))] max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:zoom-out-100 max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:slide-out-to-bottom"
+      >
+        <div
+          aria-hidden="true"
+          className="mx-auto -mt-1 mb-1 h-1 w-10 rounded-full bg-muted-foreground/30 sm:hidden"
+        />
         <DialogHeader>
           <DialogTitle>新規タスク</DialogTitle>
         </DialogHeader>
