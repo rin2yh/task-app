@@ -26,17 +26,20 @@ export default function Dashboard({ projects }: Props) {
     if (busy || !trimmed) return;
     setBusy(true);
     const result = await Result.try(
-      fetch('/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': shared.csrfToken,
-        },
-        body: JSON.stringify({ name }),
-      }),
+      (async () => {
+        const res = await fetch('/projects', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': shared.csrfToken,
+          },
+          body: JSON.stringify({ name }),
+        });
+        if (!res.ok) throw new Error(`Failed to create project: ${res.status}`);
+      })(),
     );
     setBusy(false);
-    if (result.ok && result.value.ok) {
+    if (result.ok) {
       router.reload({ only: ['projects'] });
       setName('');
     }
@@ -46,13 +49,16 @@ export default function Dashboard({ projects }: Props) {
     if (!confirm(`プロジェクト「${name}」を削除しますか？`)) return;
     setDeletingId(id);
     const result = await Result.try(
-      fetch(`/projects/${id}`, {
-        method: 'DELETE',
-        headers: { 'X-CSRF-Token': shared.csrfToken },
-      }),
+      (async () => {
+        const res = await fetch(`/projects/${id}`, {
+          method: 'DELETE',
+          headers: { 'X-CSRF-Token': shared.csrfToken },
+        });
+        if (!res.ok) throw new Error(`Failed to delete project: ${res.status}`);
+      })(),
     );
     setDeletingId(null);
-    if (result.ok && result.value.ok) router.reload({ only: ['projects'] });
+    if (result.ok) router.reload({ only: ['projects'] });
   };
 
   const logout = async () => {

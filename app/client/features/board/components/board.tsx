@@ -132,13 +132,16 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     if (!confirm('列を削除しますか？')) return;
     setDeletingColumnId(id);
     const result = await Result.try(
-      fetch(`/columns/${id}`, {
-        method: 'DELETE',
-        headers: { 'X-CSRF-Token': csrfToken },
-      }),
+      (async () => {
+        const res = await fetch(`/columns/${id}`, {
+          method: 'DELETE',
+          headers: { 'X-CSRF-Token': csrfToken },
+        });
+        if (!res.ok) throw new Error(`delete column failed: ${res.status}`);
+      })(),
     );
     setDeletingColumnId(null);
-    if (result.ok && result.value.ok) board.removeColumnLocal(id);
+    if (result.ok) board.removeColumnLocal(id);
   };
 
   return (
