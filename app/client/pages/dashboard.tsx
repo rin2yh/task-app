@@ -42,11 +42,11 @@ export default function Dashboard({ projects }: Props) {
     }
   };
 
-  const remove = async (project: Project) => {
-    if (!confirm(`プロジェクト「${project.name}」を削除しますか？`)) return;
-    setDeletingId(project.id);
+  const remove = async (id: string, name: string) => {
+    if (!confirm(`プロジェクト「${name}」を削除しますか？`)) return;
+    setDeletingId(id);
     try {
-      const res = await fetch(`/projects/${project.id}`, {
+      const res = await fetch(`/projects/${id}`, {
         method: 'DELETE',
         headers: { 'X-CSRF-Token': shared.csrfToken },
       });
@@ -114,7 +114,7 @@ export default function Dashboard({ projects }: Props) {
                 className="text-destructive hover:text-destructive"
                 aria-label={`プロジェクト ${p.name} を削除`}
                 disabled={deletingId === p.id}
-                onClick={() => remove(p)}
+                onClick={() => remove(p.id, p.name)}
               >
                 <Trash2 className="size-3.5" />
                 削除
