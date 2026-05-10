@@ -115,28 +115,30 @@ export default function Dashboard({ projects }: Props) {
                   <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
                 ) : null}
               </Link>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                aria-label={`プロジェクト ${p.name} の名前を変更`}
-                disabled={deletingId === p.id}
-                onClick={() => setRenameTarget(p)}
-              >
-                <Pencil className="size-3.5" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                aria-label={`プロジェクト ${p.name} を削除`}
-                loading={deletingId === p.id}
-                loadingText="削除中…"
-                onClick={() => remove(p.id, p.name)}
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
+              <div className="flex items-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`プロジェクト ${p.name} の名前を変更`}
+                  disabled={deletingId === p.id}
+                  onClick={() => setRenameTarget(p)}
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  aria-label={`プロジェクト ${p.name} を削除`}
+                  loading={deletingId === p.id}
+                  loadingText="削除中…"
+                  onClick={() => remove(p.id, p.name)}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
             </Card>
           </li>
         ))}
