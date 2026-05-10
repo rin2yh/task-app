@@ -85,10 +85,7 @@ export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Pr
         })}
         {orphanTasks.length > 0 ? (
           <section aria-labelledby="col-no-status">
-            <h2
-              id="col-no-status"
-              className="mb-2 text-sm font-semibold text-muted-foreground"
-            >
+            <h2 id="col-no-status" className="mb-2 text-sm font-semibold text-muted-foreground">
               ステータスなし <span className="text-xs">({orphanTasks.length})</span>
             </h2>
             <ul className="space-y-2">

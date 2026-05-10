@@ -10,9 +10,9 @@ interface Props {
 
 export function NoStatusColumn({ tasks, onSelectTask }: Props) {
   return (
-    <div
-      className="flex w-80 shrink-0 flex-col gap-2 rounded-xl border border-dashed bg-muted/40 p-3"
+    <section
       aria-label="ステータスなし"
+      className="flex w-80 shrink-0 flex-col gap-2 rounded-xl border border-dashed bg-muted/40 p-3"
     >
       <header className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-muted-foreground">ステータスなし</h2>
@@ -59,6 +59,6 @@ export function NoStatusColumn({ tasks, onSelectTask }: Props) {
           ))
         )}
       </div>
-    </div>
+    </section>
   );
 }
