@@ -23,17 +23,19 @@ import type { Label } from '@shared/label';
 import type { TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
 import { buildInitialState, useOptimisticBoard } from '../hooks/use-optimistic-board';
+import { AddColumn } from './add-column';
 import { Column } from './column';
 import { TaskDialog } from './task-dialog';
 
 interface Props {
+  projectId: string;
   columns: ColumnT[];
   tasks: TaskWithLabels[];
   labels: Label[];
   csrfToken: string;
 }
 
-export function Board({ columns, tasks, labels, csrfToken }: Props) {
+export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
   const board = useOptimisticBoard(buildInitialState(columns, tasks));
   const [openTask, setOpenTask] = useState<TaskWithLabels | null>(null);
   const [creatingInColumn, setCreatingInColumn] = useState<string | null>(null);
@@ -130,6 +132,7 @@ export function Board({ columns, tasks, labels, csrfToken }: Props) {
               }}
             />
           ))}
+          <AddColumn projectId={projectId} csrfToken={csrfToken} />
         </div>
       </DndContext>
 
