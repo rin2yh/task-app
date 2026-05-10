@@ -23,8 +23,13 @@ export default function Project({ project, columns, tasks, labels }: Props) {
   const [view, setView] = useState<ProjectView>('board');
   const [newColumnName, setNewColumnName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState(project.name);
+  const [renaming, setRenaming] = useState(false);
 
   const canAddColumn = !busy && newColumnName.trim().length > 0;
+  const trimmedName = nameDraft.trim();
+  const canSaveName = !renaming && trimmedName.length > 0 && trimmedName !== project.name;
 
   const addColumn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +52,37 @@ export default function Project({ project, columns, tasks, labels }: Props) {
     }
   };
 
+  const startRename = () => {
+    setNameDraft(project.name);
+    setEditingName(true);
+  };
+
+  const cancelRename = () => {
+    setNameDraft(project.name);
+    setEditingName(false);
+  };
+
+  const saveRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSaveName) return;
+    setRenaming(true);
+    try {
+      const res = await fetch(`/projects/${project.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': shared.csrfToken,
+        },
+        body: JSON.stringify({ name: trimmedName }),
+      });
+      if (!res.ok) throw new Error(`Failed to rename project: ${res.status}`);
+      setEditingName(false);
+      router.reload({ only: ['project'] });
+    } finally {
+      setRenaming(false);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-6 py-4">
@@ -54,7 +90,47 @@ export default function Project({ project, columns, tasks, labels }: Props) {
           <Link href="/" className="text-sm text-primary hover:underline">
             ← 戻る
           </Link>
-          <h1 className="text-lg font-semibold tracking-tight">{project.name}</h1>
+          {editingName ? (
+            <form onSubmit={saveRename} className="flex items-center gap-2">
+              <Input
+                type="text"
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') cancelRename();
+                }}
+                maxLength={100}
+                autoFocus
+                aria-label="プロジェクト名"
+                className="w-64"
+              />
+              <Button type="submit" size="sm" disabled={!canSaveName}>
+                保存
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={cancelRename}
+                disabled={renaming}
+              >
+                キャンセル
+              </Button>
+            </form>
+          ) : (
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold tracking-tight">{project.name}</h1>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={startRename}
+                aria-label="プロジェクト名を変更"
+              >
+                名前変更
+              </Button>
+            </div>
+          )}
         </div>
         <form onSubmit={addColumn} className="flex gap-2">
           <Input
