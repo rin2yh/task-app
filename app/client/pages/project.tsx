@@ -56,25 +56,23 @@ export default function Project({ project, columns, tasks, labels }: Props) {
           </a>
           <h1 className="text-lg font-semibold tracking-tight">{project.name}</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <ViewSwitcher value={view} onChange={setView} />
-          {view === 'board' ? (
-            <form onSubmit={addColumn} className="flex gap-2">
-              <Input
-                type="text"
-                placeholder="新しい列名"
-                value={newColumnName}
-                onChange={(e) => setNewColumnName(e.target.value)}
-                maxLength={50}
-                className="w-48"
-              />
-              <Button type="submit" variant="outline" size="sm" disabled={!canAddColumn}>
-                列追加
-              </Button>
-            </form>
-          ) : null}
-        </div>
+        <form onSubmit={addColumn} className="flex gap-2">
+          <Input
+            type="text"
+            placeholder="新しい列名"
+            value={newColumnName}
+            onChange={(e) => setNewColumnName(e.target.value)}
+            maxLength={50}
+            className="w-48"
+          />
+          <Button type="submit" variant="outline" size="sm" disabled={!canAddColumn}>
+            列追加
+          </Button>
+        </form>
       </header>
+      <div className="border-b bg-card px-6 py-2">
+        <ViewSwitcher value={view} onChange={setView} />
+      </div>
       {view === 'board' ? (
         <Board columns={columns} tasks={tasks} labels={labels} csrfToken={shared.csrfToken} />
       ) : (
