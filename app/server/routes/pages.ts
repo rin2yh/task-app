@@ -51,3 +51,23 @@ pageRoutes.get('/projects/:id', requireAuthentication, async (c) => {
     labels: labels ?? [],
   });
 });
+
+pageRoutes.get('/projects/:id/tasks', requireAuthentication, async (c) => {
+  const user = c.var.authUser;
+  const id = c.req.param('id');
+  const db = createDb(c.env.DB);
+  const project = await getProjectByIdForOwner(db, id, user.id);
+  if (!project) throw NotFound();
+  const [cols, tasksAll, labels] = await Promise.all([
+    listColumnsForProject(db, id, user.id),
+    listTasksForProject(db, id),
+    listLabelsForProject(db, id, user.id),
+  ]);
+  return c.render('task-list', {
+    ...buildSharedProps(c),
+    project,
+    columns: cols ?? [],
+    tasks: tasksAll,
+    labels: labels ?? [],
+  });
+});

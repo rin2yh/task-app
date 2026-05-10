@@ -31,6 +31,25 @@ export class ProjectPage {
     }
   }
 
+  async openListView() {
+    await this.page
+      .getByRole('navigation', { name: 'ビュー切替' })
+      .getByRole('link', { name: 'リスト' })
+      .click();
+    await expect(
+      this.page
+        .getByRole('navigation', { name: 'ビュー切替' })
+        .getByRole('link', { name: 'リスト' }),
+    ).toHaveAttribute('aria-current', 'page');
+  }
+
+  async expectTaskInListView(columnName: string, taskTitle: string) {
+    const section = this.page.locator('section').filter({
+      has: this.page.getByRole('heading', { name: new RegExp(`^${columnName}\\b`) }),
+    });
+    await expect(section.getByRole('button', { name: `タスク: ${taskTitle}` })).toBeVisible();
+  }
+
   private columnHeading(name: string): Locator {
     return this.page.getByRole('heading', { name, exact: true });
   }

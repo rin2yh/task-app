@@ -46,26 +46,43 @@ export default function Project({ project, columns, tasks, labels }: Props) {
 
   return (
     <div className="min-h-screen">
-      <header className="flex items-center justify-between border-b bg-card px-6 py-4">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-6 py-4">
         <div className="flex items-center gap-4">
           <a href="/" className="text-sm text-primary hover:underline">
             ← 戻る
           </a>
           <h1 className="text-lg font-semibold tracking-tight">{project.name}</h1>
         </div>
-        <form onSubmit={addColumn} className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="新しい列名"
-            value={newColumnName}
-            onChange={(e) => setNewColumnName(e.target.value)}
-            maxLength={50}
-            className="w-48"
-          />
-          <Button type="submit" variant="outline" size="sm" disabled={!canAddColumn}>
-            列追加
-          </Button>
-        </form>
+        <div className="flex flex-wrap items-center gap-3">
+          <nav aria-label="ビュー切替" className="flex gap-2 text-sm">
+            <a
+              href={`/projects/${project.id}`}
+              aria-current="page"
+              className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground"
+            >
+              ボード
+            </a>
+            <a
+              href={`/projects/${project.id}/tasks`}
+              className="rounded-md border border-input bg-background px-3 py-1.5 hover:bg-accent hover:text-accent-foreground"
+            >
+              リスト
+            </a>
+          </nav>
+          <form onSubmit={addColumn} className="flex gap-2">
+            <Input
+              type="text"
+              placeholder="新しい列名"
+              value={newColumnName}
+              onChange={(e) => setNewColumnName(e.target.value)}
+              maxLength={50}
+              className="w-48"
+            />
+            <Button type="submit" variant="outline" size="sm" disabled={!canAddColumn}>
+              列追加
+            </Button>
+          </form>
+        </div>
       </header>
       <Board columns={columns} tasks={tasks} labels={labels} csrfToken={shared.csrfToken} />
     </div>
