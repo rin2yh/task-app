@@ -20,6 +20,7 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import type { Column as ColumnT } from '@shared/column';
 import type { Label } from '@shared/label';
+import { Result } from '@shared/result';
 import type { TaskWithLabels } from '@shared/task';
 import { useEffect, useState } from 'react';
 import { buildInitialState, useOptimisticBoard } from '../hooks/use-optimistic-board';
@@ -79,18 +80,21 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     const snapshot = board.state;
     board.moveTaskLocal(activeId, toColumnId, toIndex);
 
-    try {
-      const res = await fetch(`/tasks/${activeId}/move`, {
-        method: 'POST',
-        headers: jsonHeaders,
-        body: JSON.stringify({ toColumnId, beforeTaskId, afterTaskId }),
-      });
-      if (!res.ok) throw new Error(`move failed: ${res.status}`);
-      const data = (await res.json()) as { tasksInColumn?: TaskWithLabels[] };
-      if (data.tasksInColumn) {
-        board.replaceTasksForColumnLocal(toColumnId, data.tasksInColumn);
-      }
-    } catch {
+    const result = await Result.try(
+      (async () => {
+        const res = await fetch(`/tasks/${activeId}/move`, {
+          method: 'POST',
+          headers: jsonHeaders,
+          body: JSON.stringify({ toColumnId, beforeTaskId, afterTaskId }),
+        });
+        if (!res.ok) throw new Error(`move failed: ${res.status}`);
+        const data = (await res.json()) as { tasksInColumn?: TaskWithLabels[] };
+        if (data.tasksInColumn) {
+          board.replaceTasksForColumnLocal(toColumnId, data.tasksInColumn);
+        }
+      })(),
+    );
+    if (!result.ok) {
       board.reset(snapshot);
       alert('移動に失敗しました');
     }
@@ -127,16 +131,17 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     if (deletingColumnId) return;
     if (!confirm('列を削除しますか？')) return;
     setDeletingColumnId(id);
-    try {
-      const res = await fetch(`/columns/${id}`, {
-        method: 'DELETE',
-        headers: { 'X-CSRF-Token': csrfToken },
-      });
-      if (!res.ok) throw new Error(`delete column failed: ${res.status}`);
-      board.removeColumnLocal(id);
-    } finally {
-      setDeletingColumnId(null);
-    }
+    const result = await Result.try(
+      (async () => {
+        const res = await fetch(`/columns/${id}`, {
+          method: 'DELETE',
+          headers: { 'X-CSRF-Token': csrfToken },
+        });
+        if (!res.ok) throw new Error(`delete column failed: ${res.status}`);
+      })(),
+    );
+    setDeletingColumnId(null);
+    if (result.ok) board.removeColumnLocal(id);
   };
 
   return (
@@ -240,11 +245,8 @@ function NewTaskDialog({
             e.preventDefault();
             if (busy || !trimmed) return;
             setBusy(true);
-            try {
-              await onSubmit({ title: trimmed });
-            } finally {
-              setBusy(false);
-            }
+            await Result.try(onSubmit({ title: trimmed }));
+            setBusy(false);
           }}
         >
           <div className="space-y-1.5">
