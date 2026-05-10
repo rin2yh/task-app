@@ -2,7 +2,8 @@ import { Card } from '@client/components/ui/card';
 import { TaskDialog } from '@client/features/board/components/task-dialog';
 import { LabelChip } from '@client/features/labels/components/label-chip';
 import { PriorityBadge } from '@client/features/priority/components/priority-select';
-import { router, usePage } from '@inertiajs/react';
+import { ViewSwitcher } from '@client/features/project/components/view-switcher';
+import { usePage } from '@inertiajs/react';
 import type { Column } from '@shared/column';
 import type { SharedProps } from '@shared/inertia';
 import type { Label } from '@shared/label';
@@ -17,8 +18,9 @@ interface Props {
   labels: Label[];
 }
 
-export default function TaskList({ project, columns, tasks, labels }: Props) {
+export default function TaskList({ project, columns, tasks: initialTasks, labels }: Props) {
   const { props: shared } = usePage<SharedProps>();
+  const [tasks, setTasks] = useState<TaskWithLabels[]>(initialTasks);
   const [openTask, setOpenTask] = useState<TaskWithLabels | null>(null);
 
   const tasksByColumn = new Map<string, TaskWithLabels[]>();
@@ -37,25 +39,10 @@ export default function TaskList({ project, columns, tasks, labels }: Props) {
           </a>
           <h1 className="text-lg font-semibold tracking-tight">{project.name}</h1>
         </div>
-        <nav aria-label="ビュー切替" className="flex gap-2 text-sm">
-          <a
-            href={`/projects/${project.id}`}
-            className="rounded-md border border-input bg-background px-3 py-1.5 hover:bg-accent hover:text-accent-foreground"
-          >
-            ボード
-          </a>
-          <a
-            href={`/projects/${project.id}/tasks`}
-            aria-current="page"
-            className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground"
-          >
-            リスト
-          </a>
-        </nav>
+        <ViewSwitcher projectId={project.id} current="list" />
       </header>
 
       <main className="mx-auto max-w-4xl space-y-6 p-6">
-        <h2 className="sr-only">タスク一覧</h2>
         {columns.length === 0 ? (
           <p className="text-sm text-muted-foreground">列がありません。</p>
         ) : null}
@@ -63,13 +50,9 @@ export default function TaskList({ project, columns, tasks, labels }: Props) {
           const ts = tasksByColumn.get(c.id) ?? [];
           return (
             <section key={c.id} aria-labelledby={`col-${c.id}`}>
-              <h3
-                id={`col-${c.id}`}
-                className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground"
-              >
-                <span>{c.name}</span>
-                <span className="text-xs">({ts.length})</span>
-              </h3>
+              <h2 id={`col-${c.id}`} className="mb-2 text-sm font-semibold text-muted-foreground">
+                {c.name} <span className="text-xs">({ts.length})</span>
+              </h2>
               {ts.length === 0 ? (
                 <p className="text-sm text-muted-foreground">タスクがありません。</p>
               ) : (
@@ -121,13 +104,13 @@ export default function TaskList({ project, columns, tasks, labels }: Props) {
           allLabels={labels}
           csrfToken={shared.csrfToken}
           onClose={() => setOpenTask(null)}
-          onUpdated={() => {
+          onUpdated={(t) => {
+            setTasks((prev) => prev.map((x) => (x.id === t.id ? t : x)));
             setOpenTask(null);
-            router.reload();
           }}
-          onDeleted={() => {
+          onDeleted={(t) => {
+            setTasks((prev) => prev.filter((x) => x.id !== t.id));
             setOpenTask(null);
-            router.reload();
           }}
         />
       ) : null}
