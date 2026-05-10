@@ -13,6 +13,7 @@ import {
   setOAuthStateCookie,
   setSessionCookies,
 } from '../../auth/session';
+import { verifyTurnstileToken } from '../../auth/turnstile';
 import { createDb } from '../../db/client';
 import { users } from '../../db/schema';
 import type { AppEnv } from '../../env';
@@ -50,13 +51,20 @@ async function upsertUserByGithubId(
   return created.id;
 }
 
-authRoutes.get('/github', async (c) => {
+authRoutes.post('/github', async (c) => {
   if (c.get('user')) return c.redirect('/dashboard');
-  const client = createOAuthClient(c);
+  const form = await c.req.formData();
+  const token = form.get('cf-turnstile-response')?.toString() ?? '';
+  const remoteIp = c.req.header('cf-connecting-ip');
+  const ok = await verifyTurnstileToken(c.env, token, remoteIp);
+  if (!ok) return c.redirect('/auth/login?error=turnstile', 302);
+
+  const login = form.get('login')?.toString();
+  const client = createOAuthClient(c, { login });
   const state = generateState();
   const url = client.createAuthorizationURL(state, ['read:user']);
   setOAuthStateCookie(c, STATE_COOKIE, state);
-  return c.redirect(url.toString());
+  return c.redirect(url.toString(), 302);
 });
 
 authRoutes.get('/callback', async (c) => {

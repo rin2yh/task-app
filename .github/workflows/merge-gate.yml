@@ -1,0 +1,106 @@
+name: Merge Gate
+
+# Aggregates the conclusion of path-scoped CI workflows into a single required
+# status check. Branch protection should require only this workflow's `gate`
+# job; downstream workflows (Web CI / Terraform CI / Actions CI) must NOT be
+# listed as required, because their `paths:` filters mean they don't always run.
+#
+# The gate observes which workflows GitHub actually triggered for this PR via
+# the actions/runs API — it does not reimplement the `paths:` filters. So a
+# workflow that didn't trigger is treated as "skipped (not required)".
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: merge-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        with:
+          script: |
+            const KNOWN = ['Web CI', 'Terraform CI', 'Actions CI'];
+            const POLL_INTERVAL_MS = 20_000;
+            const DEADLINE_MS = 25 * 60 * 1000;
+            const DISCOVERY_ATTEMPTS = 4;
+            const DISCOVERY_GAP_MS = 5_000;
+            const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+            const fetchStates = async () => {
+              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                head_sha: context.payload.pull_request.head.sha,
+                event: 'pull_request',
+                per_page: 100,
+              });
+              const latest = new Map();
+              for (const run of data.workflow_runs) {
+                if (!KNOWN.includes(run.name)) continue;
+                const prev = latest.get(run.name);
+                if (!prev || new Date(run.run_started_at) > new Date(prev.run_started_at)) {
+                  latest.set(run.name, run);
+                }
+              }
+              return latest;
+            };
+
+            // The gate's own job can start before its siblings register in the
+            // API, so retry discovery briefly before concluding "none triggered".
+            let states;
+            for (let i = 0; i < DISCOVERY_ATTEMPTS; i++) {
+              states = await fetchStates();
+              if (states.size > 0) break;
+              if (i < DISCOVERY_ATTEMPTS - 1) await sleep(DISCOVERY_GAP_MS);
+            }
+
+            const heading = core.summary.addHeading('Merge Gate', 3);
+            if (states.size === 0) {
+              await heading.addRaw('No CI workflows triggered for this PR — gate passes.').write();
+              core.info('No CI workflows triggered for this PR; gate passes.');
+              return;
+            }
+
+            const required = [...states.keys()];
+            await heading.addRaw(`Required workflows (observed): ${required.join(', ')}`).write();
+            core.info(`Required workflows: ${required.join(', ')}`);
+
+            const deadline = Date.now() + DEADLINE_MS;
+            while (true) {
+              const pending = [];
+              const failed = [];
+              for (const run of states.values()) {
+                if (run.status !== 'completed') {
+                  pending.push(`${run.name} [${run.status}]`);
+                } else if (run.conclusion !== 'success' && run.conclusion !== 'skipped') {
+                  failed.push(`${run.name} [${run.conclusion}]`);
+                }
+              }
+
+              if (pending.length === 0) {
+                if (failed.length > 0) {
+                  core.setFailed(`Required workflows failed: ${failed.join(', ')}`);
+                  return;
+                }
+                core.info('All required workflows succeeded.');
+                return;
+              }
+
+              core.info(`pending=[${pending.join(', ')}] failed=[${failed.join(', ')}]`);
+
+              if (Date.now() >= deadline) break;
+              await sleep(POLL_INTERVAL_MS);
+              states = await fetchStates();
+            }
+
+            core.setFailed('Timed out waiting for required workflows.');

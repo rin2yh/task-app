@@ -1,6 +1,6 @@
-import { Board } from '@client/components/board/board';
 import { Button } from '@client/components/ui/button';
 import { Input } from '@client/components/ui/input';
+import { Board } from '@client/features/board/components/board';
 import { router, usePage } from '@inertiajs/react';
 import type { Column } from '@shared/column';
 import type { SharedProps } from '@shared/inertia';

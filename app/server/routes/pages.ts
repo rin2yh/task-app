@@ -16,6 +16,7 @@ pageRoutes.get('/auth/login', async (c) => {
   return c.render('login', {
     ...buildSharedProps(c),
     error: c.req.query('error') ?? null,
+    turnstileSiteKey: c.env.TURNSTILE_SITE_KEY ?? '',
   });
 });
 
