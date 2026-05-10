@@ -21,36 +21,12 @@ interface Props {
 export default function Project({ project, columns, tasks, labels }: Props) {
   const { props: shared } = usePage<SharedProps>();
   const [view, setView] = useState<ProjectView>('board');
-  const [newColumnName, setNewColumnName] = useState('');
-  const [busy, setBusy] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(project.name);
   const [renaming, setRenaming] = useState(false);
 
-  const canAddColumn = !busy && newColumnName.trim().length > 0;
   const trimmedName = nameDraft.trim();
-  const canSaveName = !renaming && trimmedName.length > 0 && trimmedName !== project.name;
-
-  const addColumn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!canAddColumn) return;
-    setBusy(true);
-    try {
-      const res = await fetch(`/projects/${project.id}/columns`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': shared.csrfToken,
-        },
-        body: JSON.stringify({ name: newColumnName.trim() }),
-      });
-      if (!res.ok) throw new Error(`Failed to add column: ${res.status}`);
-      setNewColumnName('');
-      router.reload();
-    } finally {
-      setBusy(false);
-    }
-  };
+  const canSaveName = trimmedName.length > 0 && trimmedName !== project.name;
 
   const startRename = () => {
     setNameDraft(project.name);
@@ -63,7 +39,7 @@ export default function Project({ project, columns, tasks, labels }: Props) {
 
   const saveRename = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSaveName) return;
+    if (renaming || !canSaveName) return;
     setRenaming(true);
     try {
       const res = await fetch(`/projects/${project.id}`, {
@@ -102,8 +78,15 @@ export default function Project({ project, columns, tasks, labels }: Props) {
                 autoFocus
                 aria-label="プロジェクト名"
                 className="w-64"
+                disabled={renaming}
               />
-              <Button type="submit" size="sm" disabled={!canSaveName}>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!canSaveName}
+                loading={renaming}
+                loadingText="保存中…"
+              >
                 保存
               </Button>
               <Button
@@ -131,25 +114,18 @@ export default function Project({ project, columns, tasks, labels }: Props) {
             </div>
           )}
         </div>
-        <form onSubmit={addColumn} className="flex gap-2">
-          <Input
-            type="text"
-            placeholder="新しい列名"
-            value={newColumnName}
-            onChange={(e) => setNewColumnName(e.target.value)}
-            maxLength={50}
-            className="w-48"
-          />
-          <Button type="submit" variant="outline" size="sm" disabled={!canAddColumn}>
-            列追加
-          </Button>
-        </form>
       </header>
       <div className="border-b bg-card px-6 py-2">
         <ViewSwitcher value={view} onChange={setView} />
       </div>
       {view === 'board' ? (
-        <Board columns={columns} tasks={tasks} labels={labels} csrfToken={shared.csrfToken} />
+        <Board
+          projectId={project.id}
+          columns={columns}
+          tasks={tasks}
+          labels={labels}
+          csrfToken={shared.csrfToken}
+        />
       ) : (
         <TaskList columns={columns} tasks={tasks} labels={labels} csrfToken={shared.csrfToken} />
       )}

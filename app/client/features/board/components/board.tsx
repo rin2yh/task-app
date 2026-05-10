@@ -21,22 +21,25 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import type { Column as ColumnT } from '@shared/column';
 import type { Label } from '@shared/label';
 import type { TaskWithLabels } from '@shared/task';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { buildInitialState, useOptimisticBoard } from '../hooks/use-optimistic-board';
+import { AddColumn } from './add-column';
 import { Column } from './column';
 import { TaskDialog } from './task-dialog';
 
 interface Props {
+  projectId: string;
   columns: ColumnT[];
   tasks: TaskWithLabels[];
   labels: Label[];
   csrfToken: string;
 }
 
-export function Board({ columns, tasks, labels, csrfToken }: Props) {
+export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
   const board = useOptimisticBoard(buildInitialState(columns, tasks));
   const [openTask, setOpenTask] = useState<TaskWithLabels | null>(null);
   const [creatingInColumn, setCreatingInColumn] = useState<string | null>(null);
+  const [deletingColumnId, setDeletingColumnId] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -85,7 +88,7 @@ export function Board({ columns, tasks, labels, csrfToken }: Props) {
       if (!res.ok) throw new Error(`move failed: ${res.status}`);
       const data = (await res.json()) as { tasksInColumn?: TaskWithLabels[] };
       if (data.tasksInColumn) {
-        board.replaceTasksForColumn(toColumnId, data.tasksInColumn);
+        board.replaceTasksForColumnLocal(toColumnId, data.tasksInColumn);
       }
     } catch {
       board.reset(snapshot);
@@ -102,11 +105,38 @@ export function Board({ columns, tasks, labels, csrfToken }: Props) {
     if (!res.ok) throw new Error(`create failed: ${res.status}`);
     const data = (await res.json()) as { task: TaskWithLabels };
     const newTask: TaskWithLabels = { ...data.task, labels: [] };
-    board.replaceTasksForColumn(columnId, [
+    board.replaceTasksForColumnLocal(columnId, [
       ...(board.state.tasksByColumn[columnId] ?? []),
       newTask,
     ]);
     setCreatingInColumn(null);
+  };
+
+  const handleCreateColumn = async (name: string) => {
+    const res = await fetch(`/projects/${projectId}/columns`, {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) throw new Error(`create column failed: ${res.status}`);
+    const data = (await res.json()) as { column: ColumnT };
+    board.addColumnLocal(data.column);
+  };
+
+  const handleDeleteColumn = async (id: string) => {
+    if (deletingColumnId) return;
+    if (!confirm('列を削除しますか？')) return;
+    setDeletingColumnId(id);
+    try {
+      const res = await fetch(`/columns/${id}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-Token': csrfToken },
+      });
+      if (!res.ok) throw new Error(`delete column failed: ${res.status}`);
+      board.removeColumnLocal(id);
+    } finally {
+      setDeletingColumnId(null);
+    }
   };
 
   return (
@@ -118,18 +148,13 @@ export function Board({ columns, tasks, labels, csrfToken }: Props) {
               key={c.id}
               column={c}
               tasks={board.state.tasksByColumn[c.id] ?? []}
+              deleting={deletingColumnId === c.id}
               onCreateTask={(id) => setCreatingInColumn(id)}
               onSelectTask={setOpenTask}
-              onDeleteColumn={async (id) => {
-                if (!confirm('列を削除しますか？')) return;
-                await fetch(`/columns/${id}`, {
-                  method: 'DELETE',
-                  headers: { 'X-CSRF-Token': csrfToken },
-                });
-                window.location.reload();
-              }}
+              onDeleteColumn={handleDeleteColumn}
             />
           ))}
+          <AddColumn onSubmit={handleCreateColumn} />
         </div>
       </DndContext>
 
@@ -140,13 +165,13 @@ export function Board({ columns, tasks, labels, csrfToken }: Props) {
           csrfToken={csrfToken}
           onClose={() => setOpenTask(null)}
           onUpdated={(t) => {
-            board.replaceTasksForColumn(
+            board.replaceTasksForColumnLocal(
               t.columnId,
               (board.state.tasksByColumn[t.columnId] ?? []).map((x) => (x.id === t.id ? t : x)),
             );
           }}
           onDeleted={(t) => {
-            board.replaceTasksForColumn(
+            board.replaceTasksForColumnLocal(
               t.columnId,
               (board.state.tasksByColumn[t.columnId] ?? []).filter((x) => x.id !== t.id),
             );
@@ -177,10 +202,35 @@ function NewTaskDialog({
 }) {
   const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
-  const canSubmit = !busy && title.trim().length > 0;
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const trimmed = title.trim();
+
+  // iOS Safari leaves the layout viewport pinned to the screen edge when the
+  // soft keyboard opens; without this the bottom sheet hides behind it. The
+  // inset latches to its peak so dismissing the keyboard doesn't collapse the
+  // sheet back down mid-interaction.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardInset((prev) => Math.max(prev, Math.round(inset)));
+    };
+    update();
+    vv.addEventListener('resize', update);
+    return () => vv.removeEventListener('resize', update);
+  }, []);
+
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        style={{ '--kb-inset': `${keyboardInset}px` } as React.CSSProperties}
+        className="sm:max-w-md max-sm:left-0 max-sm:top-auto max-sm:bottom-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:max-w-full max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:p-4 max-sm:pb-[calc(env(safe-area-inset-bottom,0px)+1rem+var(--kb-inset,0px))] max-sm:data-[state=open]:zoom-in-100 max-sm:data-[state=closed]:zoom-out-100 max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:slide-out-to-bottom"
+      >
+        <div
+          aria-hidden="true"
+          className="mx-auto -mt-1 mb-1 h-1 w-10 rounded-full bg-muted-foreground/30 sm:hidden"
+        />
         <DialogHeader>
           <DialogTitle>新規タスク</DialogTitle>
         </DialogHeader>
@@ -188,10 +238,10 @@ function NewTaskDialog({
           className="flex flex-col gap-3"
           onSubmit={async (e) => {
             e.preventDefault();
-            if (!canSubmit) return;
+            if (busy || !trimmed) return;
             setBusy(true);
             try {
-              await onSubmit({ title: title.trim() });
+              await onSubmit({ title: trimmed });
             } finally {
               setBusy(false);
             }
@@ -206,13 +256,14 @@ function NewTaskDialog({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={200}
+              disabled={busy}
             />
           </div>
           <DialogFooter className="flex-row justify-end gap-2 sm:justify-end">
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
               キャンセル
             </Button>
-            <Button type="submit" disabled={!canSubmit}>
+            <Button type="submit" disabled={!trimmed} loading={busy} loadingText="作成中…">
               作成
             </Button>
           </DialogFooter>

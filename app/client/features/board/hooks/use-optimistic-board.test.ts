@@ -38,14 +38,40 @@ describe('useOptimisticBoard', () => {
     expect(result.current.state.tasksByColumn.c2?.map((x) => x.id)).toEqual(['a']);
   });
 
-  it('replaceTasksForColumn keeps labels', () => {
+  it('replaceTasksForColumnLocal keeps labels', () => {
     const init = buildInitialState(cols, [
       { ...t('a', 'c1', 1), labels: [{ id: 'L', projectId: 'p', name: 'bug', color: '#fff000' }] },
     ]);
     const { result } = renderHook(() => useOptimisticBoard(init));
     act(() => {
-      result.current.replaceTasksForColumn('c1', [{ ...t('a', 'c1', 1.5) }]);
+      result.current.replaceTasksForColumnLocal('c1', [{ ...t('a', 'c1', 1.5) }]);
     });
     expect(result.current.state.tasksByColumn.c1?.[0]?.labels).toHaveLength(1);
+  });
+
+  it('addColumnLocal inserts in position order with an empty task bucket', () => {
+    const init = buildInitialState(cols, []);
+    const { result } = renderHook(() => useOptimisticBoard(init));
+    act(() => {
+      result.current.addColumnLocal({
+        id: 'c-mid',
+        projectId: 'p',
+        name: 'Mid',
+        position: 1.5,
+        createdAt: 0,
+      });
+    });
+    expect(result.current.state.columns.map((c) => c.id)).toEqual(['c1', 'c-mid', 'c2']);
+    expect(result.current.state.tasksByColumn['c-mid']).toEqual([]);
+  });
+
+  it('removeColumnLocal drops the column and its task bucket', () => {
+    const init = buildInitialState(cols, [t('a', 'c1', 1), t('b', 'c2', 1)]);
+    const { result } = renderHook(() => useOptimisticBoard(init));
+    act(() => {
+      result.current.removeColumnLocal('c1');
+    });
+    expect(result.current.state.columns.map((c) => c.id)).toEqual(['c2']);
+    expect(result.current.state.tasksByColumn.c1).toBeUndefined();
   });
 });
