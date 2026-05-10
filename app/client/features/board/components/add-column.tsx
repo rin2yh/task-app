@@ -1,6 +1,6 @@
 import { Button } from '@client/components/ui/button';
 import { Input } from '@client/components/ui/input';
-import { Loader2, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -65,15 +65,8 @@ export function AddColumn({ onSubmit }: Props) {
         disabled={busy}
       />
       <div className="flex items-center gap-2">
-        <Button type="submit" size="sm" disabled={!canSubmit} aria-busy={busy}>
-          {busy ? (
-            <>
-              <Loader2 className="size-3.5 animate-spin" aria-hidden />
-              追加中…
-            </>
-          ) : (
-            '追加'
-          )}
+        <Button type="submit" size="sm" disabled={!canSubmit} loading={busy} loadingText="追加中…">
+          追加
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={reset} disabled={busy}>
           キャンセル

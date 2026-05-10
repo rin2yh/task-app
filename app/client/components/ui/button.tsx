@@ -1,6 +1,7 @@
 import { cn } from '@client/lib/utils';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { Loader2 } from 'lucide-react';
 import * as React from 'react';
 
 const buttonVariants = cva(
@@ -34,12 +35,37 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  loading?: boolean;
+  loadingText?: React.ReactNode;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, disabled, onClick, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      disabled,
+      loading = false,
+      loadingText,
+      onClick,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
     const Comp = asChild ? Slot : 'button';
-    const isDisabled = Boolean(disabled);
+    const isDisabled = Boolean(disabled) || loading;
+    const content =
+      loading && !asChild ? (
+        <>
+          <Loader2 className="animate-spin" aria-hidden />
+          {loadingText ?? children}
+        </>
+      ) : (
+        children
+      );
     return (
       <Comp
         className={cn(
@@ -48,6 +74,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         ref={ref}
         aria-disabled={isDisabled || undefined}
+        aria-busy={loading || undefined}
         onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
           if (isDisabled) {
             e.preventDefault();
@@ -56,7 +83,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           onClick?.(e);
         }}
         {...props}
-      />
+      >
+        {content}
+      </Comp>
     );
   },
 );

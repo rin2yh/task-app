@@ -3,7 +3,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { Column as ColumnT } from '@shared/column';
 import type { TaskWithLabels } from '@shared/task';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { TaskCard } from './task-card';
 
 interface Props {
@@ -37,21 +37,12 @@ export function Column({
           size="sm"
           className="text-destructive hover:text-destructive"
           aria-label={`列 ${column.name} を削除`}
-          aria-busy={deleting}
-          disabled={deleting}
+          loading={deleting}
+          loadingText="削除中…"
           onClick={() => onDeleteColumn(column.id)}
         >
-          {deleting ? (
-            <>
-              <Loader2 className="size-3.5 animate-spin" aria-hidden />
-              削除中…
-            </>
-          ) : (
-            <>
-              <Trash2 className="size-3.5" />
-              削除
-            </>
-          )}
+          <Trash2 className="size-3.5" />
+          削除
         </Button>
       </header>
       <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
