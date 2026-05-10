@@ -5,6 +5,7 @@
 - `app/` — Cloudflare Worker + Vite/React. **Run pnpm here.**
 - `terraform/` — D1 + Worker scaffold (state outside the repo).
 - Toolchain: @mise.toml (`mise trust && mise install`).
+- Setup: `pnpm install --frozen-lockfile` (never let the lockfile drift on install).
 
 ## Commands
 
