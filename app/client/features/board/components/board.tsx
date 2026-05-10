@@ -21,6 +21,7 @@ import { useState } from 'react';
 import { buildInitialState, useOptimisticBoard } from '../hooks/use-optimistic-board';
 import { AddColumn } from './add-column';
 import { Column } from './column';
+import { NoStatusColumn } from './no-status-column';
 import { TaskDialog } from './task-dialog';
 
 interface Props {
@@ -139,6 +140,11 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     if (result.ok) board.removeColumnLocal(id);
   };
 
+  const knownColumnIds = new Set(board.state.columns.map((c) => c.id));
+  const orphanTasks = Object.entries(board.state.tasksByColumn)
+    .filter(([id]) => !knownColumnIds.has(id))
+    .flatMap(([, ts]) => ts);
+
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
@@ -154,6 +160,9 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
               onDeleteColumn={handleDeleteColumn}
             />
           ))}
+          {orphanTasks.length > 0 ? (
+            <NoStatusColumn tasks={orphanTasks} onSelectTask={setOpenTask} />
+          ) : null}
           <AddColumn onSubmit={handleCreateColumn} />
         </div>
       </DndContext>
