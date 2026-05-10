@@ -149,6 +149,9 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <div className="flex items-start gap-4 overflow-x-auto p-4">
+          {orphanTasks.length > 0 ? (
+            <NoStatusColumn tasks={orphanTasks} onSelectTask={setOpenTask} />
+          ) : null}
           {board.state.columns.map((c) => (
             <Column
               key={c.id}
@@ -160,9 +163,6 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
               onDeleteColumn={handleDeleteColumn}
             />
           ))}
-          {orphanTasks.length > 0 ? (
-            <NoStatusColumn tasks={orphanTasks} onSelectTask={setOpenTask} />
-          ) : null}
           <AddColumn onSubmit={handleCreateColumn} />
         </div>
       </DndContext>
