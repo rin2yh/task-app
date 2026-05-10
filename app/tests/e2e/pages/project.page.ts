@@ -32,12 +32,9 @@ export class ProjectPage {
   }
 
   async openListView() {
-    const tablist = this.page.getByRole('tablist', { name: 'ビュー切替' });
-    await tablist.getByRole('tab', { name: 'リスト' }).click();
-    await expect(tablist.getByRole('tab', { name: 'リスト' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    const listToggle = this.page.getByRole('button', { name: 'リスト' });
+    await listToggle.click();
+    await expect(listToggle).toHaveAttribute('aria-pressed', 'true');
   }
 
   async expectTaskInListView(columnName: string, taskTitle: string) {
