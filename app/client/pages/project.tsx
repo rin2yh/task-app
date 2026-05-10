@@ -23,11 +23,16 @@ export default function Project({ project, columns, tasks, labels }: Props) {
   return (
     <div className="min-h-screen">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-6 py-4">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-sm text-primary hover:underline">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <Link href="/" className="shrink-0 text-sm text-primary hover:underline">
             ← 戻る
           </Link>
-          <h1 className="text-lg font-semibold tracking-tight">{project.name}</h1>
+          <h1
+            className="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight"
+            title={project.name}
+          >
+            {project.name}
+          </h1>
         </div>
       </header>
       <div className="border-b bg-card px-6 py-2">
