@@ -1,12 +1,14 @@
+import { BottomSheetContent } from '@client/components/ui/bottom-sheet';
 import { Button } from '@client/components/ui/button';
 import { Card } from '@client/components/ui/card';
+import { Dialog, DialogFooter, DialogHeader, DialogTitle } from '@client/components/ui/dialog';
 import { Input } from '@client/components/ui/input';
 import { useAuthentication } from '@client/hooks/use-authentication';
 import { Link, router, usePage } from '@inertiajs/react';
 import type { SharedProps } from '@shared/inertia';
 import type { Project } from '@shared/project';
 import { Result } from '@shared/result';
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -19,6 +21,7 @@ export default function Dashboard({ projects }: Props) {
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [renameTarget, setRenameTarget] = useState<Project | null>(null);
   const trimmed = name.trim();
 
   const create = async (e: React.FormEvent) => {
@@ -112,19 +115,30 @@ export default function Dashboard({ projects }: Props) {
                   <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
                 ) : null}
               </Link>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                aria-label={`プロジェクト ${p.name} を削除`}
-                loading={deletingId === p.id}
-                loadingText="削除中…"
-                onClick={() => remove(p.id, p.name)}
-              >
-                <Trash2 className="size-3.5" />
-                削除
-              </Button>
+              <div className="flex items-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`プロジェクト ${p.name} の名前を変更`}
+                  disabled={deletingId === p.id}
+                  onClick={() => setRenameTarget(p)}
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  aria-label={`プロジェクト ${p.name} を削除`}
+                  loading={deletingId === p.id}
+                  loadingText="削除中…"
+                  onClick={() => remove(p.id, p.name)}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
             </Card>
           </li>
         ))}
@@ -132,6 +146,80 @@ export default function Dashboard({ projects }: Props) {
           <li className="text-sm text-muted-foreground">まだプロジェクトがありません。</li>
         ) : null}
       </ul>
+
+      {renameTarget ? (
+        <RenameProjectDialog
+          project={renameTarget}
+          csrfToken={shared.csrfToken}
+          onClose={() => setRenameTarget(null)}
+        />
+      ) : null}
     </div>
+  );
+}
+
+interface RenameDialogProps {
+  project: Project;
+  csrfToken: string;
+  onClose: () => void;
+}
+
+function RenameProjectDialog({ project, csrfToken, onClose }: RenameDialogProps) {
+  const [draft, setDraft] = useState(project.name);
+  const [busy, setBusy] = useState(false);
+  const trimmed = draft.trim();
+  const canSave = trimmed.length > 0 && trimmed !== project.name;
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (busy || !canSave) return;
+    setBusy(true);
+    const result = await Result.try(
+      (async () => {
+        const res = await fetch(`/projects/${project.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+          },
+          body: JSON.stringify({ name: trimmed }),
+        });
+        if (!res.ok) throw new Error(`Failed to rename project: ${res.status}`);
+      })(),
+    );
+    setBusy(false);
+    if (result.ok) {
+      router.reload({ only: ['projects'] });
+      onClose();
+    }
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
+      <BottomSheetContent>
+        <DialogHeader>
+          <DialogTitle>プロジェクト名を変更</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={save} className="flex flex-col gap-3">
+          <Input
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            maxLength={100}
+            autoFocus
+            aria-label="プロジェクト名"
+            disabled={busy}
+          />
+          <DialogFooter className="flex-row justify-end gap-2 sm:justify-end">
+            <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+              キャンセル
+            </Button>
+            <Button type="submit" disabled={!canSave} loading={busy} loadingText="保存中…">
+              保存
+            </Button>
+          </DialogFooter>
+        </form>
+      </BottomSheetContent>
+    </Dialog>
   );
 }
