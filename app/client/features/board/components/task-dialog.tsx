@@ -10,12 +10,12 @@ import {
 import { Input } from '@client/components/ui/input';
 import { Label as UiLabel } from '@client/components/ui/label';
 import { Textarea } from '@client/components/ui/textarea';
+import { LabelChip } from '@client/features/labels/components/label-chip';
+import { PrioritySelect } from '@client/features/priority/components/priority-select';
 import type { Label } from '@shared/label';
 import type { Priority } from '@shared/priority';
 import type { TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
-import { LabelChip } from '../shared/label-chip';
-import { PrioritySelect } from '../shared/priority-select';
 
 interface Props {
   task: TaskWithLabels;
