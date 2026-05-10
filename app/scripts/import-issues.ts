@@ -328,11 +328,8 @@ async function main(): Promise<void> {
   const inputPath = path.resolve(args.input);
   const raw = await readFile(inputPath, 'utf8');
   const parsedJson = JSON.parse(raw) as { items?: GhItem[] };
-  // `gh project item-list --format json` does not include `state` on the
-  // content (its GraphQL fragment only fetches body/title/number/url/repository),
-  // so filtering Issues by OPEN/CLOSED here would always reject every Issue and
-  // leave only DraftIssues. Take every Issue and DraftIssue on the board;
-  // PullRequests and Redacted items are skipped.
+  // `gh project item-list --format json` omits `state` on content, so filtering
+  // Issues by OPEN/CLOSED here would drop every Issue.
   const items = (parsedJson.items ?? []).filter((item) => {
     const t = item.content?.type;
     return t === 'Issue' || t === 'DraftIssue';
