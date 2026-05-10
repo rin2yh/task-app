@@ -1,0 +1,97 @@
+name: Import Issues (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        default: develop
+        options:
+          - develop
+          - production
+      project_number:
+        description: GitHub Projects v2 number to import from
+        type: string
+        required: true
+      project_owner:
+        description: Project owner (org or user). Empty = repository owner.
+        type: string
+        required: false
+        default: ''
+      user_login:
+        description: Owner GitHub login (must already exist in target users table)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: app
+
+jobs:
+  import:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment:
+      name: ${{ inputs.environment }}
+    concurrency:
+      group: import-issues-${{ inputs.environment }}
+      cancel-in-progress: false
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ENV: ${{ inputs.environment }}
+      # production の D1 名だけ既存リソース互換のため非対称 ("task-app-prod")。
+      # _deploy.yml と同じ式で揃える。
+      D1_NAME: task-app-${{ inputs.environment == 'production' && 'prod' || inputs.environment }}
+      GH_TOKEN: ${{ secrets.PROJECTS_READ_TOKEN }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: ./.github/actions/setup
+
+      # importer 自身の重複チェック (--force なしで即終了) と同じ条件をワークフロー
+      # 入口にも置く。CI 上で誤って 2 回押されても重複 column / task が生成されない。
+      - name: Check existing import
+        id: check
+        run: |
+          set -euo pipefail
+          out=$(pnpm exec wrangler d1 execute "$D1_NAME" \
+            --remote --env "$CLOUDFLARE_ENV" \
+            --json \
+            --command "SELECT COUNT(*) AS c FROM projects WHERE name='task_project (imported)';")
+          count=$(printf '%s' "$out" | jq -r '.[0].results[0].c // 0')
+          echo "existing project rows: $count"
+          if [ "$count" -gt 0 ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::task_project (imported) already exists in ${CLOUDFLARE_ENV}. Skipping import."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch GH project items
+        if: steps.check.outputs.skip != 'true'
+        env:
+          PROJECT_OWNER: ${{ inputs.project_owner || github.repository_owner }}
+          PROJECT_NUMBER: ${{ inputs.project_number }}
+        run: |
+          set -euo pipefail
+          mkdir -p tmp
+          gh project item-list "$PROJECT_NUMBER" \
+            --owner "$PROJECT_OWNER" \
+            --format json \
+            --limit 1000 \
+            > tmp/project-items.json
+
+      - name: Run importer
+        if: steps.check.outputs.skip != 'true'
+        env:
+          USER_LOGIN: ${{ inputs.user_login }}
+        run: |
+          pnpm import:issues \
+            --user-login "$USER_LOGIN" \
+            --remote \
+            --env "$CLOUDFLARE_ENV" \
+            --binding "$D1_NAME"
