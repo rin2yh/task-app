@@ -181,13 +181,15 @@ function NewTaskDialog({
   const canSubmit = !busy && title.trim().length > 0;
 
   // iOS Safari leaves the layout viewport pinned to the screen edge when the
-  // soft keyboard opens; without this the bottom sheet hides behind it.
+  // soft keyboard opens; without this the bottom sheet hides behind it. The
+  // inset latches to its peak so dismissing the keyboard doesn't collapse the
+  // sheet back down mid-interaction.
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
     const update = () => {
       const inset = window.innerHeight - vv.height - vv.offsetTop;
-      setKeyboardInset(Math.max(0, Math.round(inset)));
+      setKeyboardInset((prev) => Math.max(prev, Math.round(Math.max(0, inset))));
     };
     update();
     vv.addEventListener('resize', update);
