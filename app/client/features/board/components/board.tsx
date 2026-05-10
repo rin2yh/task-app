@@ -80,18 +80,20 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     const snapshot = board.state;
     board.moveTaskLocal(activeId, toColumnId, toIndex);
 
-    const result = await Result.try(async () => {
-      const res = await fetch(`/tasks/${activeId}/move`, {
-        method: 'POST',
-        headers: jsonHeaders,
-        body: JSON.stringify({ toColumnId, beforeTaskId, afterTaskId }),
-      });
-      if (!res.ok) throw new Error(`move failed: ${res.status}`);
-      const data = (await res.json()) as { tasksInColumn?: TaskWithLabels[] };
-      if (data.tasksInColumn) {
-        board.replaceTasksForColumnLocal(toColumnId, data.tasksInColumn);
-      }
-    });
+    const result = await Result.try(
+      (async () => {
+        const res = await fetch(`/tasks/${activeId}/move`, {
+          method: 'POST',
+          headers: jsonHeaders,
+          body: JSON.stringify({ toColumnId, beforeTaskId, afterTaskId }),
+        });
+        if (!res.ok) throw new Error(`move failed: ${res.status}`);
+        const data = (await res.json()) as { tasksInColumn?: TaskWithLabels[] };
+        if (data.tasksInColumn) {
+          board.replaceTasksForColumnLocal(toColumnId, data.tasksInColumn);
+        }
+      })(),
+    );
     if (!result.ok) {
       board.reset(snapshot);
       alert('移動に失敗しました');
@@ -130,16 +132,13 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     if (!confirm('列を削除しますか？')) return;
     setDeletingColumnId(id);
     const result = await Result.try(
-      async () => {
-        const res = await fetch(`/columns/${id}`, {
-          method: 'DELETE',
-          headers: { 'X-CSRF-Token': csrfToken },
-        });
-        if (!res.ok) throw new Error(`delete column failed: ${res.status}`);
-      },
-      () => setDeletingColumnId(null),
+      fetch(`/columns/${id}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-Token': csrfToken },
+      }),
     );
-    if (result.ok) board.removeColumnLocal(id);
+    setDeletingColumnId(null);
+    if (result.ok && result.value.ok) board.removeColumnLocal(id);
   };
 
   return (
@@ -243,10 +242,8 @@ function NewTaskDialog({
             e.preventDefault();
             if (busy || !trimmed) return;
             setBusy(true);
-            await Result.try(
-              () => onSubmit({ title: trimmed }),
-              () => setBusy(false),
-            );
+            await Result.try(onSubmit({ title: trimmed }));
+            setBusy(false);
           }}
         >
           <div className="space-y-1.5">

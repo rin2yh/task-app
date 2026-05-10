@@ -24,10 +24,8 @@ export function AddColumn({ onSubmit }: Props) {
     e.preventDefault();
     if (busy || !trimmed) return;
     setBusy(true);
-    const result = await Result.try(
-      () => onSubmit(trimmed),
-      () => setBusy(false),
-    );
+    const result = await Result.try(onSubmit(trimmed));
+    setBusy(false);
     if (result.ok) reset();
   };
 

@@ -22,16 +22,18 @@ export async function verifyTurnstileToken(
   body.set('response', token);
   if (remoteIp) body.set('remoteip', remoteIp);
 
-  const result = await Result.try(async () => {
-    const res = await fetch(SITEVERIFY_URL, {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body,
-      signal: AbortSignal.timeout(5_000),
-    });
-    if (!res.ok) return false;
-    const json = (await res.json()) as SiteverifyResponse;
-    return json.success === true;
-  });
+  const result = await Result.try(
+    (async () => {
+      const res = await fetch(SITEVERIFY_URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body,
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (!res.ok) return false;
+      const json = (await res.json()) as SiteverifyResponse;
+      return json.success === true;
+    })(),
+  );
   return result.ok ? result.value : false;
 }

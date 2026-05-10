@@ -54,14 +54,14 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
     }
     setError(null);
     setBusyOp('save');
+    const payload = {
+      title: title.trim(),
+      description: description.length === 0 ? null : description,
+      priority,
+      dueDate: dueDate ? Date.parse(`${dueDate}T00:00:00Z`) : null,
+    };
     const result = await Result.try(
-      async () => {
-        const payload = {
-          title: title.trim(),
-          description: description.length === 0 ? null : description,
-          priority,
-          dueDate: dueDate ? Date.parse(`${dueDate}T00:00:00Z`) : null,
-        };
+      (async () => {
         const patchRes = await fetch(`/tasks/${task.id}`, {
           method: 'PATCH',
           headers: jsonHeaders,
@@ -79,9 +79,9 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
         const labelsData = (await labelsRes.json()) as { labels: Label[] };
 
         return { ...patchData.task, labels: labelsData.labels };
-      },
-      () => setBusyOp(null),
+      })(),
     );
+    setBusyOp(null);
     if (result.ok) {
       onUpdated(result.value);
       onClose();
@@ -95,13 +95,12 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
     if (!confirm('タスクを削除しますか？')) return;
     setBusyOp('remove');
     const result = await Result.try(
-      () =>
-        fetch(`/tasks/${task.id}`, {
-          method: 'DELETE',
-          headers: { 'X-CSRF-Token': csrfToken },
-        }),
-      () => setBusyOp(null),
+      fetch(`/tasks/${task.id}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-Token': csrfToken },
+      }),
     );
+    setBusyOp(null);
     if (result.ok) onDeleted(task);
   };
 

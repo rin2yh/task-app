@@ -2,20 +2,15 @@ export type Result<T, E = unknown> = { ok: true; value: T } | { ok: false; error
 
 export const Result = {
   /**
-   * try/catch/finally を Result 型に包む薄いラッパー。
-   * `onFinally` は例外時/正常終了時の双方で必ず呼ばれ、戻りが Promise の場合は await する。
-   * `onFinally` 自身が throw した場合は素の `try/finally` 同様にその例外が伝播する。
+   * 受け取った Promise / 値を await し、成功なら `{ ok: true }`、reject なら `{ ok: false }` で返す。
+   * 関数を呼び出した時点で発生した同期 throw はラップ前なので捕捉できない。
+   * 後処理が必要な場合は呼び出し側で `await Result.try(...)` の後に書く。
    */
-  async try<T>(
-    fn: () => Promise<T> | T,
-    onFinally?: () => void | Promise<void>,
-  ): Promise<Result<T>> {
+  async try<T>(value: Promise<T> | T): Promise<Result<T>> {
     try {
-      return { ok: true, value: await fn() };
+      return { ok: true, value: await value };
     } catch (error) {
       return { ok: false, error };
-    } finally {
-      if (onFinally) await onFinally();
     }
   },
 };

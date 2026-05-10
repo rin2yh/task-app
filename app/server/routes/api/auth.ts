@@ -78,7 +78,7 @@ authRoutes.get('/callback', async (c) => {
   clearOAuthStateCookie(c, STATE_COOKIE);
 
   const client = createOAuthClient(c);
-  const tokenResult = await Result.try(() => client.validateAuthorizationCode(code));
+  const tokenResult = await Result.try(client.validateAuthorizationCode(code));
   if (!tokenResult.ok) {
     if (tokenResult.error instanceof OAuth2RequestError) {
       return c.redirect('/auth/login?error=oauth', 302);
