@@ -27,7 +27,9 @@ export default function Project({ project, columns, tasks, labels }: Props) {
           <Link href="/" className="shrink-0 text-sm text-primary hover:underline">
             ← 戻る
           </Link>
-          <h1 className="truncate text-lg font-semibold tracking-tight">{project.name}</h1>
+          <h1 className="truncate text-lg font-semibold tracking-tight" title={project.name}>
+            {project.name}
+          </h1>
         </div>
       </header>
       <div className="border-b bg-card px-6 py-2">

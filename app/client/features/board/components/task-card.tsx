@@ -36,7 +36,10 @@ export function TaskCard({ task, onClick }: Props) {
     >
       <CardContent className="space-y-2 p-3">
         <div className="flex items-start justify-between gap-2">
-          <strong className="block min-w-0 flex-1 truncate text-sm font-semibold leading-snug">
+          <strong
+            className="block min-w-0 flex-1 truncate text-sm font-semibold leading-snug"
+            title={task.title}
+          >
             {task.title}
           </strong>
           <PriorityBadge priority={task.priority} />
