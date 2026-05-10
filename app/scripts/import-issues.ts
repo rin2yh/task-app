@@ -262,10 +262,19 @@ function wranglerD1Args(args: ParsedArgs): string[] {
 }
 
 function queryDb(sql: string, args: ParsedArgs): unknown[] {
-  const out = execFileSync('wrangler', [...wranglerD1Args(args), '--json', '--command', sql], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  let out: string;
+  try {
+    out = execFileSync('wrangler', [...wranglerD1Args(args), '--json', '--command', sql], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (e) {
+    const err = e as { status?: number; stdout?: string; stderr?: string };
+    const detail = (err.stderr || err.stdout || '').trim().slice(0, 500) || 'no output';
+    const flat = detail.replace(/\r?\n/g, ' ');
+    console.error(`::error::wrangler d1 execute (query) exited ${err.status ?? '?'}: ${flat}`);
+    throw e;
+  }
   const parsed = JSON.parse(out.trim()) as unknown;
   if (Array.isArray(parsed)) {
     const first = parsed[0] as { results?: unknown[] } | undefined;
@@ -274,28 +283,33 @@ function queryDb(sql: string, args: ParsedArgs): unknown[] {
   return [];
 }
 
+// GitHub Actions parses lines starting with `::error::` from stdout/stderr
+// into job annotations, which (unlike the raw step log) we can read back via
+// the check-runs API even when the log host isn't reachable.
+function failWithAnnotation(message: string): never {
+  console.error(`::error::${message.replace(/\r?\n/g, ' ')}`);
+  process.exit(1);
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   if (!args.userLogin) {
-    console.error(
+    failWithAnnotation(
       'Usage: import-issues --user-login <github_login> [--input PATH] [--output PATH] [--status-field NAME] [--priority-field NAME] [--due-field NAME] [--remote] [--env NAME] [--binding NAME] [--dry-run] [--force]',
     );
-    process.exit(1);
   }
 
   const userRows = queryDb(`SELECT id FROM users WHERE login=${sqlString(args.userLogin)};`, args);
   if (userRows.length === 0) {
-    console.error(
-      `User not found: ${args.userLogin}. Log in to the local app once before importing.`,
+    failWithAnnotation(
+      `User '${args.userLogin}' not found in target D1 (binding=${args.binding}, env=${args.env || 'local'}). Bootstrap the user row (e.g. via the workflow's "Bootstrap user" step) or log in to the app once before importing.`,
     );
-    process.exit(1);
   }
   const ownerRow = userRows[0] as { id?: number };
   if (typeof ownerRow.id !== 'number') {
-    console.error(
+    failWithAnnotation(
       `Unexpected wrangler response while resolving user id: ${JSON.stringify(ownerRow)}`,
     );
-    process.exit(1);
   }
 
   const existing = queryDb(
@@ -303,10 +317,9 @@ async function main(): Promise<void> {
     args,
   );
   if (existing.length > 0 && !args.force) {
-    console.error(
-      `Project '${DEFAULTS.projectName}' already exists. Re-run with --force to add another copy alongside it.`,
+    failWithAnnotation(
+      `Project '${DEFAULTS.projectName}' already exists in target D1. Re-run with --force to add another copy alongside it.`,
     );
-    process.exit(1);
   }
 
   const inputPath = path.resolve(args.input);
@@ -325,9 +338,16 @@ async function main(): Promise<void> {
   await writeFile(outputPath, result.sql, 'utf8');
 
   if (!args.dryRun) {
-    execFileSync('wrangler', [...wranglerD1Args(args), `--file=${outputPath}`], {
-      stdio: 'inherit',
-    });
+    try {
+      execFileSync('wrangler', [...wranglerD1Args(args), `--file=${outputPath}`], {
+        stdio: 'inherit',
+      });
+    } catch (e) {
+      const status = (e as { status?: number }).status;
+      failWithAnnotation(
+        `wrangler d1 execute --file=${outputPath} exited ${status ?? '?'} (see raw step log for SQL error detail)`,
+      );
+    }
   }
 
   console.log(

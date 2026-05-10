@@ -83,6 +83,28 @@ jobs:
             --limit 1000 \
             > tmp/project-items.json
 
+      # importer は `SELECT id FROM users WHERE login=...` で owner_id を引く。
+      # 新しい環境 (develop / production) では rin2yh がまだ OAuth ログインしておらず
+      # users 行が存在しないので、importer 単体だと "User not found" で exit 1 する。
+      # ここで viewer の databaseId / login を gh から取り、INSERT OR IGNORE で先に
+      # ブートストラップしておく。OAuth ログイン側は github_id でルックアップするので
+      # 後で実ログインしても重複行は作られない。
+      - name: Bootstrap user row in D1
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          user_json=$(gh api graphql -f query='query { viewer { databaseId login } }')
+          gh_id=$(printf '%s' "$user_json" | jq -r '.data.viewer.databaseId')
+          gh_login=$(printf '%s' "$user_json" | jq -r '.data.viewer.login')
+          if [ -z "$gh_id" ] || [ "$gh_id" = "null" ] || [ -z "$gh_login" ] || [ "$gh_login" = "null" ]; then
+            echo "::error::Could not resolve viewer.databaseId/login from PROJECTS_READ_TOKEN"
+            exit 1
+          fi
+          now=$(($(date +%s) * 1000))
+          pnpm exec wrangler d1 execute "$D1_NAME" \
+            --remote --env "$CLOUDFLARE_ENV" \
+            --command "INSERT OR IGNORE INTO users (github_id, login, created_at) VALUES ($gh_id, '$gh_login', $now);"
+
       - name: Run importer
         if: steps.check.outputs.skip != 'true'
         run: |
