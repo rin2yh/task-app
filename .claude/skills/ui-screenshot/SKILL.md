@@ -89,30 +89,44 @@ await page.screenshot({ path: `${OUT}/mobile-keyboard.png` });
 
 ## 4. PR に貼る
 
-PR ブランチ直下に screenshot commit を 1 つ載せて raw URL で参照する。GitHub には PR コメントに画像を直接アップロードする公開 API がないので、PR 本体に push するのが一番シンプル。
+スクショは **repo に push しない**。`gh release upload` で `screenshots` という単一の release にアセットとして上げ、その公開 URL を PR コメントから参照する。リリース 1 個ぶんの掲載枠 (Releases タブに一行) だけで済む。
+
+### 4.1 専用 release を確保 (初回のみ)
 
 ```bash
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-mkdir -p ".claude/screenshots"
-cp /tmp/shots/*.png .claude/screenshots/
-git add .claude/screenshots/
-git commit -m "chore(screenshots): UI snapshot for $BRANCH"
-git push origin "$BRANCH"
-SHA=$(git rev-parse HEAD)
+gh release view screenshots --repo rin2yh/task-app >/dev/null 2>&1 \
+  || gh release create screenshots \
+       --title "UI screenshots" \
+       --notes "Auto-uploaded by the ui-screenshot skill. Not a real release." \
+       --repo rin2yh/task-app
 ```
 
-そのあと `mcp__github__add_issue_comment` で本文に画像を埋める。URL はコミット SHA 固定にして、後で squash されてもリンクが死なないようにする (commit が PR に紐付いている限り GC されない)。
+### 4.2 アセットをアップロード
+
+衝突しないようファイル名に `pr<N>-<short-sha>-<label>.png` を付ける。`--clobber` で同名を上書き。
+
+```bash
+PR=88
+SHA=$(git rev-parse --short HEAD)
+cd /tmp/shots
+for f in *.png; do mv "$f" "pr$PR-$SHA-$f"; done
+gh release upload screenshots pr$PR-$SHA-*.png --clobber --repo rin2yh/task-app
+```
+
+### 4.3 PR にコメント
+
+`mcp__github__add_issue_comment` で release asset URL を埋め込む。public repo なら認証なしで `<img>` がレンダリングされる。
 
 ```
 ## UI screenshots — `<short-sha>`
 
 | | mobile (390×844) | desktop (1280×800) |
 | --- | --- | --- |
-| no keyboard | ![](https://raw.githubusercontent.com/rin2yh/task-app/<full-sha>/.claude/screenshots/mobile.png) | ![](https://raw.githubusercontent.com/rin2yh/task-app/<full-sha>/.claude/screenshots/desktop.png) |
-| with keyboard | ![](https://raw.githubusercontent.com/rin2yh/task-app/<full-sha>/.claude/screenshots/mobile-keyboard.png) | — |
+| no keyboard | ![](https://github.com/rin2yh/task-app/releases/download/screenshots/pr<N>-<sha>-mobile.png) | ![](https://github.com/rin2yh/task-app/releases/download/screenshots/pr<N>-<sha>-desktop.png) |
+| with keyboard | ![](https://github.com/rin2yh/task-app/releases/download/screenshots/pr<N>-<sha>-mobile-keyboard.png) | — |
 ```
 
-squash merge する場合: 検証が終わったら手動で `git rm -r .claude/screenshots && git commit` してから merge すれば main には残らない。残しても問題ないなら放置で OK。
+PR diff にも main の履歴にもスクショは入らない。要らなくなった古いアセットは `gh release delete-asset screenshots <name>` で個別に消せる。
 
 ## 5. 後片付け
 
@@ -125,6 +139,7 @@ rm -rf /tmp/shots /tmp/shot.mjs /tmp/shot-wt /tmp/vite.log
 ## やらないこと
 
 - `pnpm test:e2e` / `@playwright/test` を流用しない (上記 §1 のビルド不一致)
-- 取り終わった `/tmp/shots` を repo に紛れ込ませて忘れない (`.claude/screenshots/` 経由で commit するときだけ含める)
+- スクショを repo に commit / push しない (Releases にだけ上げる)
+- private repo に対して上のフローを使わない (release asset の URL は private では認証必須でレンダリングされない)
 - `data-testid` ベースのロケータを書かない (`.claude/rules/e2e.md` §3)
 - `page.waitForTimeout` をロード待ちに使わない (アニメ完了の保険にだけ使う; `.claude/rules/e2e.md` §6)
