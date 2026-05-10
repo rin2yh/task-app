@@ -38,10 +38,10 @@ export class ProjectPage {
   }
 
   async expectTaskInListView(columnName: string, taskTitle: string) {
-    const region = this.page.getByRole('region', {
-      name: new RegExp(`^${columnName}\\b`),
+    const row = this.page.getByRole('row').filter({
+      has: this.page.getByRole('button', { name: taskTitle, exact: true }),
     });
-    await expect(region.getByRole('button', { name: `タスク: ${taskTitle}` })).toBeVisible();
+    await expect(row).toContainText(columnName);
   }
 
   private columnHeading(name: string): Locator {

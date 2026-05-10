@@ -4,6 +4,7 @@ import { PrioritySchema } from '../../../shared/priority';
 import { csrfGuard, requireAuthentication } from '../../auth/middleware';
 import { createDb } from '../../db/client';
 import {
+  bulkUpdateTasks,
   createTask,
   deleteTask,
   moveTask,
@@ -38,6 +39,24 @@ const LabelsInput = z.object({
   labelIds: z.array(z.string()).max(50),
 });
 
+const BulkUpdateInput = z
+  .object({
+    ids: z.array(z.string().min(1)).min(1).max(200),
+    patch: z
+      .object({
+        priority: PrioritySchema.optional(),
+        dueDate: z.number().int().nullable().optional(),
+      })
+      .optional(),
+    labelIds: z.array(z.string()).max(50).optional(),
+  })
+  .refine(
+    (d) =>
+      (d.patch && (d.patch.priority !== undefined || d.patch.dueDate !== undefined)) ||
+      d.labelIds !== undefined,
+    { message: 'patch or labelIds required' },
+  );
+
 export const tasksByColumnRoutes = new Hono<AppEnv>();
 tasksByColumnRoutes.use('*', requireAuthentication);
 
@@ -53,6 +72,15 @@ tasksByColumnRoutes.post('/:columnId/tasks', csrfGuard, async (c) => {
 
 export const taskRoutes = new Hono<AppEnv>();
 taskRoutes.use('*', requireAuthentication);
+
+taskRoutes.patch('/bulk', csrfGuard, async (c) => {
+  const user = c.var.authUser;
+  const input = await parseJson(c, BulkUpdateInput);
+  const db = createDb(c.env.DB);
+  const result = await bulkUpdateTasks(db, user.id, input);
+  if (!result) throw NotFound();
+  return c.json({ tasks: result });
+});
 
 taskRoutes.patch('/:id', csrfGuard, async (c) => {
   const user = c.var.authUser;
