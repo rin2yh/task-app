@@ -31,6 +31,19 @@ export class ProjectPage {
     }
   }
 
+  async openListView() {
+    const listToggle = this.page.getByRole('button', { name: 'リスト' });
+    await listToggle.click();
+    await expect(listToggle).toHaveAttribute('aria-pressed', 'true');
+  }
+
+  async expectTaskInListView(columnName: string, taskTitle: string) {
+    const region = this.page.getByRole('region', {
+      name: new RegExp(`^${columnName}\\b`),
+    });
+    await expect(region.getByRole('button', { name: `タスク: ${taskTitle}` })).toBeVisible();
+  }
+
   private columnHeading(name: string): Locator {
     return this.page.getByRole('heading', { name, exact: true });
   }
