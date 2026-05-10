@@ -52,6 +52,18 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - uses: ./.github/actions/setup
 
+      # PROJECTS_READ_TOKEN が未設定だと `gh project item-list` が exit 4 (auth 失敗) で
+      # 落ちるが、ログだけだと「token がない」のか「scope が足りない」のか分からない。
+      # 入口で secret 自体の有無だけ先に判定し、未設定ならどこに何を登録するかを明示する。
+      - name: Verify PROJECTS_READ_TOKEN is set
+        env:
+          HAS_TOKEN: ${{ secrets.PROJECTS_READ_TOKEN != '' }}
+        run: |
+          if [ "$HAS_TOKEN" != "true" ]; then
+            echo "::error::secrets.PROJECTS_READ_TOKEN is not configured. Create a PAT with 'read:project' scope (classic) or 'Projects: Read' permission (fine-grained), then add it at Settings → Secrets and variables → Actions → New repository secret."
+            exit 1
+          fi
+
       # importer 自身の重複チェック (--force なしで即終了) と同じ条件をワークフロー
       # 入口にも置く。CI 上で誤って 2 回押されても重複 column / task が生成されない。
       - name: Check existing import
