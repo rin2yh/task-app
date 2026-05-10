@@ -261,6 +261,13 @@ function wranglerD1Args(args: ParsedArgs): string[] {
   return head;
 }
 
+// `::error::` lines become job annotations, which we can read via the
+// check-runs API even when the raw log archive host is unreachable.
+function failWithAnnotation(message: string): never {
+  console.error(`::error::${message.replace(/\r?\n/g, ' ')}`);
+  process.exit(1);
+}
+
 function queryDb(sql: string, args: ParsedArgs): unknown[] {
   let out: string;
   try {
@@ -271,9 +278,7 @@ function queryDb(sql: string, args: ParsedArgs): unknown[] {
   } catch (e) {
     const err = e as { status?: number; stdout?: string; stderr?: string };
     const detail = (err.stderr || err.stdout || '').trim().slice(0, 500) || 'no output';
-    const flat = detail.replace(/\r?\n/g, ' ');
-    console.error(`::error::wrangler d1 execute (query) exited ${err.status ?? '?'}: ${flat}`);
-    throw e;
+    failWithAnnotation(`wrangler d1 execute (query) exited ${err.status ?? '?'}: ${detail}`);
   }
   const parsed = JSON.parse(out.trim()) as unknown;
   if (Array.isArray(parsed)) {
@@ -281,14 +286,6 @@ function queryDb(sql: string, args: ParsedArgs): unknown[] {
     if (first && Array.isArray(first.results)) return first.results;
   }
   return [];
-}
-
-// GitHub Actions parses lines starting with `::error::` from stdout/stderr
-// into job annotations, which (unlike the raw step log) we can read back via
-// the check-runs API even when the log host isn't reachable.
-function failWithAnnotation(message: string): never {
-  console.error(`::error::${message.replace(/\r?\n/g, ' ')}`);
-  process.exit(1);
 }
 
 async function main(): Promise<void> {
