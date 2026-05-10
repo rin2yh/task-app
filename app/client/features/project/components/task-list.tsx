@@ -9,16 +9,11 @@ import {
   DialogTitle,
 } from '@client/components/ui/dialog';
 import { Input } from '@client/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@client/components/ui/select';
 import { TaskDialog } from '@client/features/board/components/task-dialog';
 import { LabelChip } from '@client/features/labels/components/label-chip';
+import { LabelPicker } from '@client/features/labels/components/label-picker';
 import { PrioritySelect } from '@client/features/priority/components/priority-select';
+import { dueToInput, inputToDue } from '@client/lib/date';
 import { cn } from '@client/lib/utils';
 import type { Column } from '@shared/column';
 import type { Label } from '@shared/label';
@@ -32,14 +27,6 @@ interface Props {
   tasks: TaskWithLabels[];
   labels: Label[];
   csrfToken: string;
-}
-
-function dueToInput(due: number | null): string {
-  return due ? new Date(due).toISOString().slice(0, 10) : '';
-}
-
-function inputToDue(input: string): number | null {
-  return input ? Date.parse(`${input}T00:00:00Z`) : null;
 }
 
 export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Props) {
@@ -97,7 +84,7 @@ export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Pr
           headers: jsonHeaders,
           body: JSON.stringify({ ids, ...body }),
         });
-        if (!res.ok) throw new Error(`bulk update failed: ${res.status}`);
+        if (!res.ok) throw new Error('一括更新に失敗しました');
         return (await res.json()) as { tasks: TaskWithLabels[] };
       })(),
     );
@@ -288,25 +275,18 @@ function BulkToolbar({
   return (
     <Card className="sticky top-2 z-10 flex flex-wrap items-center gap-3 p-3">
       <span className="text-sm font-medium">{count} 件を一括更新</span>
-      <div className="flex items-center gap-2">
+      <div className="flex w-32 items-center gap-2">
         <span className="text-xs text-muted-foreground">優先度</span>
-        <Select
+        <PrioritySelect
           key={priorityKey}
+          ariaLabel="優先度を一括設定"
+          placeholder="一括設定..."
           disabled={disabled}
-          onValueChange={(v) => {
+          onChange={(p) => {
             setPriorityKey((k) => k + 1);
-            onPriority(v as Priority);
+            onPriority(p);
           }}
-        >
-          <SelectTrigger className="w-32" aria-label="優先度を一括設定">
-            <SelectValue placeholder="一括設定..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-          </SelectContent>
-        </Select>
+        />
       </div>
       <div className="flex items-center gap-2">
         <span className="text-xs text-muted-foreground">期限</span>
@@ -384,27 +364,12 @@ function BulkLabelsDialog({
           {allLabels.length === 0 ? (
             <p className="text-sm text-muted-foreground">利用可能なラベルがありません。</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {allLabels.map((l) => {
-                const checked = picked.has(l.id);
-                const id = `bulk-label-${l.id}`;
-                return (
-                  <label key={l.id} htmlFor={id} className="inline-flex items-center gap-1.5">
-                    <Checkbox
-                      id={id}
-                      checked={checked}
-                      onCheckedChange={(v) => {
-                        const next = new Set(picked);
-                        if (v === true) next.add(l.id);
-                        else next.delete(l.id);
-                        setPicked(next);
-                      }}
-                    />
-                    <LabelChip label={l} />
-                  </label>
-                );
-              })}
-            </div>
+            <LabelPicker
+              labels={allLabels}
+              selected={picked}
+              onChange={setPicked}
+              idPrefix="bulk-label"
+            />
           )}
         </fieldset>
         <DialogFooter className="mt-2">
