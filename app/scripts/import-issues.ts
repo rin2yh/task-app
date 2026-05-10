@@ -269,6 +269,12 @@ function failWithAnnotation(message: string): never {
   process.exit(1);
 }
 
+interface ExecError {
+  status?: number;
+  stdout?: string;
+  stderr?: string;
+}
+
 function queryDb(sql: string, args: ParsedArgs): unknown[] {
   let out: string;
   try {
@@ -277,7 +283,7 @@ function queryDb(sql: string, args: ParsedArgs): unknown[] {
       stdio: ['ignore', 'pipe', 'pipe'],
     });
   } catch (e) {
-    const err = e as { status?: number; stdout?: string; stderr?: string };
+    const err = e as ExecError;
     const detail = (err.stderr || err.stdout || '').trim().slice(0, 500) || 'no output';
     failWithAnnotation(`wrangler d1 execute (query) exited ${err.status ?? '?'}: ${detail}`);
   }
@@ -341,9 +347,9 @@ async function main(): Promise<void> {
         stdio: 'inherit',
       });
     } catch (e) {
-      const status = (e as { status?: number }).status;
+      const err = e as ExecError;
       failWithAnnotation(
-        `wrangler d1 execute --file=${outputPath} exited ${status ?? '?'} (see raw step log for SQL error detail)`,
+        `wrangler d1 execute --file=${outputPath} exited ${err.status ?? '?'} (see raw step log for SQL error detail)`,
       );
     }
   }
