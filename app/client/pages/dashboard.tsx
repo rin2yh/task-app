@@ -102,9 +102,9 @@ export default function Dashboard({ projects }: Props) {
                 href={`/projects/${p.id}`}
                 className="min-w-0 flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <span className="font-medium text-primary">{p.name}</span>
+                <span className="block truncate font-medium text-primary">{p.name}</span>
                 {p.description ? (
-                  <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
+                  <p className="mt-1 truncate text-sm text-muted-foreground">{p.description}</p>
                 ) : null}
               </Link>
               <Button

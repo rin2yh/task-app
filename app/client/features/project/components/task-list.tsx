@@ -58,7 +58,7 @@ export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Pr
                         }}
                       >
                         <div className="flex min-w-0 flex-1 flex-col gap-1">
-                          <span className="font-medium leading-snug">{t.title}</span>
+                          <span className="block truncate font-medium leading-snug">{t.title}</span>
                           {t.labels.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {t.labels.map((l) => (
