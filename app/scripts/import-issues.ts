@@ -15,7 +15,6 @@ interface GhContent {
   title?: string;
   body?: string;
   url?: string;
-  state?: string;
   labels?: GhLabel[];
 }
 
@@ -329,10 +328,11 @@ async function main(): Promise<void> {
   const inputPath = path.resolve(args.input);
   const raw = await readFile(inputPath, 'utf8');
   const parsedJson = JSON.parse(raw) as { items?: GhItem[] };
+  // `gh project item-list --format json` omits `state` on content, so filtering
+  // Issues by OPEN/CLOSED here would drop every Issue.
   const items = (parsedJson.items ?? []).filter((item) => {
     const t = item.content?.type;
-    if (t === 'Issue') return item.content?.state === 'OPEN';
-    return t === 'DraftIssue';
+    return t === 'Issue' || t === 'DraftIssue';
   });
 
   const result = buildImportSql(items, ownerRow.id, args);
