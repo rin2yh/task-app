@@ -14,7 +14,7 @@ import { LabelChip } from '@client/features/labels/components/label-chip';
 import { PrioritySelect } from '@client/features/priority/components/priority-select';
 import type { Label } from '@shared/label';
 import type { Priority } from '@shared/priority';
-import { tryAsync } from '@shared/result';
+import { Result } from '@shared/result';
 import type { TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
 
@@ -54,7 +54,7 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
     }
     setError(null);
     setBusyOp('save');
-    const result = await tryAsync(
+    const result = await Result.try(
       async () => {
         const payload = {
           title: title.trim(),
@@ -94,7 +94,7 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
     if (busy) return;
     if (!confirm('タスクを削除しますか？')) return;
     setBusyOp('remove');
-    const result = await tryAsync(
+    const result = await Result.try(
       () =>
         fetch(`/tasks/${task.id}`, {
           method: 'DELETE',

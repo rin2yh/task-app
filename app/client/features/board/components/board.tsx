@@ -20,7 +20,7 @@ import {
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import type { Column as ColumnT } from '@shared/column';
 import type { Label } from '@shared/label';
-import { tryAsync } from '@shared/result';
+import { Result } from '@shared/result';
 import type { TaskWithLabels } from '@shared/task';
 import { useEffect, useState } from 'react';
 import { buildInitialState, useOptimisticBoard } from '../hooks/use-optimistic-board';
@@ -80,7 +80,7 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     const snapshot = board.state;
     board.moveTaskLocal(activeId, toColumnId, toIndex);
 
-    const result = await tryAsync(async () => {
+    const result = await Result.try(async () => {
       const res = await fetch(`/tasks/${activeId}/move`, {
         method: 'POST',
         headers: jsonHeaders,
@@ -129,7 +129,7 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     if (deletingColumnId) return;
     if (!confirm('列を削除しますか？')) return;
     setDeletingColumnId(id);
-    const result = await tryAsync(
+    const result = await Result.try(
       async () => {
         const res = await fetch(`/columns/${id}`, {
           method: 'DELETE',
@@ -243,7 +243,7 @@ function NewTaskDialog({
             e.preventDefault();
             if (busy || !trimmed) return;
             setBusy(true);
-            await tryAsync(
+            await Result.try(
               () => onSubmit({ title: trimmed }),
               () => setBusy(false),
             );

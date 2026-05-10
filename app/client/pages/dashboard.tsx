@@ -5,7 +5,7 @@ import { useAuthentication } from '@client/hooks/use-authentication';
 import { Link, router, usePage } from '@inertiajs/react';
 import type { SharedProps } from '@shared/inertia';
 import type { Project } from '@shared/project';
-import { tryAsync } from '@shared/result';
+import { Result } from '@shared/result';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -25,7 +25,7 @@ export default function Dashboard({ projects }: Props) {
     e.preventDefault();
     if (busy || !trimmed) return;
     setBusy(true);
-    const result = await tryAsync(
+    const result = await Result.try(
       async () => {
         const res = await fetch('/projects', {
           method: 'POST',
@@ -48,7 +48,7 @@ export default function Dashboard({ projects }: Props) {
   const remove = async (id: string, name: string) => {
     if (!confirm(`プロジェクト「${name}」を削除しますか？`)) return;
     setDeletingId(id);
-    const result = await tryAsync(
+    const result = await Result.try(
       async () => {
         const res = await fetch(`/projects/${id}`, {
           method: 'DELETE',

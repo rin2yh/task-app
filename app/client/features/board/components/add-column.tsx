@@ -1,6 +1,6 @@
 import { Button } from '@client/components/ui/button';
 import { Input } from '@client/components/ui/input';
-import { tryAsync } from '@shared/result';
+import { Result } from '@shared/result';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
@@ -24,7 +24,7 @@ export function AddColumn({ onSubmit }: Props) {
     e.preventDefault();
     if (busy || !trimmed) return;
     setBusy(true);
-    const result = await tryAsync(
+    const result = await Result.try(
       () => onSubmit(trimmed),
       () => setBusy(false),
     );

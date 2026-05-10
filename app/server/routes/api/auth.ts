@@ -2,7 +2,7 @@ import { generateState, OAuth2RequestError } from 'arctic';
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
-import { tryAsync } from '../../../shared/result';
+import { Result } from '../../../shared/result';
 import { csrfGuard } from '../../auth/middleware';
 import type { GitHubUser } from '../../auth/oauth/client';
 import { createOAuthClient } from '../../auth/oauth/factory';
@@ -78,7 +78,7 @@ authRoutes.get('/callback', async (c) => {
   clearOAuthStateCookie(c, STATE_COOKIE);
 
   const client = createOAuthClient(c);
-  const tokenResult = await tryAsync(() => client.validateAuthorizationCode(code));
+  const tokenResult = await Result.try(() => client.validateAuthorizationCode(code));
   if (!tokenResult.ok) {
     if (tokenResult.error instanceof OAuth2RequestError) {
       return c.redirect('/auth/login?error=oauth', 302);

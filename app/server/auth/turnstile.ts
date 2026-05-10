@@ -1,4 +1,4 @@
-import { tryAsync } from '../../shared/result';
+import { Result } from '../../shared/result';
 import type { Env } from '../env';
 
 const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
@@ -22,7 +22,7 @@ export async function verifyTurnstileToken(
   body.set('response', token);
   if (remoteIp) body.set('remoteip', remoteIp);
 
-  const result = await tryAsync(async () => {
+  const result = await Result.try(async () => {
     const res = await fetch(SITEVERIFY_URL, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },
