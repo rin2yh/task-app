@@ -18,6 +18,12 @@ on:
       url:
         description: Deployed Workers URL
         value: ${{ jobs.deploy.outputs.url }}
+      commit_sha:
+        description: Commit SHA that was deployed
+        value: ${{ jobs.deploy.outputs.commit_sha }}
+      commit_message:
+        description: Subject line of the deployed commit
+        value: ${{ jobs.deploy.outputs.commit_message }}
 
 permissions:
   contents: read
@@ -40,6 +46,8 @@ jobs:
       cancel-in-progress: false
     outputs:
       url: ${{ vars.APP_URL }}
+      commit_sha: ${{ steps.commit.outputs.sha }}
+      commit_message: ${{ steps.commit.outputs.message }}
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -50,6 +58,13 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           ref: ${{ inputs.ref }}
+      - name: Capture deployed commit
+        id: commit
+        run: |
+          {
+            echo "sha=$(git rev-parse --short HEAD)"
+            echo "message=$(git log -1 --pretty=%s)"
+          } >> "$GITHUB_OUTPUT"
       - uses: ./.github/actions/setup
       # production の D1 名だけ既存リソース互換のため非対称 ("task-app-prod")。
       # migrate を deploy と同ジョブで先に走らせることで、失敗時に build/deploy を自動的にブロックする。

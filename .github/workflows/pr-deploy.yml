@@ -99,6 +99,7 @@ jobs:
 
             ${{ needs.deploy.result == 'success' && '✅' || '❌' }} **${{ needs.deploy.result }}** — ${{ needs.deploy.outputs.url || 'URL 取得失敗' }}
             実行者: @${{ github.event.sender.login }} ([run #${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}))
+            前回のデプロイ: ${{ needs.deploy.outputs.commit_sha && format('`{0}` {1}', needs.deploy.outputs.commit_sha, needs.deploy.outputs.commit_message) || '不明' }}
 
             ---
 
