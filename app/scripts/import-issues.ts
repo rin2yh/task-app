@@ -182,7 +182,9 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
   let tasks = 0;
   let nextColumnPos = 1;
 
-  lines.push('BEGIN TRANSACTION;');
+  // No explicit BEGIN/COMMIT: D1 remote (Durable Object SQL) rejects user-managed
+  // transactions, and `wrangler d1 execute --file` already rolls the whole batch
+  // back on failure ("your DB will return to its original state and you can safely retry").
   lines.push(
     `INSERT INTO projects (id, owner_id, name, description, created_at, updated_at) VALUES (${sqlString(projectId)}, ${ownerId}, ${sqlString(DEFAULTS.projectName)}, NULL, ${now}, ${now});`,
   );
@@ -239,7 +241,6 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
     else if (item.content?.type === 'DraftIssue') drafts++;
   }
 
-  lines.push('COMMIT;');
   return {
     sql: `${lines.join('\n')}\n`,
     columns: columnIdByStatus.size,
@@ -261,11 +262,31 @@ function wranglerD1Args(args: ParsedArgs): string[] {
   return head;
 }
 
+// `::error::` lines become job annotations, which we can read via the
+// check-runs API even when the raw log archive host is unreachable.
+function failWithAnnotation(message: string): never {
+  console.error(`::error::${message.replace(/\r?\n/g, ' ')}`);
+  process.exit(1);
+}
+
+interface ExecError {
+  status?: number;
+  stdout?: string;
+  stderr?: string;
+}
+
 function queryDb(sql: string, args: ParsedArgs): unknown[] {
-  const out = execFileSync('wrangler', [...wranglerD1Args(args), '--json', '--command', sql], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  let out: string;
+  try {
+    out = execFileSync('wrangler', [...wranglerD1Args(args), '--json', '--command', sql], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (e) {
+    const err = e as ExecError;
+    const detail = (err.stderr || err.stdout || '').trim().slice(0, 500) || 'no output';
+    failWithAnnotation(`wrangler d1 execute (query) exited ${err.status ?? '?'}: ${detail}`);
+  }
   const parsed = JSON.parse(out.trim()) as unknown;
   if (Array.isArray(parsed)) {
     const first = parsed[0] as { results?: unknown[] } | undefined;
@@ -277,25 +298,22 @@ function queryDb(sql: string, args: ParsedArgs): unknown[] {
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   if (!args.userLogin) {
-    console.error(
+    failWithAnnotation(
       'Usage: import-issues --user-login <github_login> [--input PATH] [--output PATH] [--status-field NAME] [--priority-field NAME] [--due-field NAME] [--remote] [--env NAME] [--binding NAME] [--dry-run] [--force]',
     );
-    process.exit(1);
   }
 
   const userRows = queryDb(`SELECT id FROM users WHERE login=${sqlString(args.userLogin)};`, args);
   if (userRows.length === 0) {
-    console.error(
-      `User not found: ${args.userLogin}. Log in to the local app once before importing.`,
+    failWithAnnotation(
+      `User '${args.userLogin}' not found in target D1 (binding=${args.binding}, env=${args.env || 'local'}). Log in to the app once before importing.`,
     );
-    process.exit(1);
   }
   const ownerRow = userRows[0] as { id?: number };
   if (typeof ownerRow.id !== 'number') {
-    console.error(
+    failWithAnnotation(
       `Unexpected wrangler response while resolving user id: ${JSON.stringify(ownerRow)}`,
     );
-    process.exit(1);
   }
 
   const existing = queryDb(
@@ -303,10 +321,9 @@ async function main(): Promise<void> {
     args,
   );
   if (existing.length > 0 && !args.force) {
-    console.error(
-      `Project '${DEFAULTS.projectName}' already exists. Re-run with --force to add another copy alongside it.`,
+    failWithAnnotation(
+      `Project '${DEFAULTS.projectName}' already exists in target D1. Re-run with --force to add another copy alongside it.`,
     );
-    process.exit(1);
   }
 
   const inputPath = path.resolve(args.input);
@@ -325,9 +342,16 @@ async function main(): Promise<void> {
   await writeFile(outputPath, result.sql, 'utf8');
 
   if (!args.dryRun) {
-    execFileSync('wrangler', [...wranglerD1Args(args), `--file=${outputPath}`], {
-      stdio: 'inherit',
-    });
+    try {
+      execFileSync('wrangler', [...wranglerD1Args(args), `--file=${outputPath}`], {
+        stdio: 'inherit',
+      });
+    } catch (e) {
+      const err = e as ExecError;
+      failWithAnnotation(
+        `wrangler d1 execute --file=${outputPath} exited ${err.status ?? '?'} (see raw step log for SQL error detail)`,
+      );
+    }
   }
 
   console.log(
