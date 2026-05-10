@@ -155,3 +155,6 @@ test-results/
 # Inertia auto-generated page registry
 pages.gen.ts
 
+# Import scratch dir
+tmp/
+
