@@ -18,13 +18,10 @@ export function NoStatusColumn({ tasks, onSelectTask }: Props) {
         <h2 className="text-sm font-semibold text-muted-foreground">ステータスなし</h2>
         <span className="text-xs text-muted-foreground">{tasks.length}</span>
       </header>
-      <div className="flex min-h-10 flex-col gap-2">
-        {tasks.length === 0 ? (
-          <p className="text-xs text-muted-foreground">所属する列がありません。</p>
-        ) : (
-          tasks.map((t) => (
+      <ul className="flex min-h-10 flex-col gap-2">
+        {tasks.map((t) => (
+          <li key={t.id}>
             <Card
-              key={t.id}
               role="button"
               tabIndex={0}
               aria-label={`タスク: ${t.title}`}
@@ -56,9 +53,9 @@ export function NoStatusColumn({ tasks, onSelectTask }: Props) {
                 ) : null}
               </CardContent>
             </Card>
-          ))
-        )}
-      </div>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
