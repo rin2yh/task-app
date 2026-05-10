@@ -18,12 +18,11 @@ export default function Dashboard({ projects }: Props) {
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const canSubmit = !busy && name.trim().length > 0;
+  const trimmed = name.trim();
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (busy || !trimmed) return;
     setBusy(true);
     try {
       const res = await fetch('/projects', {
@@ -88,8 +87,9 @@ export default function Dashboard({ projects }: Props) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={100}
+          disabled={busy}
         />
-        <Button type="submit" disabled={!canSubmit}>
+        <Button type="submit" disabled={!trimmed} loading={busy} loadingText="作成中…">
           作成
         </Button>
       </form>
@@ -113,7 +113,8 @@ export default function Dashboard({ projects }: Props) {
                 size="sm"
                 className="text-destructive hover:text-destructive"
                 aria-label={`プロジェクト ${p.name} を削除`}
-                disabled={deletingId === p.id}
+                loading={deletingId === p.id}
+                loadingText="削除中…"
                 onClick={() => remove(p.id, p.name)}
               >
                 <Trash2 className="size-3.5" />

@@ -37,13 +37,12 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
     new Set(task.labels.map((l) => l.id)),
   );
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busyOp, setBusyOp] = useState<'save' | 'remove' | null>(null);
+  const busy = busyOp !== null;
   const jsonHeaders = {
     'Content-Type': 'application/json',
     'X-CSRF-Token': csrfToken,
   };
-
-  const canSave = !busy && title.trim().length > 0;
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +52,7 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
       return;
     }
     setError(null);
-    setBusy(true);
+    setBusyOp('save');
     try {
       const payload = {
         title: title.trim(),
@@ -82,13 +81,14 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
     } catch (err) {
       setError(err instanceof Error ? err.message : '保存に失敗しました');
     } finally {
-      setBusy(false);
+      setBusyOp(null);
     }
   };
 
   const remove = async () => {
+    if (busy) return;
     if (!confirm('タスクを削除しますか？')) return;
-    setBusy(true);
+    setBusyOp('remove');
     try {
       await fetch(`/tasks/${task.id}`, {
         method: 'DELETE',
@@ -96,7 +96,7 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
       });
       onDeleted(task);
     } finally {
-      setBusy(false);
+      setBusyOp(null);
     }
   };
 
@@ -169,14 +169,26 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
             </p>
           ) : null}
           <DialogFooter className="mt-2 flex-row justify-between sm:justify-between">
-            <Button type="button" variant="destructive" onClick={remove} disabled={busy}>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={remove}
+              disabled={busy}
+              loading={busyOp === 'remove'}
+              loadingText="削除中…"
+            >
               削除
             </Button>
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
                 キャンセル
               </Button>
-              <Button type="submit" disabled={!canSave}>
+              <Button
+                type="submit"
+                disabled={busy || title.trim().length === 0}
+                loading={busyOp === 'save'}
+                loadingText="保存中…"
+              >
                 保存
               </Button>
             </div>
