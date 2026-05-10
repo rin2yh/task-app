@@ -188,16 +188,12 @@ function NewTaskDialog({
     const vv = window.visualViewport;
     if (!vv) return;
     const update = () => {
-      const inset = window.innerHeight - vv.height - vv.offsetTop;
-      setKeyboardInset((prev) => Math.max(prev, Math.round(Math.max(0, inset))));
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardInset((prev) => Math.max(prev, Math.round(inset)));
     };
     update();
     vv.addEventListener('resize', update);
-    vv.addEventListener('scroll', update);
-    return () => {
-      vv.removeEventListener('resize', update);
-      vv.removeEventListener('scroll', update);
-    };
+    return () => vv.removeEventListener('resize', update);
   }, []);
 
   return (
