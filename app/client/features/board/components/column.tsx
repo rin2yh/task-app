@@ -3,18 +3,26 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { Column as ColumnT } from '@shared/column';
 import type { TaskWithLabels } from '@shared/task';
-import { Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { TaskCard } from './task-card';
 
 interface Props {
   column: ColumnT;
   tasks: TaskWithLabels[];
+  deleting?: boolean;
   onCreateTask: (columnId: string) => void;
   onSelectTask: (task: TaskWithLabels) => void;
   onDeleteColumn: (columnId: string) => void;
 }
 
-export function Column({ column, tasks, onCreateTask, onSelectTask, onDeleteColumn }: Props) {
+export function Column({
+  column,
+  tasks,
+  deleting,
+  onCreateTask,
+  onSelectTask,
+  onDeleteColumn,
+}: Props) {
   const { setNodeRef } = useDroppable({
     id: `col-${column.id}`,
     data: { type: 'column', columnId: column.id },
@@ -29,10 +37,21 @@ export function Column({ column, tasks, onCreateTask, onSelectTask, onDeleteColu
           size="sm"
           className="text-destructive hover:text-destructive"
           aria-label={`列 ${column.name} を削除`}
+          aria-busy={deleting}
+          disabled={deleting}
           onClick={() => onDeleteColumn(column.id)}
         >
-          <Trash2 className="size-3.5" />
-          削除
+          {deleting ? (
+            <>
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              削除中…
+            </>
+          ) : (
+            <>
+              <Trash2 className="size-3.5" />
+              削除
+            </>
+          )}
         </Button>
       </header>
       <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>

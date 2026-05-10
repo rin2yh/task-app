@@ -39,6 +39,7 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
   const board = useOptimisticBoard(buildInitialState(columns, tasks));
   const [openTask, setOpenTask] = useState<TaskWithLabels | null>(null);
   const [creatingInColumn, setCreatingInColumn] = useState<string | null>(null);
+  const [deletingColumnId, setDeletingColumnId] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -123,13 +124,19 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
   };
 
   const handleDeleteColumn = async (id: string) => {
+    if (deletingColumnId) return;
     if (!confirm('列を削除しますか？')) return;
-    const res = await fetch(`/columns/${id}`, {
-      method: 'DELETE',
-      headers: { 'X-CSRF-Token': csrfToken },
-    });
-    if (!res.ok) throw new Error(`delete column failed: ${res.status}`);
-    board.removeColumnLocal(id);
+    setDeletingColumnId(id);
+    try {
+      const res = await fetch(`/columns/${id}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-Token': csrfToken },
+      });
+      if (!res.ok) throw new Error(`delete column failed: ${res.status}`);
+      board.removeColumnLocal(id);
+    } finally {
+      setDeletingColumnId(null);
+    }
   };
 
   return (
@@ -141,6 +148,7 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
               key={c.id}
               column={c}
               tasks={board.state.tasksByColumn[c.id] ?? []}
+              deleting={deletingColumnId === c.id}
               onCreateTask={(id) => setCreatingInColumn(id)}
               onSelectTask={setOpenTask}
               onDeleteColumn={handleDeleteColumn}
