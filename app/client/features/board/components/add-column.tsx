@@ -1,5 +1,6 @@
 import { Button } from '@client/components/ui/button';
 import { Input } from '@client/components/ui/input';
+import { Result } from '@shared/result';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
@@ -23,12 +24,9 @@ export function AddColumn({ onSubmit }: Props) {
     e.preventDefault();
     if (busy || !trimmed) return;
     setBusy(true);
-    try {
-      await onSubmit(trimmed);
-      reset();
-    } finally {
-      setBusy(false);
-    }
+    const result = await Result.try(onSubmit(trimmed));
+    setBusy(false);
+    if (result.ok) reset();
   };
 
   if (!editing) {

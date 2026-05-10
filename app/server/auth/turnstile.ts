@@ -1,3 +1,4 @@
+import { Result } from '../../shared/result';
 import type { Env } from '../env';
 
 const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
@@ -21,17 +22,18 @@ export async function verifyTurnstileToken(
   body.set('response', token);
   if (remoteIp) body.set('remoteip', remoteIp);
 
-  try {
-    const res = await fetch(SITEVERIFY_URL, {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body,
-      signal: AbortSignal.timeout(5_000),
-    });
-    if (!res.ok) return false;
-    const json = (await res.json()) as SiteverifyResponse;
-    return json.success === true;
-  } catch {
-    return false;
-  }
+  const result = await Result.try(
+    (async () => {
+      const res = await fetch(SITEVERIFY_URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        body,
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (!res.ok) return false;
+      const json = (await res.json()) as SiteverifyResponse;
+      return json.success === true;
+    })(),
+  );
+  return result.ok ? result.value : false;
 }

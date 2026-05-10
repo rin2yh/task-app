@@ -7,6 +7,7 @@ import { useAuthentication } from '@client/hooks/use-authentication';
 import { Link, router, usePage } from '@inertiajs/react';
 import type { SharedProps } from '@shared/inertia';
 import type { Project } from '@shared/project';
+import { Result } from '@shared/result';
 import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -27,36 +28,40 @@ export default function Dashboard({ projects }: Props) {
     e.preventDefault();
     if (busy || !trimmed) return;
     setBusy(true);
-    try {
-      const res = await fetch('/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': shared.csrfToken,
-        },
-        body: JSON.stringify({ name }),
-      });
-      if (!res.ok) throw new Error(`Failed to create project: ${res.status}`);
+    const result = await Result.try(
+      (async () => {
+        const res = await fetch('/projects', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': shared.csrfToken,
+          },
+          body: JSON.stringify({ name }),
+        });
+        if (!res.ok) throw new Error(`Failed to create project: ${res.status}`);
+      })(),
+    );
+    setBusy(false);
+    if (result.ok) {
       router.reload({ only: ['projects'] });
       setName('');
-    } finally {
-      setBusy(false);
     }
   };
 
   const remove = async (id: string, name: string) => {
     if (!confirm(`プロジェクト「${name}」を削除しますか？`)) return;
     setDeletingId(id);
-    try {
-      const res = await fetch(`/projects/${id}`, {
-        method: 'DELETE',
-        headers: { 'X-CSRF-Token': shared.csrfToken },
-      });
-      if (!res.ok) throw new Error(`Failed to delete project: ${res.status}`);
-      router.reload({ only: ['projects'] });
-    } finally {
-      setDeletingId(null);
-    }
+    const result = await Result.try(
+      (async () => {
+        const res = await fetch(`/projects/${id}`, {
+          method: 'DELETE',
+          headers: { 'X-CSRF-Token': shared.csrfToken },
+        });
+        if (!res.ok) throw new Error(`Failed to delete project: ${res.status}`);
+      })(),
+    );
+    setDeletingId(null);
+    if (result.ok) router.reload({ only: ['projects'] });
   };
 
   const logout = async () => {
@@ -169,20 +174,23 @@ function RenameProjectDialog({ project, csrfToken, onClose }: RenameDialogProps)
     e.preventDefault();
     if (busy || !canSave) return;
     setBusy(true);
-    try {
-      const res = await fetch(`/projects/${project.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
-        },
-        body: JSON.stringify({ name: trimmed }),
-      });
-      if (!res.ok) throw new Error(`Failed to rename project: ${res.status}`);
+    const result = await Result.try(
+      (async () => {
+        const res = await fetch(`/projects/${project.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+          },
+          body: JSON.stringify({ name: trimmed }),
+        });
+        if (!res.ok) throw new Error(`Failed to rename project: ${res.status}`);
+      })(),
+    );
+    setBusy(false);
+    if (result.ok) {
       router.reload({ only: ['projects'] });
       onClose();
-    } finally {
-      setBusy(false);
     }
   };
 
