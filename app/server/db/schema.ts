@@ -44,19 +44,38 @@ export const projects = sqliteTable(
   }),
 );
 
-export const columns = sqliteTable(
-  'columns',
+export const userColumns = sqliteTable(
+  'user_columns',
+  {
+    id: text('id').primaryKey(),
+    ownerId: integer('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => ({
+    ownerIdx: index('idx_user_columns_owner').on(t.ownerId),
+  }),
+);
+
+export const systemColumns = sqliteTable('system_columns', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+});
+
+export const projectColumns = sqliteTable(
+  'project_columns',
   {
     id: text('id').primaryKey(),
     projectId: text('project_id')
       .notNull()
       .references(() => projects.id, { onDelete: 'cascade' }),
-    name: text('name').notNull(),
+    columnId: text('column_id').notNull(),
     position: real('position').notNull(),
-    createdAt: integer('created_at').notNull(),
   },
   (t) => ({
-    projectPosIdx: index('idx_columns_project_pos').on(t.projectId, t.position),
+    projectPosIdx: index('idx_project_columns_project_pos').on(t.projectId, t.position),
   }),
 );
 
@@ -64,9 +83,9 @@ export const tasks = sqliteTable(
   'tasks',
   {
     id: text('id').primaryKey(),
-    columnId: text('column_id')
+    projectColumnId: text('project_column_id')
       .notNull()
-      .references(() => columns.id, { onDelete: 'cascade' }),
+      .references(() => projectColumns.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     description: text('description'),
     priority: text('priority').notNull().default('medium'),
@@ -76,7 +95,7 @@ export const tasks = sqliteTable(
     updatedAt: integer('updated_at').notNull(),
   },
   (t) => ({
-    columnPosIdx: index('idx_tasks_column_pos').on(t.columnId, t.position),
+    columnPosIdx: index('idx_tasks_project_column_pos').on(t.projectColumnId, t.position),
   }),
 );
 
@@ -113,6 +132,7 @@ export const taskLabels = sqliteTable(
 export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
   projects: many(projects),
+  userColumns: many(userColumns),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -121,17 +141,24 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
   owner: one(users, { fields: [projects.ownerId], references: [users.id] }),
-  columns: many(columns),
+  projectColumns: many(projectColumns),
   labels: many(labels),
 }));
 
-export const columnsRelations = relations(columns, ({ one, many }) => ({
-  project: one(projects, { fields: [columns.projectId], references: [projects.id] }),
+export const userColumnsRelations = relations(userColumns, ({ one }) => ({
+  owner: one(users, { fields: [userColumns.ownerId], references: [users.id] }),
+}));
+
+export const projectColumnsRelations = relations(projectColumns, ({ one, many }) => ({
+  project: one(projects, { fields: [projectColumns.projectId], references: [projects.id] }),
   tasks: many(tasks),
 }));
 
 export const tasksRelations = relations(tasks, ({ one, many }) => ({
-  column: one(columns, { fields: [tasks.columnId], references: [columns.id] }),
+  projectColumn: one(projectColumns, {
+    fields: [tasks.projectColumnId],
+    references: [projectColumns.id],
+  }),
   taskLabels: many(taskLabels),
 }));
 
@@ -145,8 +172,12 @@ export const taskLabelsRelations = relations(taskLabels, ({ one }) => ({
   label: one(labels, { fields: [taskLabels.labelId], references: [labels.id] }),
 }));
 
+export const SYSTEM_COLUMN_NO_STATUS = 'no_status';
+
 export type DbUser = typeof users.$inferSelect;
 export type DbProject = typeof projects.$inferSelect;
-export type DbColumn = typeof columns.$inferSelect;
+export type DbUserColumn = typeof userColumns.$inferSelect;
+export type DbSystemColumn = typeof systemColumns.$inferSelect;
+export type DbProjectColumn = typeof projectColumns.$inferSelect;
 export type DbTask = typeof tasks.$inferSelect;
 export type DbLabel = typeof labels.$inferSelect;

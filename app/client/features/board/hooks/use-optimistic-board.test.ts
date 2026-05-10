@@ -5,12 +5,12 @@ import { describe, expect, it } from 'vitest';
 import { buildInitialState, useOptimisticBoard } from './use-optimistic-board';
 
 const cols: Column[] = [
-  { id: 'c1', projectId: 'p', name: 'A', position: 1, createdAt: 0 },
-  { id: 'c2', projectId: 'p', name: 'B', position: 2, createdAt: 0 },
+  { id: 'c1', projectId: 'p', columnId: 'uc1', name: 'A', position: 1, isSystem: false },
+  { id: 'c2', projectId: 'p', columnId: 'uc2', name: 'B', position: 2, isSystem: false },
 ];
-const t = (id: string, columnId: string, position: number): TaskWithLabels => ({
+const t = (id: string, projectColumnId: string, position: number): TaskWithLabels => ({
   id,
-  columnId,
+  projectColumnId,
   title: id,
   description: null,
   priority: 'medium',
@@ -56,9 +56,10 @@ describe('useOptimisticBoard', () => {
       result.current.addColumnLocal({
         id: 'c-mid',
         projectId: 'p',
+        columnId: 'uc-mid',
         name: 'Mid',
         position: 1.5,
-        createdAt: 0,
+        isSystem: false,
       });
     });
     expect(result.current.state.columns.map((c) => c.id)).toEqual(['c1', 'c-mid', 'c2']);

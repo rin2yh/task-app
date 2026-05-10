@@ -14,7 +14,7 @@ interface Props {
 export function TaskCard({ task, onClick }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
-    data: { type: 'task', columnId: task.columnId },
+    data: { type: 'task', columnId: task.projectColumnId },
   });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),

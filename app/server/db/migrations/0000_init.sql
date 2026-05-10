@@ -34,20 +34,36 @@ CREATE TABLE `projects` (
 --> statement-breakpoint
 CREATE INDEX `idx_projects_owner` ON `projects` (`owner_id`);
 --> statement-breakpoint
-CREATE TABLE `columns` (
+CREATE TABLE `user_columns` (
+  `id` text PRIMARY KEY NOT NULL,
+  `owner_id` integer NOT NULL,
+  `name` text NOT NULL,
+  `created_at` integer NOT NULL,
+  FOREIGN KEY (`owner_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `idx_user_columns_owner` ON `user_columns` (`owner_id`);
+--> statement-breakpoint
+CREATE TABLE `system_columns` (
+  `id` text PRIMARY KEY NOT NULL,
+  `name` text NOT NULL
+);
+--> statement-breakpoint
+INSERT INTO `system_columns` (`id`, `name`) VALUES ('no_status', 'ステータスなし');
+--> statement-breakpoint
+CREATE TABLE `project_columns` (
   `id` text PRIMARY KEY NOT NULL,
   `project_id` text NOT NULL,
-  `name` text NOT NULL,
+  `column_id` text NOT NULL,
   `position` real NOT NULL,
-  `created_at` integer NOT NULL,
   FOREIGN KEY (`project_id`) REFERENCES `projects`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `idx_columns_project_pos` ON `columns` (`project_id`, `position`);
+CREATE INDEX `idx_project_columns_project_pos` ON `project_columns` (`project_id`, `position`);
 --> statement-breakpoint
 CREATE TABLE `tasks` (
   `id` text PRIMARY KEY NOT NULL,
-  `column_id` text NOT NULL,
+  `project_column_id` text NOT NULL,
   `title` text NOT NULL,
   `description` text,
   `priority` text DEFAULT 'medium' NOT NULL,
@@ -55,10 +71,10 @@ CREATE TABLE `tasks` (
   `position` real NOT NULL,
   `created_at` integer NOT NULL,
   `updated_at` integer NOT NULL,
-  FOREIGN KEY (`column_id`) REFERENCES `columns`(`id`) ON UPDATE no action ON DELETE cascade
+  FOREIGN KEY (`project_column_id`) REFERENCES `project_columns`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE INDEX `idx_tasks_column_pos` ON `tasks` (`column_id`, `position`);
+CREATE INDEX `idx_tasks_project_column_pos` ON `tasks` (`project_column_id`, `position`);
 --> statement-breakpoint
 CREATE TABLE `labels` (
   `id` text PRIMARY KEY NOT NULL,

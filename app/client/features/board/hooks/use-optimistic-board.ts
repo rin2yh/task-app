@@ -14,10 +14,10 @@ export function buildInitialState(columns: Column[], tasks: TaskWithLabels[]): B
   const tasksByColumn: Record<string, TaskWithLabels[]> = {};
   for (const col of sortedCols) tasksByColumn[col.id] = [];
   for (const t of tasks) {
-    let bucket = tasksByColumn[t.columnId];
+    let bucket = tasksByColumn[t.projectColumnId];
     if (!bucket) {
       bucket = [];
-      tasksByColumn[t.columnId] = bucket;
+      tasksByColumn[t.projectColumnId] = bucket;
     }
     bucket.push(t);
   }
@@ -51,7 +51,7 @@ export function useOptimisticBoard(initial: BoardState) {
       if (!moved) return prev;
       const dest = [...(next.tasksByColumn[toColumnId] ?? [])];
       const insertAt = Math.max(0, Math.min(toIndex, dest.length));
-      dest.splice(insertAt, 0, { ...moved, columnId: toColumnId });
+      dest.splice(insertAt, 0, { ...moved, projectColumnId: toColumnId });
       next.tasksByColumn[toColumnId] = dest;
       return next;
     });

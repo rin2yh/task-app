@@ -9,7 +9,7 @@ import {
   type TestUser,
 } from '../../../tests/helpers';
 import { createDb } from '../../db/client';
-import { columns } from '../../db/schema';
+import { projectColumns } from '../../db/schema';
 
 async function createProject(fetch: Fetch, u: TestUser) {
   const res = await fetch('/projects', {
@@ -57,12 +57,14 @@ describe('columns CRUD + reorder', () => {
         await fetch(`/projects/${p.id}/columns`, {
           headers: { cookie: u.cookies },
         })
-      ).json()) as { columns: Array<{ id: string; name: string; position: number }> }
+      ).json()) as {
+        columns: Array<{ id: string; name: string; position: number; isSystem: boolean }>;
+      }
     ).columns;
-    expect(list1.map((c) => c.name)).toEqual(['Todo', 'In Progress', 'Done']);
-    // Done を Todo の前に置く（beforeColumnId = Todo）
-    const [todo, , done] = list1;
-    if (!todo || !done) throw new Error('expected 3 columns');
+    expect(list1.map((c) => c.name)).toEqual(['ステータスなし', 'Todo', 'In Progress', 'Done']);
+    const userCols = list1.filter((c) => !c.isSystem);
+    const [todo, , done] = userCols;
+    if (!todo || !done) throw new Error('expected 3 user columns');
     const reorder = await fetch(`/columns/${done.id}/reorder`, {
       method: 'POST',
       headers: {
@@ -80,23 +82,33 @@ describe('columns CRUD + reorder', () => {
         })
       ).json()) as { columns: Array<{ id: string; name: string }> }
     ).columns;
-    expect(list2[0]?.id).toBe(done.id);
+    const list2User = list2.filter((c) => c.name !== 'ステータスなし');
+    expect(list2User[0]?.id).toBe(done.id);
   });
 
   it('triggers rebalance when positions collapse', async ({ fetch }) => {
     const u = await createTestUser('rb');
     const p = await createProject(fetch, u);
     const db = createDb(ENV.DB);
-    // 強制的に position を非常に近い値にする
-    const cols = await db.select().from(columns).where(eq(columns.projectId, p.id));
-    expect(cols.length).toBe(3);
-    const [c0, c1, c2] = cols;
-    if (!c0 || !c1 || !c2) throw new Error('expected 3 columns');
-    await db.update(columns).set({ position: 1 }).where(eq(columns.id, c0.id));
-    await db.update(columns).set({ position: 1.0000000001 }).where(eq(columns.id, c1.id));
-    await db.update(columns).set({ position: 1.0000000002 }).where(eq(columns.id, c2.id));
+    const cols = await db.select().from(projectColumns).where(eq(projectColumns.projectId, p.id));
+    expect(cols.length).toBe(4);
+    const [c0, c1, c2, c3] = cols;
+    if (!c0 || !c1 || !c2 || !c3) throw new Error('expected 4 project_columns');
+    await db.update(projectColumns).set({ position: 1 }).where(eq(projectColumns.id, c0.id));
+    await db
+      .update(projectColumns)
+      .set({ position: 1.0000000001 })
+      .where(eq(projectColumns.id, c1.id));
+    await db
+      .update(projectColumns)
+      .set({ position: 1.0000000002 })
+      .where(eq(projectColumns.id, c2.id));
+    await db
+      .update(projectColumns)
+      .set({ position: 1.0000000003 })
+      .where(eq(projectColumns.id, c3.id));
 
-    const re = await fetch(`/columns/${c2.id}/reorder`, {
+    const re = await fetch(`/columns/${c3.id}/reorder`, {
       method: 'POST',
       headers: {
         cookie: u.cookies,
@@ -108,10 +120,28 @@ describe('columns CRUD + reorder', () => {
     expect(re.status).toBe(200);
     const after = await db
       .select()
-      .from(columns)
-      .where(eq(columns.projectId, p.id))
+      .from(projectColumns)
+      .where(eq(projectColumns.projectId, p.id))
       .orderBy(sql`position ASC`);
-    // 1..3 で再採番されていること
-    expect(after.map((c) => c.position)).toEqual([1, 2, 3]);
+    expect(after.map((c) => c.position)).toEqual([1, 2, 3, 4]);
+  });
+
+  it('rejects deleting a system column', async ({ fetch }) => {
+    const u = await createTestUser('sysdel');
+    const p = await createProject(fetch, u);
+    const list = (
+      (await (
+        await fetch(`/projects/${p.id}/columns`, {
+          headers: { cookie: u.cookies },
+        })
+      ).json()) as { columns: Array<{ id: string; isSystem: boolean }> }
+    ).columns;
+    const sys = list.find((c) => c.isSystem);
+    if (!sys) throw new Error('expected a system column');
+    const del = await fetch(`/columns/${sys.id}`, {
+      method: 'DELETE',
+      headers: { cookie: u.cookies, 'X-CSRF-Token': u.csrfToken },
+    });
+    expect(del.status).toBe(409);
   });
 });

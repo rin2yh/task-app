@@ -6,8 +6,23 @@ import {
   tailPosition,
 } from '../../lib/position';
 import type { Database } from '../client';
-import { columns, type DbColumn, projects } from '../schema';
+import {
+  type DbProjectColumn,
+  projectColumns,
+  projects,
+  systemColumns,
+  userColumns,
+} from '../schema';
 import { ulid } from '../ulid';
+
+export interface ResolvedColumn {
+  id: string;
+  projectId: string;
+  columnId: string;
+  name: string;
+  position: number;
+  isSystem: boolean;
+}
 
 async function ensureProjectOwned(
   db: Database,
@@ -22,23 +37,41 @@ async function ensureProjectOwned(
   return rows.length > 0;
 }
 
+async function loadProjectColumns(db: Database, projectId: string): Promise<ResolvedColumn[]> {
+  const rows = await db
+    .select({
+      pc: projectColumns,
+      userName: userColumns.name,
+      systemId: systemColumns.id,
+      systemName: systemColumns.name,
+    })
+    .from(projectColumns)
+    .leftJoin(userColumns, eq(userColumns.id, projectColumns.columnId))
+    .leftJoin(systemColumns, eq(systemColumns.id, projectColumns.columnId))
+    .where(eq(projectColumns.projectId, projectId))
+    .orderBy(asc(projectColumns.position));
+  return rows.map((r) => ({
+    id: r.pc.id,
+    projectId: r.pc.projectId,
+    columnId: r.pc.columnId,
+    name: r.systemName ?? r.userName ?? '',
+    position: r.pc.position,
+    isSystem: r.systemId !== null,
+  }));
+}
+
 export async function listColumnsForProject(
   db: Database,
   projectId: string,
   ownerId: number,
-): Promise<DbColumn[] | null> {
+): Promise<ResolvedColumn[] | null> {
   const ok = await ensureProjectOwned(db, projectId, ownerId);
   if (!ok) return null;
-  return db
-    .select()
-    .from(columns)
-    .where(eq(columns.projectId, projectId))
-    .orderBy(asc(columns.position));
+  return loadProjectColumns(db, projectId);
 }
 
 export interface CreateColumnInput {
   name: string;
-  afterColumnId?: string | null;
 }
 
 export async function createColumn(
@@ -46,64 +79,104 @@ export async function createColumn(
   projectId: string,
   ownerId: number,
   input: CreateColumnInput,
-): Promise<DbColumn | null> {
+): Promise<ResolvedColumn | null> {
   const ok = await ensureProjectOwned(db, projectId, ownerId);
   if (!ok) return null;
   const all = await db
     .select()
-    .from(columns)
-    .where(eq(columns.projectId, projectId))
-    .orderBy(asc(columns.position));
+    .from(projectColumns)
+    .where(eq(projectColumns.projectId, projectId))
+    .orderBy(asc(projectColumns.position));
   const maxPos = all.at(-1)?.position ?? null;
   const position = tailPosition(maxPos);
   const now = Date.now();
-  const col: DbColumn = {
-    id: ulid(),
+  const userColumnId = ulid();
+  await db.insert(userColumns).values({
+    id: userColumnId,
+    ownerId,
+    name: input.name,
+    createdAt: now,
+  });
+  const projectColumnId = ulid();
+  await db.insert(projectColumns).values({
+    id: projectColumnId,
     projectId,
+    columnId: userColumnId,
+    position,
+  });
+  return {
+    id: projectColumnId,
+    projectId,
+    columnId: userColumnId,
     name: input.name,
     position,
-    createdAt: now,
+    isSystem: false,
   };
-  await db.insert(columns).values(col);
-  return col;
 }
 
-async function ownsColumn(
+interface ProjectColumnLookup {
+  projectColumn: DbProjectColumn;
+  isSystem: boolean;
+  userColumnId: string | null;
+}
+
+async function lookupProjectColumn(
   db: Database,
-  columnId: string,
+  projectColumnId: string,
   ownerId: number,
-): Promise<DbColumn | null> {
+): Promise<ProjectColumnLookup | null> {
   const rows = await db
-    .select({ col: columns })
-    .from(columns)
-    .innerJoin(projects, eq(projects.id, columns.projectId))
-    .where(and(eq(columns.id, columnId), eq(projects.ownerId, ownerId)))
+    .select({
+      pc: projectColumns,
+      userColumnId: userColumns.id,
+      systemId: systemColumns.id,
+    })
+    .from(projectColumns)
+    .innerJoin(projects, eq(projects.id, projectColumns.projectId))
+    .leftJoin(userColumns, eq(userColumns.id, projectColumns.columnId))
+    .leftJoin(systemColumns, eq(systemColumns.id, projectColumns.columnId))
+    .where(and(eq(projectColumns.id, projectColumnId), eq(projects.ownerId, ownerId)))
     .limit(1);
-  return rows[0]?.col ?? null;
+  const row = rows[0];
+  if (!row) return null;
+  return {
+    projectColumn: row.pc,
+    isSystem: row.systemId !== null,
+    userColumnId: row.userColumnId,
+  };
 }
 
 export async function updateColumn(
   db: Database,
-  columnId: string,
+  projectColumnId: string,
   ownerId: number,
   patch: { name?: string },
-): Promise<DbColumn | null> {
-  const existing = await ownsColumn(db, columnId, ownerId);
-  if (!existing) return null;
-  const next: DbColumn = { ...existing, name: patch.name ?? existing.name };
-  await db.update(columns).set({ name: next.name }).where(eq(columns.id, columnId));
-  return next;
+): Promise<ResolvedColumn | null> {
+  const found = await lookupProjectColumn(db, projectColumnId, ownerId);
+  if (!found) return null;
+  if (found.isSystem) return null;
+  const userColumnId = found.userColumnId;
+  if (!userColumnId) return null;
+  if (patch.name !== undefined) {
+    await db.update(userColumns).set({ name: patch.name }).where(eq(userColumns.id, userColumnId));
+  }
+  const list = await loadProjectColumns(db, found.projectColumn.projectId);
+  return list.find((c) => c.id === projectColumnId) ?? null;
 }
 
 export async function deleteColumn(
   db: Database,
-  columnId: string,
+  projectColumnId: string,
   ownerId: number,
-): Promise<boolean> {
-  const existing = await ownsColumn(db, columnId, ownerId);
-  if (!existing) return false;
-  await db.delete(columns).where(eq(columns.id, columnId));
-  return true;
+): Promise<{ ok: boolean; system: boolean }> {
+  const found = await lookupProjectColumn(db, projectColumnId, ownerId);
+  if (!found) return { ok: false, system: false };
+  if (found.isSystem) return { ok: false, system: true };
+  await db.delete(projectColumns).where(eq(projectColumns.id, projectColumnId));
+  if (found.userColumnId) {
+    await db.delete(userColumns).where(eq(userColumns.id, found.userColumnId));
+  }
+  return { ok: true, system: false };
 }
 
 export interface ReorderColumnInput {
@@ -111,24 +184,21 @@ export interface ReorderColumnInput {
   afterColumnId?: string | null;
 }
 
-/**
- * 列の並び替え。midpoint で挿入位置決定、衝突時は当該プロジェクト内で全列リバランス。
- * 戻り値は新位置の columns 全件。
- */
 export async function reorderColumn(
   db: Database,
-  columnId: string,
+  projectColumnId: string,
   ownerId: number,
   input: ReorderColumnInput,
-): Promise<DbColumn[] | null> {
-  const target = await ownsColumn(db, columnId, ownerId);
-  if (!target) return null;
+): Promise<ResolvedColumn[] | null> {
+  const found = await lookupProjectColumn(db, projectColumnId, ownerId);
+  if (!found) return null;
+  const projectId = found.projectColumn.projectId;
   const all = await db
     .select()
-    .from(columns)
-    .where(eq(columns.projectId, target.projectId))
-    .orderBy(asc(columns.position));
-  const others = all.filter((c) => c.id !== columnId);
+    .from(projectColumns)
+    .where(eq(projectColumns.projectId, projectId))
+    .orderBy(asc(projectColumns.position));
+  const others = all.filter((c) => c.id !== projectColumnId);
   const beforeIdx = input.beforeColumnId
     ? others.findIndex((c) => c.id === input.beforeColumnId)
     : -1;
@@ -153,7 +223,6 @@ export async function reorderColumn(
     return prev != null && c.position - prev.position < REBALANCE_THRESHOLD;
   });
   if (newPos == null || existingCollapsed) {
-    // 全列リバランス：論理順に並べたうえで対象列を target index に配置
     const logical = others.slice();
     let insertAt: number;
     if (input.beforeColumnId) {
@@ -163,17 +232,19 @@ export async function reorderColumn(
     } else {
       insertAt = logical.length;
     }
-    logical.splice(insertAt, 0, target);
+    logical.splice(insertAt, 0, found.projectColumn);
     const reb = rebalance(logical);
     for (const r of reb) {
-      await db.update(columns).set({ position: r.position }).where(eq(columns.id, r.id));
+      await db
+        .update(projectColumns)
+        .set({ position: r.position })
+        .where(eq(projectColumns.id, r.id));
     }
   } else {
-    await db.update(columns).set({ position: newPos }).where(eq(columns.id, columnId));
+    await db
+      .update(projectColumns)
+      .set({ position: newPos })
+      .where(eq(projectColumns.id, projectColumnId));
   }
-  return db
-    .select()
-    .from(columns)
-    .where(eq(columns.projectId, target.projectId))
-    .orderBy(asc(columns.position));
+  return loadProjectColumns(db, projectId);
 }

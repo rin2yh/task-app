@@ -10,7 +10,7 @@ import {
   updateColumn,
 } from '../../db/repositories/columns';
 import type { AppEnv } from '../../env';
-import { NotFound } from '../../lib/errors';
+import { HttpError, NotFound } from '../../lib/errors';
 import { parseJson } from '../../lib/validation';
 
 const CreateInput = z.object({
@@ -63,8 +63,9 @@ columnRoutes.delete('/:id', csrfGuard, async (c) => {
   const user = c.var.authUser;
   const id = c.req.param('id');
   const db = createDb(c.env.DB);
-  const ok = await deleteColumn(db, id, user.id);
-  if (!ok) throw NotFound();
+  const result = await deleteColumn(db, id, user.id);
+  if (result.system) throw new HttpError(409, 'system column cannot be deleted');
+  if (!result.ok) throw NotFound();
   return c.json({ ok: true });
 });
 

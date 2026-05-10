@@ -43,10 +43,10 @@ tasksByColumnRoutes.use('*', requireAuthentication);
 
 tasksByColumnRoutes.post('/:columnId/tasks', csrfGuard, async (c) => {
   const user = c.var.authUser;
-  const columnId = c.req.param('columnId');
+  const projectColumnId = c.req.param('columnId');
   const input = await parseJson(c, CreateInput);
   const db = createDb(c.env.DB);
-  const task = await createTask(db, columnId, user.id, input);
+  const task = await createTask(db, projectColumnId, user.id, input);
   if (!task) throw NotFound();
   return c.json({ task }, 201);
 });
@@ -78,7 +78,11 @@ taskRoutes.post('/:id/move', csrfGuard, async (c) => {
   const id = c.req.param('id');
   const input = await parseJson(c, MoveInput);
   const db = createDb(c.env.DB);
-  const result = await moveTask(db, id, user.id, input);
+  const result = await moveTask(db, id, user.id, {
+    toProjectColumnId: input.toColumnId,
+    beforeTaskId: input.beforeTaskId,
+    afterTaskId: input.afterTaskId,
+  });
   if (!result) throw NotFound();
   return c.json(result);
 });

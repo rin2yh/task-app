@@ -43,7 +43,7 @@ describe('projects CRUD', () => {
     expect(del.status).toBe(200);
   });
 
-  it('default 3 columns are created with project', async ({ fetch }) => {
+  it('default columns are created with project (no_status + 3 user)', async ({ fetch }) => {
     const u = await createTestUser('with-cols');
     const headers = {
       cookie: u.cookies,
@@ -61,7 +61,13 @@ describe('projects CRUD', () => {
       headers: { cookie: u.cookies },
     });
     expect(cols.status).toBe(200);
-    const body = (await cols.json()) as { columns: Array<{ name: string }> };
-    expect(body.columns.map((c) => c.name)).toEqual(['Todo', 'In Progress', 'Done']);
+    const body = (await cols.json()) as { columns: Array<{ name: string; isSystem: boolean }> };
+    expect(body.columns.map((c) => c.name)).toEqual([
+      'ステータスなし',
+      'Todo',
+      'In Progress',
+      'Done',
+    ]);
+    expect(body.columns.map((c) => c.isSystem)).toEqual([true, false, false, false]);
   });
 });

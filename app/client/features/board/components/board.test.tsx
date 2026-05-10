@@ -6,14 +6,14 @@ import { describe, expect, it } from 'vitest';
 import { Board } from './board';
 
 const cols: Column[] = [
-  { id: 'c1', projectId: 'p', name: 'Todo', position: 1, createdAt: 0 },
-  { id: 'c2', projectId: 'p', name: 'Done', position: 2, createdAt: 0 },
+  { id: 'c1', projectId: 'p', columnId: 'uc1', name: 'Todo', position: 1, isSystem: false },
+  { id: 'c2', projectId: 'p', columnId: 'uc2', name: 'Done', position: 2, isSystem: false },
 ];
 
 const tasks: TaskWithLabels[] = [
   {
     id: 't1',
-    columnId: 'c1',
+    projectColumnId: 'c1',
     title: 'first',
     description: null,
     priority: 'medium',

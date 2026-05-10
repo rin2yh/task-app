@@ -5,7 +5,7 @@ import { TaskDialog } from './task-dialog';
 
 const task: TaskWithLabels = {
   id: 't1',
-  columnId: 'c1',
+  projectColumnId: 'c1',
   title: 'hello',
   description: 'world',
   priority: 'medium',

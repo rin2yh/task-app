@@ -24,14 +24,14 @@ async function setup(fetch: Fetch) {
 
   const [col0, col1] = cols;
   if (!col0 || !col1) throw new Error('expected at least 2 columns');
-  const created: Array<{ id: string; columnId: string }> = [];
+  const created: Array<{ id: string; projectColumnId: string }> = [];
   for (let i = 0; i < 3; i++) {
     const r = await fetch(`/columns/${col0.id}/tasks`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ title: `t${i}` }),
     });
-    created.push(((await r.json()) as { task: { id: string; columnId: string } }).task);
+    created.push(((await r.json()) as { task: { id: string; projectColumnId: string } }).task);
   }
   const [t0, t1, t2] = created;
   if (!t0 || !t1 || !t2) throw new Error('expected 3 tasks');
@@ -52,10 +52,10 @@ describe('tasks move (column-to-column + within-column)', () => {
     });
     expect(r.status).toBe(200);
     const body = (await r.json()) as {
-      task: { columnId: string };
+      task: { projectColumnId: string };
       tasksInColumn: Array<{ id: string }>;
     };
-    expect(body.task.columnId).toBe(col1.id);
+    expect(body.task.projectColumnId).toBe(col1.id);
     expect(body.tasksInColumn.map((t) => t.id)).toContain(t0.id);
   });
 

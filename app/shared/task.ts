@@ -4,7 +4,7 @@ import { PrioritySchema } from './priority';
 
 export const TaskSchema = z.object({
   id: z.string(),
-  columnId: z.string(),
+  projectColumnId: z.string(),
   title: z.string().min(1).max(200),
   description: z.string().max(10_000).nullable(),
   priority: PrioritySchema,

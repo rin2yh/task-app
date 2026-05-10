@@ -20,61 +20,14 @@ export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Pr
 
   const tasksByColumn = new Map<string, TaskWithLabels[]>();
   for (const c of columns) tasksByColumn.set(c.id, []);
-  const orphanTasks: TaskWithLabels[] = [];
   for (const t of tasks) {
-    const list = tasksByColumn.get(t.columnId);
+    const list = tasksByColumn.get(t.projectColumnId);
     if (list) list.push(t);
-    else orphanTasks.push(t);
   }
 
   return (
     <>
       <div className="mx-auto max-w-4xl space-y-6 p-6">
-        <section aria-labelledby="col-no-status">
-          <h2 id="col-no-status" className="mb-2 text-sm font-semibold text-muted-foreground">
-            ステータスなし <span className="text-xs">({orphanTasks.length})</span>
-          </h2>
-          {orphanTasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground">タスクがありません。</p>
-          ) : (
-            <ul className="space-y-2">
-              {orphanTasks.map((t) => (
-                <li key={t.id}>
-                  <Card
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`タスク: ${t.title}`}
-                    className="flex cursor-pointer flex-wrap items-center justify-between gap-3 border-dashed p-3 transition-colors hover:bg-accent/50"
-                    onClick={() => setOpenTask(t)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        setOpenTask(t);
-                      }
-                    }}
-                  >
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      <span className="font-medium leading-snug">{t.title}</span>
-                      {t.labels.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {t.labels.map((l) => (
-                            <LabelChip key={l.id} label={l} />
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      {t.dueDate ? (
-                        <span>期限: {new Date(t.dueDate).toLocaleDateString('ja-JP')}</span>
-                      ) : null}
-                      <PriorityBadge priority={t.priority} />
-                    </div>
-                  </Card>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
         {columns.length === 0 ? (
           <p className="text-sm text-muted-foreground">列がありません。</p>
         ) : null}
@@ -95,7 +48,11 @@ export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Pr
                         role="button"
                         tabIndex={0}
                         aria-label={`タスク: ${t.title}`}
-                        className="flex cursor-pointer flex-wrap items-center justify-between gap-3 p-3 transition-colors hover:bg-accent/50"
+                        className={
+                          c.isSystem
+                            ? 'flex cursor-pointer flex-wrap items-center justify-between gap-3 border-dashed p-3 transition-colors hover:bg-accent/50'
+                            : 'flex cursor-pointer flex-wrap items-center justify-between gap-3 p-3 transition-colors hover:bg-accent/50'
+                        }
                         onClick={() => setOpenTask(t)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {

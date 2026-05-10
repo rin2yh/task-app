@@ -28,22 +28,30 @@ export function Column({
     data: { type: 'column', columnId: column.id },
   });
   return (
-    <div className="flex w-80 shrink-0 flex-col gap-2 rounded-xl bg-secondary p-3">
+    <div
+      className={
+        column.isSystem
+          ? 'flex w-80 shrink-0 flex-col gap-2 rounded-xl border border-dashed bg-muted/40 p-3'
+          : 'flex w-80 shrink-0 flex-col gap-2 rounded-xl bg-secondary p-3'
+      }
+    >
       <header className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">{column.name}</h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="text-destructive hover:text-destructive"
-          aria-label={`列 ${column.name} を削除`}
-          loading={deleting}
-          loadingText="削除中…"
-          onClick={() => onDeleteColumn(column.id)}
-        >
-          <Trash2 className="size-3.5" />
-          削除
-        </Button>
+        {column.isSystem ? null : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-destructive hover:text-destructive"
+            aria-label={`列 ${column.name} を削除`}
+            loading={deleting}
+            loadingText="削除中…"
+            onClick={() => onDeleteColumn(column.id)}
+          >
+            <Trash2 className="size-3.5" />
+            削除
+          </Button>
+        )}
       </header>
       <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
         <div ref={setNodeRef} className="flex min-h-10 flex-col gap-2">

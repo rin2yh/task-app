@@ -21,7 +21,6 @@ import { useState } from 'react';
 import { buildInitialState, useOptimisticBoard } from '../hooks/use-optimistic-board';
 import { AddColumn } from './add-column';
 import { Column } from './column';
-import { NoStatusColumn } from './no-status-column';
 import { TaskDialog } from './task-dialog';
 
 interface Props {
@@ -140,16 +139,10 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
     if (result.ok) board.removeColumnLocal(id);
   };
 
-  const knownColumnIds = new Set(board.state.columns.map((c) => c.id));
-  const orphanTasks = Object.entries(board.state.tasksByColumn)
-    .filter(([id]) => !knownColumnIds.has(id))
-    .flatMap(([, ts]) => ts);
-
   return (
     <>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <div className="flex items-start gap-4 overflow-x-auto p-4">
-          <NoStatusColumn tasks={orphanTasks} onSelectTask={setOpenTask} />
           {board.state.columns.map((c) => (
             <Column
               key={c.id}
@@ -173,14 +166,16 @@ export function Board({ projectId, columns, tasks, labels, csrfToken }: Props) {
           onClose={() => setOpenTask(null)}
           onUpdated={(t) => {
             board.replaceTasksForColumnLocal(
-              t.columnId,
-              (board.state.tasksByColumn[t.columnId] ?? []).map((x) => (x.id === t.id ? t : x)),
+              t.projectColumnId,
+              (board.state.tasksByColumn[t.projectColumnId] ?? []).map((x) =>
+                x.id === t.id ? t : x,
+              ),
             );
           }}
           onDeleted={(t) => {
             board.replaceTasksForColumnLocal(
-              t.columnId,
-              (board.state.tasksByColumn[t.columnId] ?? []).filter((x) => x.id !== t.id),
+              t.projectColumnId,
+              (board.state.tasksByColumn[t.projectColumnId] ?? []).filter((x) => x.id !== t.id),
             );
             setOpenTask(null);
           }}

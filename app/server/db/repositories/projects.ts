@@ -1,7 +1,13 @@
 import { and, asc, eq } from 'drizzle-orm';
 import { POSITION_STEP } from '../../lib/position';
 import type { Database } from '../client';
-import { columns, type DbProject, projects } from '../schema';
+import {
+  type DbProject,
+  projectColumns,
+  projects,
+  SYSTEM_COLUMN_NO_STATUS,
+  userColumns,
+} from '../schema';
 import { ulid } from '../ulid';
 
 export async function listProjectsByOwner(db: Database, ownerId: number): Promise<DbProject[]> {
@@ -46,17 +52,30 @@ export async function createProject(
     updatedAt: now,
   };
   await db.insert(projects).values(project);
-  // 既定 3 列
+
+  await db.insert(projectColumns).values({
+    id: ulid(),
+    projectId: id,
+    columnId: SYSTEM_COLUMN_NO_STATUS,
+    position: POSITION_STEP,
+  });
+
   const defaults = ['Todo', 'In Progress', 'Done'];
-  await db.insert(columns).values(
-    defaults.map((name, idx) => ({
+  for (let i = 0; i < defaults.length; i++) {
+    const userColumnId = ulid();
+    await db.insert(userColumns).values({
+      id: userColumnId,
+      ownerId,
+      name: defaults[i] ?? '',
+      createdAt: now,
+    });
+    await db.insert(projectColumns).values({
       id: ulid(),
       projectId: id,
-      name,
-      position: (idx + 1) * POSITION_STEP,
-      createdAt: now,
-    })),
-  );
+      columnId: userColumnId,
+      position: (i + 2) * POSITION_STEP,
+    });
+  }
   return project;
 }
 
