@@ -10,19 +10,6 @@ on:
         options:
           - develop
           - production
-      project_number:
-        description: GitHub Projects v2 number to import from
-        type: string
-        required: true
-      project_owner:
-        description: Project owner (org or user). Empty = repository owner.
-        type: string
-        required: false
-        default: ''
-      user_login:
-        description: Owner GitHub login (must already exist in target users table)
-        type: string
-        required: true
 
 permissions:
   contents: read
@@ -52,6 +39,18 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       - uses: ./.github/actions/setup
 
+      # PROJECTS_READ_TOKEN が未設定だと `gh project item-list` が exit 4 (auth 失敗) で
+      # 落ちるが、ログだけだと「token がない」のか「scope が足りない」のか分からない。
+      # 入口で secret 自体の有無だけ先に判定し、未設定ならどこに何を登録するかを明示する。
+      - name: Verify PROJECTS_READ_TOKEN is set
+        env:
+          HAS_TOKEN: ${{ secrets.PROJECTS_READ_TOKEN != '' }}
+        run: |
+          if [ "$HAS_TOKEN" != "true" ]; then
+            echo "::error::secrets.PROJECTS_READ_TOKEN is not configured. Create a PAT with 'read:project' scope (classic) or 'Projects: Read' permission (fine-grained), then add it at Settings → Secrets and variables → Actions → New repository secret."
+            exit 1
+          fi
+
       # importer 自身の重複チェック (--force なしで即終了) と同じ条件をワークフロー
       # 入口にも置く。CI 上で誤って 2 回押されても重複 column / task が生成されない。
       - name: Check existing import
@@ -71,27 +70,24 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # 単一ユーザー (rin2yh) 専用の importer なので owner / project / user-login は固定。
+      # `--owner @me` は viewer.login を使うので owner type 解決の追加 scope を要求しない。
       - name: Fetch GH project items
         if: steps.check.outputs.skip != 'true'
-        env:
-          PROJECT_OWNER: ${{ inputs.project_owner || github.repository_owner }}
-          PROJECT_NUMBER: ${{ inputs.project_number }}
         run: |
           set -euo pipefail
           mkdir -p tmp
-          gh project item-list "$PROJECT_NUMBER" \
-            --owner "$PROJECT_OWNER" \
+          gh project item-list 7 \
+            --owner @me \
             --format json \
             --limit 1000 \
             > tmp/project-items.json
 
       - name: Run importer
         if: steps.check.outputs.skip != 'true'
-        env:
-          USER_LOGIN: ${{ inputs.user_login }}
         run: |
           pnpm import:issues \
-            --user-login "$USER_LOGIN" \
+            --user-login rin2yh \
             --remote \
             --env "$CLOUDFLARE_ENV" \
             --binding "$D1_NAME"
