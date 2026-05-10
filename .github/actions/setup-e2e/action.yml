@@ -4,16 +4,27 @@ description: Cache Playwright browsers, install Playwright + chromium, stage .de
 runs:
   using: composite
   steps:
+    - name: Resolve Playwright version
+      id: playwright-version
+      shell: bash
+      working-directory: app
+      run: echo "version=$(jq -r .version node_modules/@playwright/test/package.json)" >> "$GITHUB_OUTPUT"
     - name: Cache Playwright browsers
+      id: playwright-cache
       uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
       with:
         path: ~/.cache/ms-playwright
-        key: playwright-${{ hashFiles('app/pnpm-lock.yaml') }}
-        restore-keys: playwright-
-    - name: Install Playwright (chromium)
+        key: playwright-${{ runner.os }}-${{ runner.arch }}-chromium-${{ steps.playwright-version.outputs.version }}
+    - name: Install Playwright browsers
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
       shell: bash
       working-directory: app
       run: pnpm exec playwright install --with-deps chromium
+    - name: Install Playwright system deps
+      if: steps.playwright-cache.outputs.cache-hit == 'true'
+      shell: bash
+      working-directory: app
+      run: pnpm exec playwright install-deps chromium
     - name: Stage .dev.vars for E2E
       shell: bash
       working-directory: app

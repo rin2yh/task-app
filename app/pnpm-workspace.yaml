@@ -12,4 +12,4 @@ allowBuilds:
 # このファイルを一時的に編集する。
 minimumReleaseAge: 20160
 minimumReleaseAgeIgnoreMissingTime: true
-minimumReleaseAgeStrict: false
+minimumReleaseAgeStrict: true

@@ -1,6 +1,6 @@
 ---
 name: gemini-review-loop
-description: PR で Gemini Code Assist のレビューに対応し、`/gemini review` を PR コメントで投げ、新しいレビューが来たらまた直す、を Gemini が指摘を出さなくなるまで繰り返す。Use when the user asks to "gemini レビューループ", "gemini のレビューがなくなるまで直して", "/gemini review を投げて直し続けて", or wants Gemini Code Assist to keep reviewing until clean.
+description: "PR で Gemini Code Assist のレビューに対応し、指摘がなくなるまで修正と再レビューを繰り返す skill。**一度でも Gemini の指摘に返信 / 修正する意図があれば即この skill に入る**。Use when the user asks to 'gemini レビューループ', 'gemini のレビューがなくなるまで直して', '/gemini review を投げて直し続けて', 'gemini のレビューに返信', 'gemini の指摘を直して', 'gemini の指摘に対応して', 'gemini のコメントに返信', 'gemini からの指摘を反映', 'gemini のレビューを反映して', or otherwise indicates any response (even just one) to a Gemini Code Assist review on a PR."
 ---
 
 # gemini-review-loop
@@ -10,7 +10,9 @@ description: PR で Gemini Code Assist のレビューに対応し、`/gemini re
 ## 前提
 
 - 対象 PR が現在のリポジトリに存在し、Gemini Code Assist app がインストールされている。
-- ユーザは「直近の Gemini レビューには既に対応済み (= push 済み)」の状態でこの skill を起動する想定。**最初の `/gemini review` 投稿は人間の review 対応より後**に行う。
+- **ユーザの依頼が「単発の修正や返信」のつもりでも、この skill に入ったら必ずループを回す。** 1 件の指摘への対応 (修正や返信) だけで終わらず、step 7 → step 3 → step 4 で次のレビューを待つ。ユーザが明示的に「もう止めて」と言うか、step 6 の終了条件を満たすまで抜けない。
+- 起動時の状態は問わない (まだ何も直していない / 既に直して push 済み どちらでも可)。未対応の Gemini comment が残っていれば step 2 で先に片付けてからループに入る。
+- **最初の `/gemini review` 投稿は、修正コミットを push した後**に行う (push 前に投げると 1 ラウンド無駄になる)。
 - GitHub 操作は `mcp__github__*` ツール経由 (`gh` CLI は使わない)。
 
 ## 手順
