@@ -2,24 +2,19 @@ import { Card } from '@client/components/ui/card';
 import { TaskDialog } from '@client/features/board/components/task-dialog';
 import { LabelChip } from '@client/features/labels/components/label-chip';
 import { PriorityBadge } from '@client/features/priority/components/priority-select';
-import { ViewSwitcher } from '@client/features/project/components/view-switcher';
-import { usePage } from '@inertiajs/react';
 import type { Column } from '@shared/column';
-import type { SharedProps } from '@shared/inertia';
 import type { Label } from '@shared/label';
-import type { Project as ProjectT } from '@shared/project';
 import type { TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
 
 interface Props {
-  project: ProjectT;
   columns: Column[];
   tasks: TaskWithLabels[];
   labels: Label[];
+  csrfToken: string;
 }
 
-export default function TaskList({ project, columns, tasks: initialTasks, labels }: Props) {
-  const { props: shared } = usePage<SharedProps>();
+export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Props) {
   const [tasks, setTasks] = useState<TaskWithLabels[]>(initialTasks);
   const [openTask, setOpenTask] = useState<TaskWithLabels | null>(null);
 
@@ -31,18 +26,8 @@ export default function TaskList({ project, columns, tasks: initialTasks, labels
   }
 
   return (
-    <div className="min-h-screen">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-card px-6 py-4">
-        <div className="flex items-center gap-4">
-          <a href="/dashboard" className="text-sm text-primary hover:underline">
-            ← 戻る
-          </a>
-          <h1 className="text-lg font-semibold tracking-tight">{project.name}</h1>
-        </div>
-        <ViewSwitcher projectId={project.id} current="list" />
-      </header>
-
-      <main className="mx-auto max-w-4xl space-y-6 p-6">
+    <>
+      <div className="mx-auto max-w-4xl space-y-6 p-6">
         {columns.length === 0 ? (
           <p className="text-sm text-muted-foreground">列がありません。</p>
         ) : null}
@@ -96,13 +81,13 @@ export default function TaskList({ project, columns, tasks: initialTasks, labels
             </section>
           );
         })}
-      </main>
+      </div>
 
       {openTask ? (
         <TaskDialog
           task={openTask}
           allLabels={labels}
-          csrfToken={shared.csrfToken}
+          csrfToken={csrfToken}
           onClose={() => setOpenTask(null)}
           onUpdated={(t) => {
             setTasks((prev) => prev.map((x) => (x.id === t.id ? t : x)));
@@ -114,6 +99,6 @@ export default function TaskList({ project, columns, tasks: initialTasks, labels
           }}
         />
       ) : null}
-    </div>
+    </>
   );
 }

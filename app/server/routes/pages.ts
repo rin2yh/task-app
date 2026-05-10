@@ -1,4 +1,4 @@
-import { type Context, Hono } from 'hono';
+import { Hono } from 'hono';
 import { requireAuthentication } from '../auth/middleware';
 import { createDb } from '../db/client';
 import { listColumnsForProject } from '../db/repositories/columns';
@@ -10,25 +10,6 @@ import { buildSharedProps } from '../inertia/share';
 import { NotFound } from '../lib/errors';
 
 export const pageRoutes = new Hono<AppEnv>();
-
-async function loadProjectPageProps(c: Context<AppEnv>, id: string) {
-  const user = c.var.authUser;
-  const db = createDb(c.env.DB);
-  const project = await getProjectByIdForOwner(db, id, user.id);
-  if (!project) throw NotFound();
-  const [cols, tasksAll, labels] = await Promise.all([
-    listColumnsForProject(db, id, user.id),
-    listTasksForProject(db, id),
-    listLabelsForProject(db, id, user.id),
-  ]);
-  return {
-    ...buildSharedProps(c),
-    project,
-    columns: cols ?? [],
-    tasks: tasksAll,
-    labels: labels ?? [],
-  };
-}
 
 pageRoutes.get('/auth/login', async (c) => {
   if (c.get('user')) return c.redirect('/dashboard');
@@ -52,9 +33,21 @@ pageRoutes.get('/dashboard', requireAuthentication, async (c) => {
 });
 
 pageRoutes.get('/projects/:id', requireAuthentication, async (c) => {
-  return c.render('project', await loadProjectPageProps(c, c.req.param('id')));
-});
-
-pageRoutes.get('/projects/:id/tasks', requireAuthentication, async (c) => {
-  return c.render('task-list', await loadProjectPageProps(c, c.req.param('id')));
+  const user = c.var.authUser;
+  const id = c.req.param('id');
+  const db = createDb(c.env.DB);
+  const project = await getProjectByIdForOwner(db, id, user.id);
+  if (!project) throw NotFound();
+  const [cols, tasksAll, labels] = await Promise.all([
+    listColumnsForProject(db, id, user.id),
+    listTasksForProject(db, id),
+    listLabelsForProject(db, id, user.id),
+  ]);
+  return c.render('project', {
+    ...buildSharedProps(c),
+    project,
+    columns: cols ?? [],
+    tasks: tasksAll,
+    labels: labels ?? [],
+  });
 });

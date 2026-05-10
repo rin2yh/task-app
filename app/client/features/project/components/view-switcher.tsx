@@ -1,41 +1,49 @@
 import { cn } from '@client/lib/utils';
 
-type ProjectView = 'board' | 'list';
+export type ProjectView = 'board' | 'list';
 
-const linkBase = 'rounded-md px-3 py-1.5';
+const tabBase = 'rounded-md px-3 py-1.5';
 const activeClass = 'bg-primary text-primary-foreground';
 const inactiveClass =
   'border border-input bg-background hover:bg-accent hover:text-accent-foreground';
 
-export function ViewSwitcher({ projectId, current }: { projectId: string; current: ProjectView }) {
+export function ViewSwitcher({
+  value,
+  onChange,
+}: {
+  value: ProjectView;
+  onChange: (v: ProjectView) => void;
+}) {
   return (
-    <nav aria-label="ビュー切替" className="flex gap-2 text-sm">
-      <Tab href={`/projects/${projectId}`} active={current === 'board'}>
+    <div role="tablist" aria-label="ビュー切替" className="flex gap-2 text-sm">
+      <Tab active={value === 'board'} onClick={() => onChange('board')}>
         ボード
       </Tab>
-      <Tab href={`/projects/${projectId}/tasks`} active={current === 'list'}>
+      <Tab active={value === 'list'} onClick={() => onChange('list')}>
         リスト
       </Tab>
-    </nav>
+    </div>
   );
 }
 
 function Tab({
-  href,
   active,
+  onClick,
   children,
 }: {
-  href: string;
   active: boolean;
+  onClick: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <a
-      href={href}
-      aria-current={active ? 'page' : undefined}
-      className={cn(linkBase, active ? activeClass : inactiveClass)}
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={cn(tabBase, active ? activeClass : inactiveClass)}
     >
       {children}
-    </a>
+    </button>
   );
 }

@@ -32,15 +32,12 @@ export class ProjectPage {
   }
 
   async openListView() {
-    await this.page
-      .getByRole('navigation', { name: 'ビュー切替' })
-      .getByRole('link', { name: 'リスト' })
-      .click();
-    await expect(
-      this.page
-        .getByRole('navigation', { name: 'ビュー切替' })
-        .getByRole('link', { name: 'リスト' }),
-    ).toHaveAttribute('aria-current', 'page');
+    const tablist = this.page.getByRole('tablist', { name: 'ビュー切替' });
+    await tablist.getByRole('tab', { name: 'リスト' }).click();
+    await expect(tablist.getByRole('tab', { name: 'リスト' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
   }
 
   async expectTaskInListView(columnName: string, taskTitle: string) {

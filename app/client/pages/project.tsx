@@ -1,7 +1,8 @@
 import { Button } from '@client/components/ui/button';
 import { Input } from '@client/components/ui/input';
 import { Board } from '@client/features/board/components/board';
-import { ViewSwitcher } from '@client/features/project/components/view-switcher';
+import { TaskList } from '@client/features/project/components/task-list';
+import { type ProjectView, ViewSwitcher } from '@client/features/project/components/view-switcher';
 import { router, usePage } from '@inertiajs/react';
 import type { Column } from '@shared/column';
 import type { SharedProps } from '@shared/inertia';
@@ -19,6 +20,7 @@ interface Props {
 
 export default function Project({ project, columns, tasks, labels }: Props) {
   const { props: shared } = usePage<SharedProps>();
+  const [view, setView] = useState<ProjectView>('board');
   const [newColumnName, setNewColumnName] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -55,23 +57,29 @@ export default function Project({ project, columns, tasks, labels }: Props) {
           <h1 className="text-lg font-semibold tracking-tight">{project.name}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <ViewSwitcher projectId={project.id} current="board" />
-          <form onSubmit={addColumn} className="flex gap-2">
-            <Input
-              type="text"
-              placeholder="新しい列名"
-              value={newColumnName}
-              onChange={(e) => setNewColumnName(e.target.value)}
-              maxLength={50}
-              className="w-48"
-            />
-            <Button type="submit" variant="outline" size="sm" disabled={!canAddColumn}>
-              列追加
-            </Button>
-          </form>
+          <ViewSwitcher value={view} onChange={setView} />
+          {view === 'board' ? (
+            <form onSubmit={addColumn} className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="新しい列名"
+                value={newColumnName}
+                onChange={(e) => setNewColumnName(e.target.value)}
+                maxLength={50}
+                className="w-48"
+              />
+              <Button type="submit" variant="outline" size="sm" disabled={!canAddColumn}>
+                列追加
+              </Button>
+            </form>
+          ) : null}
         </div>
       </header>
-      <Board columns={columns} tasks={tasks} labels={labels} csrfToken={shared.csrfToken} />
+      {view === 'board' ? (
+        <Board columns={columns} tasks={tasks} labels={labels} csrfToken={shared.csrfToken} />
+      ) : (
+        <TaskList columns={columns} tasks={tasks} labels={labels} csrfToken={shared.csrfToken} />
+      )}
     </div>
   );
 }
