@@ -49,7 +49,6 @@ const DEFAULTS = {
   dueField: 'Due Date',
   projectName: 'task_project (imported)',
   d1Binding: 'task-app-local',
-  noStatus: '(no status)',
   titleMax: 200,
   descriptionMax: 10_000,
   defaultColor: '#999999',
@@ -162,6 +161,7 @@ interface BuildResult {
   tasks: number;
   issues: number;
   drafts: number;
+  skipped: number;
 }
 
 function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): BuildResult {
@@ -179,6 +179,7 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
   let issues = 0;
   let drafts = 0;
   let tasks = 0;
+  let skipped = 0;
   let nextColumnPos = 1;
 
   // No explicit BEGIN/COMMIT: D1 remote (Durable Object SQL) rejects user-managed
@@ -189,7 +190,12 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
   );
 
   for (const item of items) {
-    const status = getStatus(item, statusField) ?? DEFAULTS.noStatus;
+    // tasks.column_id は NOT NULL なので、Status (列) のない issue は import しない。
+    const status = getStatus(item, statusField);
+    if (status === null) {
+      skipped++;
+      continue;
+    }
     let columnId = columnIdByStatus.get(status);
     if (!columnId) {
       columnId = ulid();
@@ -247,6 +253,7 @@ function buildImportSql(items: GhItem[], ownerId: number, args: ParsedArgs): Bui
     tasks,
     issues,
     drafts,
+    skipped,
   };
 }
 
@@ -355,7 +362,7 @@ async function main(): Promise<void> {
   }
 
   console.log(
-    `created project=1, columns=${result.columns}, labels=${result.labels}, tasks=${result.tasks} (issues=${result.issues}, drafts=${result.drafts})`,
+    `created project=1, columns=${result.columns}, labels=${result.labels}, tasks=${result.tasks} (issues=${result.issues}, drafts=${result.drafts}, skipped=${result.skipped})`,
   );
 }
 
