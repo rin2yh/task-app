@@ -89,44 +89,30 @@ await page.screenshot({ path: `${OUT}/mobile-keyboard.png` });
 
 ## 4. PR に貼る
 
-PR diff を汚さないよう、専用 orphan ブランチ `screenshots` に別 worktree から push する。
+PR ブランチ直下に screenshot commit を 1 つ載せて raw URL で参照する。GitHub には PR コメントに画像を直接アップロードする公開 API がないので、PR 本体に push するのが一番シンプル。
 
 ```bash
-PR=88
-SHA=$(git rev-parse --short HEAD)
-WT=/tmp/shot-wt
-
-if git ls-remote --exit-code --heads origin screenshots >/dev/null 2>&1; then
-  git fetch origin screenshots
-  git worktree add "$WT" screenshots
-else
-  # 初回: detached worktree を切ってから orphan ブランチに切り替えて空 commit
-  git worktree add --detach "$WT" HEAD
-  git -C "$WT" checkout --orphan screenshots
-  git -C "$WT" rm -rf . 2>/dev/null || true
-  git -C "$WT" commit --allow-empty -m "init screenshots branch"
-fi
-
-mkdir -p "$WT/$PR/$SHA"
-cp /tmp/shots/*.png "$WT/$PR/$SHA/"
-git -C "$WT" add .
-git -C "$WT" commit -m "shot: PR #$PR @ $SHA"
-git -C "$WT" push -u origin screenshots
-git worktree remove "$WT"
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+mkdir -p ".claude/screenshots"
+cp /tmp/shots/*.png .claude/screenshots/
+git add .claude/screenshots/
+git commit -m "chore(screenshots): UI snapshot for $BRANCH"
+git push origin "$BRANCH"
+SHA=$(git rev-parse HEAD)
 ```
 
-そのあと `mcp__github__add_issue_comment` で本文に画像を埋める:
+そのあと `mcp__github__add_issue_comment` で本文に画像を埋める。URL はコミット SHA 固定にして、後で squash されてもリンクが死なないようにする (commit が PR に紐付いている限り GC されない)。
 
 ```
 ## UI screenshots — `<short-sha>`
 
 | | mobile (390×844) | desktop (1280×800) |
 | --- | --- | --- |
-| no keyboard | ![](https://raw.githubusercontent.com/rin2yh/task-app/screenshots/<pr>/<sha>/mobile.png) | ![](https://raw.githubusercontent.com/rin2yh/task-app/screenshots/<pr>/<sha>/desktop.png) |
-| with keyboard | ![](https://raw.githubusercontent.com/rin2yh/task-app/screenshots/<pr>/<sha>/mobile-keyboard.png) | — |
+| no keyboard | ![](https://raw.githubusercontent.com/rin2yh/task-app/<full-sha>/.claude/screenshots/mobile.png) | ![](https://raw.githubusercontent.com/rin2yh/task-app/<full-sha>/.claude/screenshots/desktop.png) |
+| with keyboard | ![](https://raw.githubusercontent.com/rin2yh/task-app/<full-sha>/.claude/screenshots/mobile-keyboard.png) | — |
 ```
 
-orphan ブランチなので merge されず、PR の diff にも入らない。
+squash merge する場合: 検証が終わったら手動で `git rm -r .claude/screenshots && git commit` してから merge すれば main には残らない。残しても問題ないなら放置で OK。
 
 ## 5. 後片付け
 
@@ -139,6 +125,6 @@ rm -rf /tmp/shots /tmp/shot.mjs /tmp/shot-wt /tmp/vite.log
 ## やらないこと
 
 - `pnpm test:e2e` / `@playwright/test` を流用しない (上記 §1 のビルド不一致)
-- screenshot を PR ブランチ本体に commit しない (PR diff を汚す + merge 対象に入る)
+- 取り終わった `/tmp/shots` を repo に紛れ込ませて忘れない (`.claude/screenshots/` 経由で commit するときだけ含める)
 - `data-testid` ベースのロケータを書かない (`.claude/rules/e2e.md` §3)
 - `page.waitForTimeout` をロード待ちに使わない (アニメ完了の保険にだけ使う; `.claude/rules/e2e.md` §6)
