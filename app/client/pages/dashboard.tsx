@@ -12,7 +12,7 @@ import { useAuthentication } from '@client/hooks/use-authentication';
 import { Link, router, usePage } from '@inertiajs/react';
 import type { SharedProps } from '@shared/inertia';
 import type { Project } from '@shared/project';
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -24,6 +24,7 @@ export default function Dashboard({ projects }: Props) {
   const { user } = useAuthentication();
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [renameTarget, setRenameTarget] = useState<Project | null>(null);
   const trimmed = name.trim();
 
@@ -45,6 +46,21 @@ export default function Dashboard({ projects }: Props) {
       setName('');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const remove = async (id: string, name: string) => {
+    if (!confirm(`プロジェクト「${name}」を削除しますか？`)) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/projects/${id}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-Token': shared.csrfToken },
+      });
+      if (!res.ok) throw new Error(`Failed to delete project: ${res.status}`);
+      router.reload({ only: ['projects'] });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -88,28 +104,42 @@ export default function Dashboard({ projects }: Props) {
 
       <ul className="mt-4 space-y-2.5">
         {projects.map((p) => (
-          <li key={p.id} className="flex items-stretch gap-2">
-            <Link
-              href={`/projects/${p.id}`}
-              className="block flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Card className="h-full p-4 transition-colors hover:bg-accent/50">
+          <li key={p.id}>
+            <Card className="flex items-center gap-3 p-4 transition-colors hover:bg-accent/50">
+              <Link
+                href={`/projects/${p.id}`}
+                className="min-w-0 flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
                 <span className="font-medium text-primary">{p.name}</span>
                 {p.description ? (
                   <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
                 ) : null}
-              </Card>
-            </Link>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setRenameTarget(p)}
-              aria-label={`${p.name} の名前を変更`}
-              className="self-center"
-            >
-              <Pencil className="size-4" />
-            </Button>
+              </Link>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-label={`プロジェクト ${p.name} の名前を変更`}
+                disabled={deletingId === p.id}
+                onClick={() => setRenameTarget(p)}
+              >
+                <Pencil className="size-3.5" />
+                名前変更
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                aria-label={`プロジェクト ${p.name} を削除`}
+                loading={deletingId === p.id}
+                loadingText="削除中…"
+                onClick={() => remove(p.id, p.name)}
+              >
+                <Trash2 className="size-3.5" />
+                削除
+              </Button>
+            </Card>
           </li>
         ))}
         {projects.length === 0 ? (
