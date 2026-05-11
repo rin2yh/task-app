@@ -1,4 +1,4 @@
-import { isSystemColumn } from '@shared/column';
+import { type Column, isSystemColumn } from '@shared/column';
 import { and, asc, eq, max } from 'drizzle-orm';
 import {
   computeInsertPosition,
@@ -16,14 +16,6 @@ import {
 } from '../schema';
 import { ulid } from '../ulid';
 
-export interface ResolvedColumn {
-  id: string;
-  projectId: string;
-  columnId: string;
-  name: string;
-  position: number;
-}
-
 async function ensureProjectOwned(
   db: Database,
   projectId: string,
@@ -37,7 +29,7 @@ async function ensureProjectOwned(
   return rows.length > 0;
 }
 
-async function loadProjectColumns(db: Database, projectId: string): Promise<ResolvedColumn[]> {
+async function loadProjectColumns(db: Database, projectId: string): Promise<Column[]> {
   const rows = await db
     .select({
       pc: projectColumns,
@@ -68,7 +60,7 @@ export async function listColumnsForProject(
   db: Database,
   projectId: string,
   ownerId: number,
-): Promise<ResolvedColumn[] | null> {
+): Promise<Column[] | null> {
   const ok = await ensureProjectOwned(db, projectId, ownerId);
   if (!ok) return null;
   return loadProjectColumns(db, projectId);
@@ -83,7 +75,7 @@ export async function createColumn(
   projectId: string,
   ownerId: number,
   input: CreateColumnInput,
-): Promise<ResolvedColumn | null> {
+): Promise<Column | null> {
   const ok = await ensureProjectOwned(db, projectId, ownerId);
   if (!ok) return null;
   const maxRow = await db
@@ -157,7 +149,7 @@ export async function updateColumn(
   projectColumnId: string,
   ownerId: number,
   patch: { name?: string },
-): Promise<ResolvedColumn | null> {
+): Promise<Column | null> {
   const found = await lookupProjectColumn(db, projectColumnId, ownerId);
   if (!found) return null;
   if (isSystemColumn(found.projectColumn)) return null;
@@ -205,7 +197,7 @@ export async function reorderColumn(
   projectColumnId: string,
   ownerId: number,
   input: ReorderColumnInput,
-): Promise<ResolvedColumn[] | null> {
+): Promise<Column[] | null> {
   const found = await lookupProjectColumn(db, projectColumnId, ownerId);
   if (!found) return null;
   const projectId = found.projectColumn.projectId;
