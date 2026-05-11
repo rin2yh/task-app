@@ -3,7 +3,8 @@ import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-pool-worker
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig(async () => {
-  const migrations = await readD1Migrations(path.resolve(__dirname, '..', 'server/db/migrations'));
+  const dir = path.resolve(__dirname, '..');
+  const migrations = await readD1Migrations(path.resolve(dir, 'server/db/migrations'));
   return {
     plugins: [
       cloudflareTest({
@@ -19,9 +20,16 @@ export default defineConfig(async () => {
             TEST_MIGRATIONS: migrations,
           },
         },
-        wrangler: { configPath: path.resolve(__dirname, '..', 'wrangler.toml') },
+        wrangler: { configPath: path.resolve(dir, 'wrangler.toml') },
       }),
     ],
+    resolve: {
+      alias: {
+        '@server': path.resolve(dir, 'server'),
+        '@client': path.resolve(dir, 'client'),
+        '@shared': path.resolve(dir, 'shared'),
+      },
+    },
     test: {
       include: ['server/**/*.test.ts'],
       coverage: {

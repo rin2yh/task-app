@@ -1,3 +1,4 @@
+import { SYSTEM_COLUMN_NO_STATUS } from '@shared/column';
 import { beforeEach, describe, expect } from 'vitest';
 import { applyMigrations, createTestUser, it } from '../../../tests/helpers';
 
@@ -68,6 +69,6 @@ describe('projects CRUD', () => {
       'In Progress',
       'Done',
     ]);
-    expect(body.columns[0]?.columnId).toBe('no_status');
+    expect(body.columns[0]?.columnId).toBe(SYSTEM_COLUMN_NO_STATUS);
   });
 });

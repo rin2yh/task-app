@@ -1,5 +1,5 @@
+import { isSystemColumn } from '@shared/column';
 import { and, asc, eq, max } from 'drizzle-orm';
-import { isSystemColumn } from '../../../shared/column';
 import {
   computeInsertPosition,
   REBALANCE_THRESHOLD,
@@ -158,7 +158,7 @@ export async function updateColumn(
 ): Promise<ResolvedColumn | null> {
   const found = await lookupProjectColumn(db, projectColumnId, ownerId);
   if (!found) return null;
-  if (isSystemColumn({ columnId: found.projectColumn.columnId })) return null;
+  if (isSystemColumn(found.projectColumn)) return null;
   const userColumnId = found.userColumnId;
   if (!userColumnId) return null;
   if (patch.name !== undefined) {
@@ -180,9 +180,7 @@ export async function deleteColumn(
 ): Promise<{ ok: boolean; system: boolean }> {
   const found = await lookupProjectColumn(db, projectColumnId, ownerId);
   if (!found) return { ok: false, system: false };
-  if (isSystemColumn({ columnId: found.projectColumn.columnId })) {
-    return { ok: false, system: true };
-  }
+  if (isSystemColumn(found.projectColumn)) return { ok: false, system: true };
   await db.delete(projectColumns).where(eq(projectColumns.id, projectColumnId));
   if (found.userColumnId) {
     await db.delete(userColumns).where(eq(userColumns.id, found.userColumnId));

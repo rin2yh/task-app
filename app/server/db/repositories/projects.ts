@@ -1,5 +1,5 @@
+import { SYSTEM_COLUMN_NO_STATUS } from '@shared/column';
 import { and, asc, eq } from 'drizzle-orm';
-import { SYSTEM_COLUMN_NO_STATUS } from '../../../shared/column';
 import { POSITION_STEP } from '../../lib/position';
 import type { Database } from '../client';
 import { type DbProject, projectColumns, projects, userColumns } from '../schema';

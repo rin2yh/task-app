@@ -34,6 +34,7 @@ export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Pr
         ) : null}
         {columns.map((c) => {
           const ts = tasksByColumn.get(c.id) ?? [];
+          const system = isSystemColumn(c);
           return (
             <section key={c.id} aria-labelledby={`col-${c.id}`}>
               <h2 id={`col-${c.id}`} className="mb-2 text-sm font-semibold text-muted-foreground">
@@ -51,7 +52,7 @@ export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Pr
                         aria-label={`タスク: ${t.title}`}
                         className={cn(
                           'flex cursor-pointer flex-wrap items-center justify-between gap-3 p-3 transition-colors hover:bg-accent/50',
-                          isSystemColumn(c) && 'border-dashed',
+                          system && 'border-dashed',
                         )}
                         onClick={() => setOpenTask(t)}
                         onKeyDown={(e) => {

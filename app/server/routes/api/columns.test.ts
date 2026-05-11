@@ -1,3 +1,4 @@
+import { SYSTEM_COLUMN_NO_STATUS } from '@shared/column';
 import { eq, sql } from 'drizzle-orm';
 import { beforeEach, describe, expect } from 'vitest';
 import {
@@ -62,7 +63,7 @@ describe('columns CRUD + reorder', () => {
       }
     ).columns;
     expect(list1.map((c) => c.name)).toEqual(['ステータスなし', 'Todo', 'In Progress', 'Done']);
-    const userCols = list1.filter((c) => c.columnId !== 'no_status');
+    const userCols = list1.filter((c) => c.columnId !== SYSTEM_COLUMN_NO_STATUS);
     const [todo, , done] = userCols;
     if (!todo || !done) throw new Error('expected 3 user columns');
     const reorder = await fetch(`/columns/${done.id}/reorder`, {
@@ -136,7 +137,7 @@ describe('columns CRUD + reorder', () => {
         })
       ).json()) as { columns: Array<{ id: string; columnId: string }> }
     ).columns;
-    const sys = list.find((c) => c.columnId === 'no_status');
+    const sys = list.find((c) => c.columnId === SYSTEM_COLUMN_NO_STATUS);
     if (!sys) throw new Error('expected a system column');
     const del = await fetch(`/columns/${sys.id}`, {
       method: 'DELETE',
