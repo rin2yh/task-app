@@ -180,15 +180,12 @@ export async function deleteColumn(
   const found = await lookupProjectColumn(db, projectColumnId, ownerId);
   if (!found) return { ok: false, system: false };
   if (isSystemColumn(found.projectColumn)) return { ok: false, system: true };
-  const deletePc = db.delete(projectColumns).where(eq(projectColumns.id, projectColumnId));
-  if (found.userColumnId) {
-    await db.batch([
-      deletePc,
-      db.delete(userColumns).where(eq(userColumns.id, found.userColumnId)),
-    ]);
-  } else {
-    await deletePc;
-  }
+  const userColumnId = found.userColumnId;
+  if (userColumnId == null) return { ok: false, system: false };
+  await db.batch([
+    db.delete(projectColumns).where(eq(projectColumns.id, projectColumnId)),
+    db.delete(userColumns).where(eq(userColumns.id, userColumnId)),
+  ]);
   return { ok: true, system: false };
 }
 
@@ -212,16 +209,17 @@ export async function reorderColumn(
     .from(projectColumns)
     .where(eq(projectColumns.projectId, projectId))
     .orderBy(asc(projectColumns.position));
-  if (input.afterColumnId && all.some((c) => c.id === input.afterColumnId && isSystemColumn(c))) {
-    return null;
-  }
   const others = all.filter((c) => c.id !== projectColumnId);
   const beforeIdx = input.beforeColumnId
     ? others.findIndex((c) => c.id === input.beforeColumnId)
     : -1;
   const afterIdx = input.afterColumnId ? others.findIndex((c) => c.id === input.afterColumnId) : -1;
   if (input.beforeColumnId && beforeIdx < 0) return null;
-  if (input.afterColumnId && afterIdx < 0) return null;
+  if (input.afterColumnId) {
+    if (afterIdx < 0) return null;
+    const afterCol = others[afterIdx];
+    if (afterCol && isSystemColumn(afterCol)) return null;
+  }
   const prevPos =
     beforeIdx >= 0
       ? (others[beforeIdx]?.position ?? null)
