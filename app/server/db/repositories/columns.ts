@@ -1,4 +1,5 @@
 import { and, asc, eq, max } from 'drizzle-orm';
+import { isSystemColumn } from '../../../shared/column';
 import {
   computeInsertPosition,
   REBALANCE_THRESHOLD,
@@ -21,7 +22,6 @@ export interface ResolvedColumn {
   columnId: string;
   name: string;
   position: number;
-  isSystem: boolean;
 }
 
 async function ensureProjectOwned(
@@ -42,7 +42,6 @@ async function loadProjectColumns(db: Database, projectId: string): Promise<Reso
     .select({
       pc: projectColumns,
       userName: userColumns.name,
-      systemId: systemColumns.id,
       systemName: systemColumns.name,
     })
     .from(projectColumns)
@@ -60,7 +59,6 @@ async function loadProjectColumns(db: Database, projectId: string): Promise<Reso
         columnId: r.pc.columnId,
         name,
         position: r.pc.position,
-        isSystem: r.systemId !== null,
       },
     ];
   });
@@ -114,13 +112,11 @@ export async function createColumn(
     columnId: userColumnId,
     name: input.name,
     position,
-    isSystem: false,
   };
 }
 
 interface ProjectColumnLookup {
   projectColumn: DbProjectColumn;
-  isSystem: boolean;
   userColumnId: string | null;
   name: string;
 }
@@ -135,7 +131,6 @@ async function lookupProjectColumn(
       pc: projectColumns,
       userColumnId: userColumns.id,
       userName: userColumns.name,
-      systemId: systemColumns.id,
       systemName: systemColumns.name,
     })
     .from(projectColumns)
@@ -150,7 +145,6 @@ async function lookupProjectColumn(
   if (name == null) return null;
   return {
     projectColumn: row.pc,
-    isSystem: row.systemId !== null,
     userColumnId: row.userColumnId,
     name,
   };
@@ -164,7 +158,7 @@ export async function updateColumn(
 ): Promise<ResolvedColumn | null> {
   const found = await lookupProjectColumn(db, projectColumnId, ownerId);
   if (!found) return null;
-  if (found.isSystem) return null;
+  if (isSystemColumn({ columnId: found.projectColumn.columnId })) return null;
   const userColumnId = found.userColumnId;
   if (!userColumnId) return null;
   if (patch.name !== undefined) {
@@ -176,7 +170,6 @@ export async function updateColumn(
     columnId: found.projectColumn.columnId,
     name: patch.name ?? found.name,
     position: found.projectColumn.position,
-    isSystem: false,
   };
 }
 
@@ -187,7 +180,9 @@ export async function deleteColumn(
 ): Promise<{ ok: boolean; system: boolean }> {
   const found = await lookupProjectColumn(db, projectColumnId, ownerId);
   if (!found) return { ok: false, system: false };
-  if (found.isSystem) return { ok: false, system: true };
+  if (isSystemColumn({ columnId: found.projectColumn.columnId })) {
+    return { ok: false, system: true };
+  }
   await db.delete(projectColumns).where(eq(projectColumns.id, projectColumnId));
   if (found.userColumnId) {
     await db.delete(userColumns).where(eq(userColumns.id, found.userColumnId));

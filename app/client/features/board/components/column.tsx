@@ -2,7 +2,7 @@ import { Button } from '@client/components/ui/button';
 import { cn } from '@client/lib/utils';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import type { Column as ColumnT } from '@shared/column';
+import { type Column as ColumnT, isSystemColumn } from '@shared/column';
 import type { TaskWithLabels } from '@shared/task';
 import { Plus, Trash2 } from 'lucide-react';
 import { TaskCard } from './task-card';
@@ -28,16 +28,17 @@ export function Column({
     id: `col-${column.id}`,
     data: { type: 'column', columnId: column.id },
   });
+  const system = isSystemColumn(column);
   return (
     <div
       className={cn(
         'flex w-80 shrink-0 flex-col gap-2 rounded-xl p-3',
-        column.isSystem ? 'border border-dashed bg-muted/40' : 'bg-secondary',
+        system ? 'border border-dashed bg-muted/40' : 'bg-secondary',
       )}
     >
       <header className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">{column.name}</h2>
-        {column.isSystem ? null : (
+        {system ? null : (
           <Button
             type="button"
             variant="ghost"

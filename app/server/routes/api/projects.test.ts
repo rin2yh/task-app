@@ -61,13 +61,13 @@ describe('projects CRUD', () => {
       headers: { cookie: u.cookies },
     });
     expect(cols.status).toBe(200);
-    const body = (await cols.json()) as { columns: Array<{ name: string; isSystem: boolean }> };
+    const body = (await cols.json()) as { columns: Array<{ name: string; columnId: string }> };
     expect(body.columns.map((c) => c.name)).toEqual([
       'ステータスなし',
       'Todo',
       'In Progress',
       'Done',
     ]);
-    expect(body.columns.map((c) => c.isSystem)).toEqual([true, false, false, false]);
+    expect(body.columns[0]?.columnId).toBe('no_status');
   });
 });

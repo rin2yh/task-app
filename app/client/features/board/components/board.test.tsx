@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { Board } from './board';
 
 const cols: Column[] = [
-  { id: 'c1', projectId: 'p', columnId: 'uc1', name: 'Todo', position: 1, isSystem: false },
-  { id: 'c2', projectId: 'p', columnId: 'uc2', name: 'Done', position: 2, isSystem: false },
+  { id: 'c1', projectId: 'p', columnId: 'uc1', name: 'Todo', position: 1 },
+  { id: 'c2', projectId: 'p', columnId: 'uc2', name: 'Done', position: 2 },
 ];
 
 const tasks: TaskWithLabels[] = [

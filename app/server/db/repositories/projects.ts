@@ -1,13 +1,8 @@
 import { and, asc, eq } from 'drizzle-orm';
+import { SYSTEM_COLUMN_NO_STATUS } from '../../../shared/column';
 import { POSITION_STEP } from '../../lib/position';
 import type { Database } from '../client';
-import {
-  type DbProject,
-  projectColumns,
-  projects,
-  SYSTEM_COLUMN_NO_STATUS,
-  userColumns,
-} from '../schema';
+import { type DbProject, projectColumns, projects, userColumns } from '../schema';
 import { ulid } from '../ulid';
 
 export async function listProjectsByOwner(db: Database, ownerId: number): Promise<DbProject[]> {

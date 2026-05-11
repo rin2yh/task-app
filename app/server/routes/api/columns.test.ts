@@ -58,11 +58,11 @@ describe('columns CRUD + reorder', () => {
           headers: { cookie: u.cookies },
         })
       ).json()) as {
-        columns: Array<{ id: string; name: string; position: number; isSystem: boolean }>;
+        columns: Array<{ id: string; columnId: string; name: string; position: number }>;
       }
     ).columns;
     expect(list1.map((c) => c.name)).toEqual(['ステータスなし', 'Todo', 'In Progress', 'Done']);
-    const userCols = list1.filter((c) => !c.isSystem);
+    const userCols = list1.filter((c) => c.columnId !== 'no_status');
     const [todo, , done] = userCols;
     if (!todo || !done) throw new Error('expected 3 user columns');
     const reorder = await fetch(`/columns/${done.id}/reorder`, {
@@ -134,9 +134,9 @@ describe('columns CRUD + reorder', () => {
         await fetch(`/projects/${p.id}/columns`, {
           headers: { cookie: u.cookies },
         })
-      ).json()) as { columns: Array<{ id: string; isSystem: boolean }> }
+      ).json()) as { columns: Array<{ id: string; columnId: string }> }
     ).columns;
-    const sys = list.find((c) => c.isSystem);
+    const sys = list.find((c) => c.columnId === 'no_status');
     if (!sys) throw new Error('expected a system column');
     const del = await fetch(`/columns/${sys.id}`, {
       method: 'DELETE',

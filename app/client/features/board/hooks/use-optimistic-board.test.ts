@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { buildInitialState, useOptimisticBoard } from './use-optimistic-board';
 
 const cols: Column[] = [
-  { id: 'c1', projectId: 'p', columnId: 'uc1', name: 'A', position: 1, isSystem: false },
-  { id: 'c2', projectId: 'p', columnId: 'uc2', name: 'B', position: 2, isSystem: false },
+  { id: 'c1', projectId: 'p', columnId: 'uc1', name: 'A', position: 1 },
+  { id: 'c2', projectId: 'p', columnId: 'uc2', name: 'B', position: 2 },
 ];
 const t = (id: string, projectColumnId: string, position: number): TaskWithLabels => ({
   id,
@@ -59,7 +59,6 @@ describe('useOptimisticBoard', () => {
         columnId: 'uc-mid',
         name: 'Mid',
         position: 1.5,
-        isSystem: false,
       });
     });
     expect(result.current.state.columns.map((c) => c.id)).toEqual(['c1', 'c-mid', 'c2']);

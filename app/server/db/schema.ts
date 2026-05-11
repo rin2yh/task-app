@@ -172,8 +172,6 @@ export const taskLabelsRelations = relations(taskLabels, ({ one }) => ({
   label: one(labels, { fields: [taskLabels.labelId], references: [labels.id] }),
 }));
 
-export const SYSTEM_COLUMN_NO_STATUS = 'no_status';
-
 export type DbUser = typeof users.$inferSelect;
 export type DbProject = typeof projects.$inferSelect;
 export type DbUserColumn = typeof userColumns.$inferSelect;

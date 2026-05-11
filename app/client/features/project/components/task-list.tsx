@@ -3,7 +3,7 @@ import { TaskDialog } from '@client/features/board/components/task-dialog';
 import { LabelChip } from '@client/features/labels/components/label-chip';
 import { PriorityBadge } from '@client/features/priority/components/priority-select';
 import { cn } from '@client/lib/utils';
-import type { Column } from '@shared/column';
+import { type Column, isSystemColumn } from '@shared/column';
 import type { Label } from '@shared/label';
 import type { TaskWithLabels } from '@shared/task';
 import { useState } from 'react';
@@ -51,7 +51,7 @@ export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Pr
                         aria-label={`タスク: ${t.title}`}
                         className={cn(
                           'flex cursor-pointer flex-wrap items-center justify-between gap-3 p-3 transition-colors hover:bg-accent/50',
-                          c.isSystem && 'border-dashed',
+                          isSystemColumn(c) && 'border-dashed',
                         )}
                         onClick={() => setOpenTask(t)}
                         onKeyDown={(e) => {
