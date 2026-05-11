@@ -1,5 +1,5 @@
 import type { Priority } from '@shared/priority';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, max } from 'drizzle-orm';
 import { computeInsertPosition, rebalance, tailPosition } from '../../lib/position';
 import type { Database } from '../client';
 import {
@@ -94,12 +94,11 @@ export async function createTask(
 ): Promise<DbTask | null> {
   const owned = await ownsProjectColumn(db, projectColumnId, ownerId);
   if (!owned) return null;
-  const all = await db
-    .select()
+  const maxRow = await db
+    .select({ value: max(tasks.position) })
     .from(tasks)
-    .where(eq(tasks.projectColumnId, projectColumnId))
-    .orderBy(asc(tasks.position));
-  const maxPos = all.at(-1)?.position ?? null;
+    .where(eq(tasks.projectColumnId, projectColumnId));
+  const maxPos = maxRow[0]?.value ?? null;
   const now = Date.now();
   const t: DbTask = {
     id: ulid(),
@@ -160,7 +159,7 @@ export async function deleteTask(db: Database, taskId: string, ownerId: number):
 }
 
 export interface MoveTaskInput {
-  toProjectColumnId: string;
+  toColumnId: string;
   beforeTaskId?: string | null;
   afterTaskId?: string | null;
 }
@@ -173,7 +172,7 @@ export async function moveTask(
 ): Promise<{ task: DbTask; tasksInColumn: DbTask[] } | null> {
   const owned = await ownsTask(db, taskId, ownerId);
   if (!owned) return null;
-  const destOwned = await ownsProjectColumn(db, input.toProjectColumnId, ownerId);
+  const destOwned = await ownsProjectColumn(db, input.toColumnId, ownerId);
   if (!destOwned) return null;
   if (destOwned.projectId !== owned.projectId) return null;
 
@@ -181,7 +180,7 @@ export async function moveTask(
     await db
       .select()
       .from(tasks)
-      .where(eq(tasks.projectColumnId, input.toProjectColumnId))
+      .where(eq(tasks.projectColumnId, input.toColumnId))
       .orderBy(asc(tasks.position))
   ).filter((t) => t.id !== taskId);
   const beforeIdx = input.beforeTaskId ? others.findIndex((t) => t.id === input.beforeTaskId) : -1;
@@ -214,7 +213,7 @@ export async function moveTask(
     }
     const movedTask: DbTask = {
       ...owned.task,
-      projectColumnId: input.toProjectColumnId,
+      projectColumnId: input.toColumnId,
     };
     logical.splice(insertAt, 0, movedTask);
     const reb = rebalance(logical);
@@ -223,7 +222,7 @@ export async function moveTask(
         await db
           .update(tasks)
           .set({
-            projectColumnId: input.toProjectColumnId,
+            projectColumnId: input.toColumnId,
             position: r.position,
             updatedAt: now,
           })
@@ -235,7 +234,7 @@ export async function moveTask(
   } else {
     await db
       .update(tasks)
-      .set({ projectColumnId: input.toProjectColumnId, position: newPos, updatedAt: now })
+      .set({ projectColumnId: input.toColumnId, position: newPos, updatedAt: now })
       .where(eq(tasks.id, taskId));
   }
   const updated = (await db.select().from(tasks).where(eq(tasks.id, taskId)).limit(1))[0];
@@ -243,7 +242,7 @@ export async function moveTask(
   const tasksInColumn = await db
     .select()
     .from(tasks)
-    .where(eq(tasks.projectColumnId, input.toProjectColumnId))
+    .where(eq(tasks.projectColumnId, input.toColumnId))
     .orderBy(asc(tasks.position));
   return { task: updated, tasksInColumn };
 }

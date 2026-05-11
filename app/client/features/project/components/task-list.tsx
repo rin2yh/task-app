@@ -2,6 +2,7 @@ import { Card } from '@client/components/ui/card';
 import { TaskDialog } from '@client/features/board/components/task-dialog';
 import { LabelChip } from '@client/features/labels/components/label-chip';
 import { PriorityBadge } from '@client/features/priority/components/priority-select';
+import { cn } from '@client/lib/utils';
 import type { Column } from '@shared/column';
 import type { Label } from '@shared/label';
 import type { TaskWithLabels } from '@shared/task';
@@ -48,11 +49,10 @@ export function TaskList({ columns, tasks: initialTasks, labels, csrfToken }: Pr
                         role="button"
                         tabIndex={0}
                         aria-label={`タスク: ${t.title}`}
-                        className={
-                          c.isSystem
-                            ? 'flex cursor-pointer flex-wrap items-center justify-between gap-3 border-dashed p-3 transition-colors hover:bg-accent/50'
-                            : 'flex cursor-pointer flex-wrap items-center justify-between gap-3 p-3 transition-colors hover:bg-accent/50'
-                        }
+                        className={cn(
+                          'flex cursor-pointer flex-wrap items-center justify-between gap-3 p-3 transition-colors hover:bg-accent/50',
+                          c.isSystem && 'border-dashed',
+                        )}
                         onClick={() => setOpenTask(t)}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {

@@ -28,7 +28,6 @@ export async function applyMigrations(): Promise<void> {
     'project_columns',
     'system_columns',
     'user_columns',
-    'columns',
     'projects',
     'sessions',
     'users',

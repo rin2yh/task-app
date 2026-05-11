@@ -1,4 +1,4 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, max } from 'drizzle-orm';
 import {
   computeInsertPosition,
   REBALANCE_THRESHOLD,
@@ -50,14 +50,20 @@ async function loadProjectColumns(db: Database, projectId: string): Promise<Reso
     .leftJoin(systemColumns, eq(systemColumns.id, projectColumns.columnId))
     .where(eq(projectColumns.projectId, projectId))
     .orderBy(asc(projectColumns.position));
-  return rows.map((r) => ({
-    id: r.pc.id,
-    projectId: r.pc.projectId,
-    columnId: r.pc.columnId,
-    name: r.systemName ?? r.userName ?? '',
-    position: r.pc.position,
-    isSystem: r.systemId !== null,
-  }));
+  return rows.flatMap((r) => {
+    const name = r.systemName ?? r.userName;
+    if (name == null) return [];
+    return [
+      {
+        id: r.pc.id,
+        projectId: r.pc.projectId,
+        columnId: r.pc.columnId,
+        name,
+        position: r.pc.position,
+        isSystem: r.systemId !== null,
+      },
+    ];
+  });
 }
 
 export async function listColumnsForProject(
@@ -82,13 +88,11 @@ export async function createColumn(
 ): Promise<ResolvedColumn | null> {
   const ok = await ensureProjectOwned(db, projectId, ownerId);
   if (!ok) return null;
-  const all = await db
-    .select()
+  const maxRow = await db
+    .select({ value: max(projectColumns.position) })
     .from(projectColumns)
-    .where(eq(projectColumns.projectId, projectId))
-    .orderBy(asc(projectColumns.position));
-  const maxPos = all.at(-1)?.position ?? null;
-  const position = tailPosition(maxPos);
+    .where(eq(projectColumns.projectId, projectId));
+  const position = tailPosition(maxRow[0]?.value ?? null);
   const now = Date.now();
   const userColumnId = ulid();
   await db.insert(userColumns).values({
@@ -118,6 +122,7 @@ interface ProjectColumnLookup {
   projectColumn: DbProjectColumn;
   isSystem: boolean;
   userColumnId: string | null;
+  name: string;
 }
 
 async function lookupProjectColumn(
@@ -129,7 +134,9 @@ async function lookupProjectColumn(
     .select({
       pc: projectColumns,
       userColumnId: userColumns.id,
+      userName: userColumns.name,
       systemId: systemColumns.id,
+      systemName: systemColumns.name,
     })
     .from(projectColumns)
     .innerJoin(projects, eq(projects.id, projectColumns.projectId))
@@ -139,10 +146,13 @@ async function lookupProjectColumn(
     .limit(1);
   const row = rows[0];
   if (!row) return null;
+  const name = row.systemName ?? row.userName;
+  if (name == null) return null;
   return {
     projectColumn: row.pc,
     isSystem: row.systemId !== null,
     userColumnId: row.userColumnId,
+    name,
   };
 }
 
@@ -160,8 +170,14 @@ export async function updateColumn(
   if (patch.name !== undefined) {
     await db.update(userColumns).set({ name: patch.name }).where(eq(userColumns.id, userColumnId));
   }
-  const list = await loadProjectColumns(db, found.projectColumn.projectId);
-  return list.find((c) => c.id === projectColumnId) ?? null;
+  return {
+    id: found.projectColumn.id,
+    projectId: found.projectColumn.projectId,
+    columnId: found.projectColumn.columnId,
+    name: patch.name ?? found.name,
+    position: found.projectColumn.position,
+    isSystem: false,
+  };
 }
 
 export async function deleteColumn(

@@ -61,12 +61,12 @@ export async function createProject(
   });
 
   const defaults = ['Todo', 'In Progress', 'Done'];
-  for (let i = 0; i < defaults.length; i++) {
+  for (const [i, name] of defaults.entries()) {
     const userColumnId = ulid();
     await db.insert(userColumns).values({
       id: userColumnId,
       ownerId,
-      name: defaults[i] ?? '',
+      name,
       createdAt: now,
     });
     await db.insert(projectColumns).values({

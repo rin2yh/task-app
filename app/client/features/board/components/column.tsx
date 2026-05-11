@@ -1,4 +1,5 @@
 import { Button } from '@client/components/ui/button';
+import { cn } from '@client/lib/utils';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { Column as ColumnT } from '@shared/column';
@@ -29,11 +30,10 @@ export function Column({
   });
   return (
     <div
-      className={
-        column.isSystem
-          ? 'flex w-80 shrink-0 flex-col gap-2 rounded-xl border border-dashed bg-muted/40 p-3'
-          : 'flex w-80 shrink-0 flex-col gap-2 rounded-xl bg-secondary p-3'
-      }
+      className={cn(
+        'flex w-80 shrink-0 flex-col gap-2 rounded-xl p-3',
+        column.isSystem ? 'border border-dashed bg-muted/40' : 'bg-secondary',
+      )}
     >
       <header className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">{column.name}</h2>

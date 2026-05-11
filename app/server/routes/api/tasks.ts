@@ -78,11 +78,7 @@ taskRoutes.post('/:id/move', csrfGuard, async (c) => {
   const id = c.req.param('id');
   const input = await parseJson(c, MoveInput);
   const db = createDb(c.env.DB);
-  const result = await moveTask(db, id, user.id, {
-    toProjectColumnId: input.toColumnId,
-    beforeTaskId: input.beforeTaskId,
-    afterTaskId: input.afterTaskId,
-  });
+  const result = await moveTask(db, id, user.id, input);
   if (!result) throw NotFound();
   return c.json(result);
 });
