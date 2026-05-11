@@ -220,6 +220,8 @@ export async function reorderColumn(
     ? others.findIndex((c) => c.id === input.beforeColumnId)
     : -1;
   const afterIdx = input.afterColumnId ? others.findIndex((c) => c.id === input.afterColumnId) : -1;
+  if (input.beforeColumnId && beforeIdx < 0) return null;
+  if (input.afterColumnId && afterIdx < 0) return null;
   const prevPos =
     beforeIdx >= 0
       ? (others[beforeIdx]?.position ?? null)

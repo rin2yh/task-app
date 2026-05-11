@@ -171,6 +171,30 @@ describe('columns CRUD + reorder', () => {
     expect(re.status).toBe(404);
   });
 
+  it('rejects reorder when beforeColumnId references an unknown column', async ({ fetch }) => {
+    const u = await createTestUser('badref');
+    const p = await createProject(fetch, u);
+    const list = (
+      (await (
+        await fetch(`/projects/${p.id}/columns`, {
+          headers: { cookie: u.cookies },
+        })
+      ).json()) as { columns: Array<{ id: string; columnId: string }> }
+    ).columns;
+    const userCol = list.find((c) => c.columnId !== SYSTEM_COLUMN_NO_STATUS);
+    if (!userCol) throw new Error('expected a user column');
+    const re = await fetch(`/columns/${userCol.id}/reorder`, {
+      method: 'POST',
+      headers: {
+        cookie: u.cookies,
+        'X-CSRF-Token': u.csrfToken,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ beforeColumnId: 'nonexistent' }),
+    });
+    expect(re.status).toBe(404);
+  });
+
   it('rejects placing a user column before the system column', async ({ fetch }) => {
     const u = await createTestUser('userbeforesys');
     const p = await createProject(fetch, u);
