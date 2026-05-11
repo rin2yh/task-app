@@ -9,13 +9,3 @@ variable "cloudflare_account_id" {
   description = "Cloudflare Account ID"
 }
 
-variable "worker_name" {
-  type    = string
-  default = "task-app"
-}
-
-variable "d1_database_name" {
-  type    = string
-  default = "task-app-prod"
-}
-
