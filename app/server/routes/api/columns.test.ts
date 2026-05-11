@@ -116,7 +116,7 @@ describe('columns CRUD + reorder', () => {
         'X-CSRF-Token': u.csrfToken,
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ afterColumnId: c0.id }),
+      body: JSON.stringify({ afterColumnId: c1.id }),
     });
     expect(re.status).toBe(200);
     const after = await db
@@ -144,5 +144,55 @@ describe('columns CRUD + reorder', () => {
       headers: { cookie: u.cookies, 'X-CSRF-Token': u.csrfToken },
     });
     expect(del.status).toBe(409);
+  });
+
+  it('rejects reordering a system column itself', async ({ fetch }) => {
+    const u = await createTestUser('sysreorder');
+    const p = await createProject(fetch, u);
+    const list = (
+      (await (
+        await fetch(`/projects/${p.id}/columns`, {
+          headers: { cookie: u.cookies },
+        })
+      ).json()) as { columns: Array<{ id: string; columnId: string }> }
+    ).columns;
+    const sys = list.find((c) => c.columnId === SYSTEM_COLUMN_NO_STATUS);
+    const userCol = list.find((c) => c.columnId !== SYSTEM_COLUMN_NO_STATUS);
+    if (!sys || !userCol) throw new Error('expected a system and a user column');
+    const re = await fetch(`/columns/${sys.id}/reorder`, {
+      method: 'POST',
+      headers: {
+        cookie: u.cookies,
+        'X-CSRF-Token': u.csrfToken,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ afterColumnId: userCol.id }),
+    });
+    expect(re.status).toBe(404);
+  });
+
+  it('rejects placing a user column before the system column', async ({ fetch }) => {
+    const u = await createTestUser('userbeforesys');
+    const p = await createProject(fetch, u);
+    const list = (
+      (await (
+        await fetch(`/projects/${p.id}/columns`, {
+          headers: { cookie: u.cookies },
+        })
+      ).json()) as { columns: Array<{ id: string; columnId: string }> }
+    ).columns;
+    const sys = list.find((c) => c.columnId === SYSTEM_COLUMN_NO_STATUS);
+    const userCol = list.find((c) => c.columnId !== SYSTEM_COLUMN_NO_STATUS);
+    if (!sys || !userCol) throw new Error('expected a system and a user column');
+    const re = await fetch(`/columns/${userCol.id}/reorder`, {
+      method: 'POST',
+      headers: {
+        cookie: u.cookies,
+        'X-CSRF-Token': u.csrfToken,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ afterColumnId: sys.id }),
+    });
+    expect(re.status).toBe(404);
   });
 });

@@ -200,12 +200,16 @@ export async function reorderColumn(
 ): Promise<Column[] | null> {
   const found = await lookupProjectColumn(db, projectColumnId, ownerId);
   if (!found) return null;
+  if (isSystemColumn(found.projectColumn)) return null;
   const projectId = found.projectColumn.projectId;
   const all = await db
     .select()
     .from(projectColumns)
     .where(eq(projectColumns.projectId, projectId))
     .orderBy(asc(projectColumns.position));
+  if (input.afterColumnId && all.some((c) => c.id === input.afterColumnId && isSystemColumn(c))) {
+    return null;
+  }
   const others = all.filter((c) => c.id !== projectColumnId);
   const beforeIdx = input.beforeColumnId
     ? others.findIndex((c) => c.id === input.beforeColumnId)
