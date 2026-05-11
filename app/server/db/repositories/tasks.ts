@@ -49,17 +49,13 @@ export async function listTasksForProject(
   db: Database,
   projectId: string,
 ): Promise<(DbTask & { labels: DbLabel[] })[]> {
-  const cols = await db
-    .select({ id: projectColumns.id })
-    .from(projectColumns)
-    .where(eq(projectColumns.projectId, projectId));
-  const colIds = cols.map((c) => c.id);
-  if (colIds.length === 0) return [];
-  const allTasks = await db
-    .select()
+  const rows = await db
+    .select({ task: tasks })
     .from(tasks)
-    .where(inArray(tasks.projectColumnId, colIds))
+    .innerJoin(projectColumns, eq(projectColumns.id, tasks.projectColumnId))
+    .where(eq(projectColumns.projectId, projectId))
     .orderBy(asc(tasks.position));
+  const allTasks = rows.map((r) => r.task);
   if (allTasks.length === 0) return [];
   const taskIds = allTasks.map((t) => t.id);
   const tlRows = await db
