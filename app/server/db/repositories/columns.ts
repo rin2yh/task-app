@@ -43,7 +43,12 @@ async function loadProjectColumns(db: Database, projectId: string): Promise<Colu
     .orderBy(asc(projectColumns.position));
   return rows.flatMap((r) => {
     const name = r.systemName ?? r.userName;
-    if (name == null) return [];
+    if (name == null) {
+      console.warn(
+        `orphaned project_columns row: id=${r.pc.id} columnId=${r.pc.columnId} (no matching user_columns or system_columns)`,
+      );
+      return [];
+    }
     return [
       {
         id: r.pc.id,
