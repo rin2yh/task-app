@@ -236,6 +236,85 @@ export async function moveTask(
   return { task: updated, tasksInColumn };
 }
 
+export interface BulkUpdateTasksInput {
+  ids: string[];
+  patch?: {
+    priority?: Priority;
+    dueDate?: number | null;
+  };
+  labelIds?: string[];
+}
+
+export async function bulkUpdateTasks(
+  db: Database,
+  ownerId: number,
+  input: BulkUpdateTasksInput,
+): Promise<(DbTask & { labels: DbLabel[] })[] | null> {
+  if (input.ids.length === 0) return [];
+  const owned = await db
+    .select({ task: tasks, projectId: columns.projectId })
+    .from(tasks)
+    .innerJoin(columns, eq(columns.id, tasks.columnId))
+    .innerJoin(projects, eq(projects.id, columns.projectId))
+    .where(and(inArray(tasks.id, input.ids), eq(projects.ownerId, ownerId)));
+  if (owned.length !== input.ids.length) return null;
+  const ownedIds = owned.map((r) => r.task.id);
+
+  const now = Date.now();
+  const fieldPatch: Partial<Pick<DbTask, 'priority' | 'dueDate'>> = {};
+  if (input.patch?.priority !== undefined) fieldPatch.priority = input.patch.priority;
+  if (input.patch?.dueDate !== undefined) fieldPatch.dueDate = input.patch.dueDate;
+  const hasFieldPatch = Object.keys(fieldPatch).length > 0;
+  if (hasFieldPatch) {
+    await db
+      .update(tasks)
+      .set({ ...fieldPatch, updatedAt: now })
+      .where(inArray(tasks.id, ownedIds));
+  }
+
+  let labelsByTask: Map<string, DbLabel[]>;
+  if (input.labelIds !== undefined) {
+    const projectIds = new Set(owned.map((r) => r.projectId));
+    if (projectIds.size > 1) return null;
+    const projectId = owned[0]?.projectId;
+    if (!projectId) return null;
+    let validated: DbLabel[] = [];
+    if (input.labelIds.length > 0) {
+      validated = await db
+        .select()
+        .from(labels)
+        .where(and(inArray(labels.id, input.labelIds), eq(labels.projectId, projectId)));
+      if (validated.length !== input.labelIds.length) return null;
+    }
+    await db.delete(taskLabels).where(inArray(taskLabels.taskId, ownedIds));
+    if (validated.length > 0) {
+      const rows: { taskId: string; labelId: string }[] = [];
+      for (const tid of ownedIds) {
+        for (const l of validated) rows.push({ taskId: tid, labelId: l.id });
+      }
+      await db.insert(taskLabels).values(rows);
+    }
+    labelsByTask = new Map(ownedIds.map((id) => [id, validated]));
+  } else {
+    const tlRows = await db
+      .select({ taskId: taskLabels.taskId, label: labels })
+      .from(taskLabels)
+      .innerJoin(labels, eq(labels.id, taskLabels.labelId))
+      .where(inArray(taskLabels.taskId, ownedIds));
+    labelsByTask = new Map();
+    for (const r of tlRows) {
+      const arr = labelsByTask.get(r.taskId) ?? [];
+      arr.push(r.label);
+      labelsByTask.set(r.taskId, arr);
+    }
+  }
+
+  return owned.map((r) => {
+    const merged: DbTask = hasFieldPatch ? { ...r.task, ...fieldPatch, updatedAt: now } : r.task;
+    return { ...merged, labels: labelsByTask.get(merged.id) ?? [] };
+  });
+}
+
 export async function setTaskLabels(
   db: Database,
   taskId: string,

@@ -1,5 +1,4 @@
 import { Button } from '@client/components/ui/button';
-import { Checkbox } from '@client/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -10,8 +9,9 @@ import {
 import { Input } from '@client/components/ui/input';
 import { Label as UiLabel } from '@client/components/ui/label';
 import { Textarea } from '@client/components/ui/textarea';
-import { LabelChip } from '@client/features/labels/components/label-chip';
+import { LabelPicker } from '@client/features/labels/components/label-picker';
 import { PrioritySelect } from '@client/features/priority/components/priority-select';
+import { dueToInput, inputToDue } from '@client/lib/date';
 import type { Label } from '@shared/label';
 import type { Priority } from '@shared/priority';
 import { Result } from '@shared/result';
@@ -31,9 +31,7 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description ?? '');
   const [priority, setPriority] = useState<Priority>(task.priority);
-  const [dueDate, setDueDate] = useState<string>(
-    task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : '',
-  );
+  const [dueDate, setDueDate] = useState<string>(dueToInput(task.dueDate));
   const [selectedLabels, setSelectedLabels] = useState<Set<string>>(
     new Set(task.labels.map((l) => l.id)),
   );
@@ -58,7 +56,7 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
       title: title.trim(),
       description: description.length === 0 ? null : description,
       priority,
-      dueDate: dueDate ? Date.parse(`${dueDate}T00:00:00Z`) : null,
+      dueDate: inputToDue(dueDate),
     };
     const result = await Result.try(
       (async () => {
@@ -145,27 +143,12 @@ export function TaskDialog({ task, allLabels, csrfToken, onClose, onUpdated, onD
           </div>
           <fieldset className="rounded-md border p-3">
             <legend className="px-1 text-sm font-medium">ラベル</legend>
-            <div className="flex flex-wrap gap-2">
-              {allLabels.map((l) => {
-                const checked = selectedLabels.has(l.id);
-                const id = `task-label-${l.id}`;
-                return (
-                  <label key={l.id} htmlFor={id} className="inline-flex items-center gap-1.5">
-                    <Checkbox
-                      id={id}
-                      checked={checked}
-                      onCheckedChange={(value) => {
-                        const next = new Set(selectedLabels);
-                        if (value === true) next.add(l.id);
-                        else next.delete(l.id);
-                        setSelectedLabels(next);
-                      }}
-                    />
-                    <LabelChip label={l} />
-                  </label>
-                );
-              })}
-            </div>
+            <LabelPicker
+              labels={allLabels}
+              selected={selectedLabels}
+              onChange={setSelectedLabels}
+              idPrefix="task-label"
+            />
           </fieldset>
           {error ? (
             <p role="alert" className="text-sm text-destructive">

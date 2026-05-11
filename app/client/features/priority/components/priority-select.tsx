@@ -19,15 +19,21 @@ export function PrioritySelect({
   id,
   value,
   onChange,
+  placeholder,
+  ariaLabel,
+  disabled,
 }: {
   id?: string;
-  value: Priority;
+  value?: Priority;
   onChange: (v: Priority) => void;
+  placeholder?: string;
+  ariaLabel?: string;
+  disabled?: boolean;
 }) {
   return (
-    <Select value={value} onValueChange={(v) => onChange(v as Priority)}>
-      <SelectTrigger id={id} className="w-full">
-        <SelectValue />
+    <Select value={value} onValueChange={(v) => onChange(v as Priority)} disabled={disabled}>
+      <SelectTrigger id={id} className="w-full" aria-label={ariaLabel}>
+        <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
         {PRIORITY_OPTIONS.map((opt) => (
