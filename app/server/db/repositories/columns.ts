@@ -93,19 +93,21 @@ export async function createColumn(
   const position = tailPosition(maxRow[0]?.value ?? null);
   const now = Date.now();
   const userColumnId = ulid();
-  await db.insert(userColumns).values({
-    id: userColumnId,
-    ownerId,
-    name: input.name,
-    createdAt: now,
-  });
   const projectColumnId = ulid();
-  await db.insert(projectColumns).values({
-    id: projectColumnId,
-    projectId,
-    columnId: userColumnId,
-    position,
-  });
+  await db.batch([
+    db.insert(userColumns).values({
+      id: userColumnId,
+      ownerId,
+      name: input.name,
+      createdAt: now,
+    }),
+    db.insert(projectColumns).values({
+      id: projectColumnId,
+      projectId,
+      columnId: userColumnId,
+      position,
+    }),
+  ]);
   return {
     id: projectColumnId,
     projectId,
@@ -181,9 +183,14 @@ export async function deleteColumn(
   const found = await lookupProjectColumn(db, projectColumnId, ownerId);
   if (!found) return { ok: false, system: false };
   if (isSystemColumn(found.projectColumn)) return { ok: false, system: true };
-  await db.delete(projectColumns).where(eq(projectColumns.id, projectColumnId));
+  const deletePc = db.delete(projectColumns).where(eq(projectColumns.id, projectColumnId));
   if (found.userColumnId) {
-    await db.delete(userColumns).where(eq(userColumns.id, found.userColumnId));
+    await db.batch([
+      deletePc,
+      db.delete(userColumns).where(eq(userColumns.id, found.userColumnId)),
+    ]);
+  } else {
+    await deletePc;
   }
   return { ok: true, system: false };
 }
@@ -243,12 +250,10 @@ export async function reorderColumn(
     }
     logical.splice(insertAt, 0, found.projectColumn);
     const reb = rebalance(logical);
-    for (const r of reb) {
-      await db
-        .update(projectColumns)
-        .set({ position: r.position })
-        .where(eq(projectColumns.id, r.id));
-    }
+    const [first, ...rest] = reb.map((r) =>
+      db.update(projectColumns).set({ position: r.position }).where(eq(projectColumns.id, r.id)),
+    );
+    if (first) await db.batch([first, ...rest]);
   } else {
     await db
       .update(projectColumns)

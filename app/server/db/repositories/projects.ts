@@ -46,31 +46,27 @@ export async function createProject(
     createdAt: now,
     updatedAt: now,
   };
-  await db.insert(projects).values(project);
-
-  await db.insert(projectColumns).values({
-    id: ulid(),
-    projectId: id,
-    columnId: SYSTEM_COLUMN_NO_STATUS,
-    position: POSITION_STEP,
-  });
-
   const defaults = ['Todo', 'In Progress', 'Done'];
-  for (const [i, name] of defaults.entries()) {
-    const userColumnId = ulid();
-    await db.insert(userColumns).values({
-      id: userColumnId,
-      ownerId,
-      name,
-      createdAt: now,
-    });
-    await db.insert(projectColumns).values({
+  const userColumnRows = defaults.map((name) => ({
+    id: ulid(),
+    ownerId,
+    name,
+    createdAt: now,
+  }));
+  const projectColumnRows = [
+    { id: ulid(), projectId: id, columnId: SYSTEM_COLUMN_NO_STATUS, position: POSITION_STEP },
+    ...userColumnRows.map((u, i) => ({
       id: ulid(),
       projectId: id,
-      columnId: userColumnId,
+      columnId: u.id,
       position: (i + 2) * POSITION_STEP,
-    });
-  }
+    })),
+  ];
+  await db.batch([
+    db.insert(projects).values(project),
+    db.insert(userColumns).values(userColumnRows),
+    db.insert(projectColumns).values(projectColumnRows),
+  ]);
   return project;
 }
 

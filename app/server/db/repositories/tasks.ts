@@ -217,20 +217,19 @@ export async function moveTask(
     };
     logical.splice(insertAt, 0, movedTask);
     const reb = rebalance(logical);
-    for (const r of reb) {
-      if (r.id === taskId) {
-        await db
-          .update(tasks)
-          .set({
-            projectColumnId: input.toColumnId,
-            position: r.position,
-            updatedAt: now,
-          })
-          .where(eq(tasks.id, taskId));
-      } else {
-        await db.update(tasks).set({ position: r.position }).where(eq(tasks.id, r.id));
-      }
-    }
+    const [first, ...rest] = reb.map((r) =>
+      r.id === taskId
+        ? db
+            .update(tasks)
+            .set({
+              projectColumnId: input.toColumnId,
+              position: r.position,
+              updatedAt: now,
+            })
+            .where(eq(tasks.id, taskId))
+        : db.update(tasks).set({ position: r.position }).where(eq(tasks.id, r.id)),
+    );
+    if (first) await db.batch([first, ...rest]);
   } else {
     await db
       .update(tasks)
